@@ -26,6 +26,25 @@ module.exports = {
         'playfair': ['Playfair Display', 'serif'],
         'sans': ['Inter', 'sans-serif'],
       },
+      // Enhanced responsive breakpoints
+      screens: {
+        'xs': '375px',    // Small phones
+        'sm': '640px',    // Large phones
+        'md': '768px',    // Tablets
+        'lg': '1024px',   // Small desktops/laptops
+        'xl': '1280px',   // Desktops
+        '2xl': '1536px',  // Large desktops
+        '3xl': '1920px',  // TVs/4K monitors
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
+      maxWidth: {
+        '8xl': '88rem',
+        '9xl': '96rem',
+      },
       animation: {
         'gradient-move': 'gradientMove 15s ease infinite',
         'float-slow': 'floatSlow 20s ease-in-out infinite',

@@ -6,7 +6,6 @@ export default function Document() {
       <Head>
         {/* Primary Meta Tags */}
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#A3562A" />
         
         {/* SEO Meta Tags */}
@@ -53,6 +52,7 @@ export default function Document() {
         <link rel="canonical" href="https://varahajewels.vercel.app" />
       </Head>
       <body className="antialiased">
+        {/* Responsive viewport handled in individual pages */}
         <Main />
         <NextScript />
       </body>
