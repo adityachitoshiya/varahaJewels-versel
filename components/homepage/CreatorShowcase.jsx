@@ -9,8 +9,7 @@ const creators = [
     handle: "@priyastyle",
     platform: "instagram",
     followers: "2.5M",
-    videoUrl: "/varaha-assets/creator1.mp4", // You'll add actual video paths
-    thumbnail: "/varaha-assets/creator1-thumb.jpg",
+    videoUrl: "/varaha-assets/creator1.mp4",
     product: "Heritage Kundan Necklace",
     verified: true
   },
@@ -21,7 +20,6 @@ const creators = [
     platform: "youtube",
     followers: "1.8M",
     videoUrl: "/varaha-assets/creator2.mp4",
-    thumbnail: "/varaha-assets/creator2-thumb.jpg",
     product: "Traditional Jhumka Earrings",
     verified: true
   },
@@ -32,7 +30,6 @@ const creators = [
     platform: "instagram",
     followers: "3.2M",
     videoUrl: "/varaha-assets/creator3.mp4",
-    thumbnail: "/varaha-assets/creator3-thumb.jpg",
     product: "Polki Diamond Bangles",
     verified: true
   },
@@ -43,7 +40,6 @@ const creators = [
     platform: "instagram",
     followers: "950K",
     videoUrl: "/varaha-assets/creator4.mp4",
-    thumbnail: "/varaha-assets/creator4-thumb.jpg",
     product: "Gold Maang Tikka",
     verified: true
   },
@@ -54,7 +50,6 @@ const creators = [
     platform: "youtube",
     followers: "2.1M",
     videoUrl: "/varaha-assets/creator5.mp4",
-    thumbnail: "/varaha-assets/creator5-thumb.jpg",
     product: "Temple Jewelry Collection",
     verified: true
   }
@@ -290,10 +285,68 @@ export default function CreatorShowcase() {
 
 // Video Card Component
 function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onToggleMute }) {
+  const [thumbnailGenerated, setThumbnailGenerated] = useState(false);
+  const canvasRef = useRef(null);
+
+  // Generate thumbnail from video
+  useEffect(() => {
+    const video = videoRef;
+    if (!video || thumbnailGenerated) return;
+
+    const handleLoadedData = () => {
+      // Set video to 1 second to capture a good frame
+      video.currentTime = 1;
+    };
+
+    const handleSeeked = () => {
+      if (!canvasRef.current) return;
+      
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Draw video frame to canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert canvas to blob and set as poster
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          video.poster = url;
+          setThumbnailGenerated(true);
+        }
+      }, 'image/jpeg', 0.8);
+      
+      // Reset video to start
+      video.currentTime = 0;
+    };
+
+    video.addEventListener('loadeddata', handleLoadedData);
+    video.addEventListener('seeked', handleSeeked);
+
+    return () => {
+      video.removeEventListener('loadeddata', handleLoadedData);
+      video.removeEventListener('seeked', handleSeeked);
+    };
+  }, [videoRef, thumbnailGenerated]);
+
   return (
     <div className="relative group w-full max-w-[280px] sm:max-w-[320px] mx-auto">
+      {/* Hidden canvas for thumbnail generation */}
+      <canvas ref={canvasRef} className="hidden" />
+      
       {/* 9:16 Video Container */}
       <div className="relative w-full aspect-[9/16] rounded-3xl overflow-hidden bg-black shadow-2xl">
+        {/* Loading placeholder */}
+        {!thumbnailGenerated && (
+          <div className="absolute inset-0 bg-gradient-to-br from-copper/20 to-heritage/20 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-copper"></div>
+          </div>
+        )}
+        
         {/* Video Element */}
         <video
           ref={videoRef}
@@ -301,7 +354,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
           loop
           playsInline
           muted={isMuted}
-          poster={creator.thumbnail}
+          preload="metadata"
         >
           <source src={creator.videoUrl} type="video/mp4" />
           Your browser does not support the video tag.
