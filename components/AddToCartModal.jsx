@@ -76,7 +76,7 @@ export default function AddToCartModal({
             <p className="text-gray-500 text-sm mb-6">Start adding items to your cart!</p>
             <button
               onClick={onContinueShopping}
-              className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition"
+              className="px-6 py-3 bg-copper text-white font-semibold rounded-lg hover:bg-heritage transition"
             >
               Continue Shopping
             </button>
@@ -140,7 +140,7 @@ export default function AddToCartModal({
               <div className="space-y-2">
                 <button
                   onClick={onCheckout}
-                  className="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                  className="w-full px-6 py-3 bg-copper text-white font-semibold rounded-xl shadow-lg hover:bg-heritage transition flex items-center justify-center gap-2"
                 >
                   Proceed to Checkout
                   <ArrowRight size={18} />

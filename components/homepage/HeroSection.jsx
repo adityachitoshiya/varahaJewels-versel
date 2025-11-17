@@ -124,17 +124,17 @@ export default function HeroSection() {
         </div>
       ))}
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Hidden on Mobile, Visible on Desktop */}
       <button
         onClick={prevSlide}
-        className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
+        className="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
         aria-label="Previous slide"
       >
         <ChevronLeft size={28} />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
+        className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
         aria-label="Next slide"
       >
         <ChevronRight size={28} />

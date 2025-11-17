@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-export default function AnnouncementBar({ showCountdown = false }) {
+export default function AnnouncementBar({ showCountdown = true }) {
   const [isDismissed, setIsDismissed] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState({
     days: 39,
@@ -60,32 +60,36 @@ export default function AnnouncementBar({ showCountdown = false }) {
   if (isDismissed) return null;
 
   return (
-    <div className="sticky top-0 z-50 bg-[#EFE9E2] text-heritage py-3 px-4 border-b border-heritage/15">
+    <div className="sticky top-0 z-50 bg-gradient-to-r from-heritage via-copper to-heritage text-warm-sand py-1.5 px-2 border-b border-warm-sand/20 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-center">
         {showCountdown ? (
-          <div className="flex items-center justify-center gap-3 text-sm md:text-base">
-            <span className="font-medium">🚀 Grand Launch In:</span>
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-copper bg-copper/10 px-2 py-0.5 rounded border border-copper/30">
-                {String(timeRemaining.days).padStart(2, '0')}d
+          <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs">
+            <span className="font-semibold flex items-center gap-1">
+              <span className="text-xs">🎉</span>
+              <span className="hidden sm:inline">Grand Launch In:</span>
+              <span className="sm:hidden">Launch:</span>
+            </span>
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
+                {String(timeRemaining.days).padStart(2, '0')}
               </span>
-              <span className="font-mono font-bold text-heritage">:</span>
-              <span className="font-mono font-bold text-copper bg-copper/10 px-2 py-0.5 rounded border border-copper/30">
-                {String(timeRemaining.hours).padStart(2, '0')}h
+              <span className="font-bold text-warm-sand/60 text-xs">:</span>
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
+                {String(timeRemaining.hours).padStart(2, '0')}
               </span>
-              <span className="font-mono font-bold text-heritage">:</span>
-              <span className="font-mono font-bold text-copper bg-copper/10 px-2 py-0.5 rounded border border-copper/30">
-                {String(timeRemaining.minutes).padStart(2, '0')}m
+              <span className="font-bold text-warm-sand/60 text-xs">:</span>
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
+                {String(timeRemaining.minutes).padStart(2, '0')}
               </span>
-              <span className="font-mono font-bold text-heritage">:</span>
-              <span className="font-mono font-bold text-copper bg-copper/10 px-2 py-0.5 rounded border border-copper/30">
-                {String(timeRemaining.seconds).padStart(2, '0')}s
+              <span className="font-bold text-warm-sand/60 text-xs">:</span>
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
+                {String(timeRemaining.seconds).padStart(2, '0')}
               </span>
             </div>
           </div>
         ) : (
-          <p className="text-sm md:text-base text-center font-medium">
-            ✨ New Collection: Get <span className="font-semibold text-copper px-2 py-0.5 bg-copper/10 rounded-sm border border-copper/30">15% OFF</span> on Heritage Collection
+          <p className="text-[10px] sm:text-xs text-center font-medium">
+            ✨ Get <span className="font-semibold px-1.5 py-0.5 bg-warm-sand/20 rounded border border-warm-sand/30">15% OFF</span>
           </p>
         )}
       </div>

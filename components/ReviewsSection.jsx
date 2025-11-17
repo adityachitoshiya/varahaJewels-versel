@@ -25,7 +25,7 @@ export default function ReviewsSection({ reviews, averageRating, reviewCount }) 
       <div className="mb-8">
         <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Customer Reviews</h2>
         <div className="flex items-center space-x-4">
-          <div className="text-5xl font-bold text-indigo-600">{averageRating.toFixed(1)}</div>
+          <div className="text-5xl font-bold text-copper">{averageRating.toFixed(1)}</div>
           <div>
             <div className="flex mb-1">
               {[...Array(5)].map((_, i) => (

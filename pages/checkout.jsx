@@ -31,6 +31,9 @@ export default function Checkout() {
   // Payment method state
   const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' or 'cod'
 
+  // COD Confirmation Modal state
+  const [showCODConfirmation, setShowCODConfirmation] = useState(false);
+
   // Cart items state
   const [cartItems, setCartItems] = useState([]);
   
@@ -70,6 +73,30 @@ export default function Checkout() {
       ...prev,
       [name]: value
     }));
+
+    // Auto-fetch city and state when pincode is entered (6 digits)
+    if (name === 'pincode' && value.length === 6) {
+      fetchPincodeDetails(value);
+    }
+  };
+
+  // Fetch city and state from pincode
+  const fetchPincodeDetails = async (pincode) => {
+    try {
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await response.json();
+      
+      if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
+        const postOffice = data[0].PostOffice[0];
+        setFormData(prev => ({
+          ...prev,
+          city: postOffice.District,
+          state: postOffice.State
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching pincode details:', error);
+    }
   };
 
   const handleApplyCoupon = () => {
@@ -93,6 +120,96 @@ export default function Checkout() {
     setDiscount(0);
     setCouponCode('');
     setCouponError('');
+  };
+
+  // Handle COD Order Confirmation
+  const handleCODConfirmation = async () => {
+    setShowCODConfirmation(false);
+    setIsLoading(true);
+
+    try {
+      // Prepare order data based on cart or single product
+      const orderData = cartItems.length > 0 
+        ? {
+            items: cartItems.map(item => ({
+              productId: item.productId || item.id,
+              productName: item.productName || item.name,
+              variantId: item.variant.id,
+              variantName: item.variant.name,
+              quantity: item.quantity,
+              price: item.variant.price,
+            })),
+            amount: Math.round(finalAmount),
+            name: formData.name,
+            email: formData.email,
+            contact: formData.contact,
+            address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+            couponCode: appliedCoupon || '',
+            discount: discount * 100,
+            paymentMethod: paymentMethod,
+            codCharges: paymentMethod === 'cod' ? COD_CHARGE : 0,
+            isCartCheckout: true,
+          }
+        : {
+            productId: orderDetails.productId,
+            variantId: orderDetails.variantId,
+            quantity: orderDetails.quantity,
+            amount: Math.round(finalAmount),
+            name: formData.name,
+            email: formData.email,
+            contact: formData.contact,
+            address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+            couponCode: appliedCoupon || '',
+            discount: discount * 100,
+            paymentMethod: paymentMethod,
+            codCharges: paymentMethod === 'cod' ? COD_CHARGE : 0,
+          };
+
+      const response = await fetch('/api/create-cod-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create order');
+      }
+
+      // Use the order ID from API response
+      const orderId = data.orderId || `ORD-${Date.now()}`;
+
+      // Clear cart if it was a cart checkout
+      if (cartItems.length > 0) {
+        localStorage.removeItem('cart');
+      }
+
+      // Redirect directly to payment success page (COD confirmed)
+      router.push({
+        pathname: '/payment-success',
+        query: {
+          orderId: orderId,
+          amount: Math.round(finalAmount),
+          paymentId: `COD-${Date.now()}`,
+          productName: cartItems.length > 0 
+            ? `${cartItems.length} items` 
+            : orderDetails.productName,
+          quantity: cartItems.length > 0 
+            ? cartItems.reduce((sum, item) => sum + item.quantity, 0)
+            : orderDetails.quantity,
+          email: formData.email,
+          name: formData.name,
+          codMode: 'true'
+        }
+      });
+    } catch (err) {
+      console.error('COD order error:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   // Calculate total amount based on cart or single product
@@ -283,49 +400,10 @@ export default function Checkout() {
             codCharges: paymentMethod === 'cod' ? COD_CHARGE : 0,
           };
 
-      // Cash on Delivery - Skip Razorpay, create order directly
+      // Cash on Delivery - Show confirmation modal first
       if (paymentMethod === 'cod') {
-        const response = await fetch('/api/create-cod-order', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderData),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to create order');
-        }
-
-        // Use the order ID from API response
-        const orderId = data.orderId || `ORD-${Date.now()}`;
-
-        // Clear cart if it was a cart checkout
-        if (cartItems.length > 0) {
-          localStorage.removeItem('cart');
-        }
-
-        // Redirect directly to payment success page (COD confirmed)
-        router.push({
-          pathname: '/payment-success',
-          query: {
-            orderId: orderId,
-            amount: Math.round(finalAmount),
-            paymentId: `COD-${Date.now()}`,
-            productName: cartItems.length > 0 
-              ? `${cartItems.length} items` 
-              : orderDetails.productName,
-            quantity: cartItems.length > 0 
-              ? cartItems.reduce((sum, item) => sum + item.quantity, 0)
-              : orderDetails.quantity,
-            email: formData.email,
-            name: formData.name,
-            codMode: 'true'
-          }
-        });
-        
+        setShowCODConfirmation(true);
+        setIsLoading(false);
         return;
       }
 
@@ -804,6 +882,57 @@ export default function Checkout() {
       </main>
 
       <Footer />
+
+      {/* COD Confirmation Modal */}
+      {showCODConfirmation && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div className="text-center mb-6">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-copper/10 mb-4">
+                <svg className="h-8 w-8 text-copper" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-heritage mb-2">Confirm COD Order</h3>
+              <p className="text-sm text-heritage/70 mb-4">
+                Are you sure you want to process this Cash on Delivery order?
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-r from-heritage/5 via-copper/5 to-heritage/5 rounded-sm p-4 mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-heritage/70">Order Amount:</span>
+                <span className="text-lg font-bold text-copper">₹{finalAmount.toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs text-heritage/60">
+                <span>Payment Method:</span>
+                <span className="font-medium">Cash on Delivery</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCODConfirmation(false);
+                  setIsLoading(false);
+                }}
+                className="flex-1 px-4 py-3 bg-gray-100 text-heritage font-medium rounded-sm hover:bg-gray-200 transition-all duration-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCODConfirmation}
+                disabled={isLoading}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-heritage via-copper to-heritage text-warm-sand font-medium rounded-sm hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+              >
+                {isLoading ? 'Processing...' : 'Confirm Order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

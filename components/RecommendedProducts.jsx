@@ -22,7 +22,7 @@ export default function RecommendedProducts({ products, title = "You Might Also 
             </div>
             <div className="p-4">
               <h3 className="font-semibold text-gray-900 truncate mb-2">{product.title}</h3>
-              <p className="text-xl font-bold text-indigo-600 mb-3">{formatCurrency(product.price)}</p>
+              <p className="text-xl font-bold text-copper mb-3">{formatCurrency(product.price)}</p>
               <button className="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition">
                 Quick Add
               </button>

@@ -58,7 +58,7 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-6 text-copper text-lg">Support</h4>
             <ul className="space-y-3 text-sm text-warm-sand/90">
-              <li><Link href="/coming-soon" className="hover:text-copper transition-colors duration-300">Contact Us</Link></li>
+              <li><Link href="/contact" className="hover:text-copper transition-colors duration-300">Contact Us</Link></li>
               <li><Link href="/coming-soon" className="hover:text-copper transition-colors duration-300">FAQs</Link></li>
               <li><Link href="/coming-soon" className="hover:text-copper transition-colors duration-300">Shipping</Link></li>
               <li><Link href="/coming-soon" className="hover:text-copper transition-colors duration-300">Returns</Link></li>

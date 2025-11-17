@@ -93,8 +93,8 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white border border-copper/30 rounded-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <ShoppingBag className="text-blue-600" size={24} />
+                <div className="w-12 h-12 bg-copper/10 rounded-full flex items-center justify-center">
+                  <ShoppingBag className="text-copper" size={24} />
                 </div>
                 <TrendingUp className="text-green-500" size={20} />
               </div>

@@ -116,7 +116,7 @@ export default function ProductCarousel({ images = [] }) {
                     {!isVideoPlaying && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                         <div className="bg-white/90 rounded-full p-4 shadow-lg">
-                          <Play size={40} className="text-indigo-600 fill-indigo-600" />
+                          <Play size={40} className="text-copper fill-copper" />
                         </div>
                       </div>
                     )}
@@ -164,7 +164,7 @@ export default function ProductCarousel({ images = [] }) {
               key={item.id}
               onClick={() => goToSlide(index)}
               className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition ${
-                index === activeIndex ? 'border-indigo-600 ring-2 ring-indigo-600' : 'border-gray-200 hover:border-gray-400'
+                index === activeIndex ? 'border-copper ring-2 ring-copper' : 'border-gray-200 hover:border-gray-400'
               }`}
             >
               {item.type === 'image' ? (
