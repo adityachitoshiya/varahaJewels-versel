@@ -3,8 +3,5 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/checkout": "pages/checkout.js",
-  "/coming-soon": "pages/coming-soon.js",
-  "/api/create-checkout-session": "pages/api/create-checkout-session.js",
-  "/product/[id]": "pages/product/[id].js"
+  "/coming-soon": "pages/coming-soon.js"
 }
