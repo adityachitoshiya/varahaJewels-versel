@@ -73,15 +73,15 @@ export default function BackToTop() {
       const currentScroll = window.pageYOffset;
       if (currentScroll > 0) {
         window.scrollBy({
-          top: -50, // Scroll up by 50px each interval
-          behavior: 'smooth'
+          top: -100, // Faster scroll: 100px each interval for fast speed
+          behavior: 'auto' // Instant scroll for speed
         });
       } else {
         stopAutoScroll();
         stopVibration();
         setIsLongPressing(false);
       }
-    }, 50);
+    }, 30); // 30ms interval for smooth fast scrolling
   };
 
   const stopAutoScroll = () => {
@@ -93,12 +93,12 @@ export default function BackToTop() {
 
   // Handle long press start
   const handlePressStart = () => {
-    // Only enable long press on mobile
-    if (!isMobileDevice()) return;
-
     longPressTimer.current = setTimeout(() => {
       setIsLongPressing(true);
-      startVibration();
+      // Only vibrate on mobile
+      if (isMobileDevice()) {
+        startVibration();
+      }
       startAutoScroll();
     }, 500); // 500ms delay to activate long press
   };
@@ -118,9 +118,18 @@ export default function BackToTop() {
   };
 
   // Handle normal click (when not long pressing)
-  const handleClick = () => {
-    if (!isLongPressing && !isMobileDevice()) {
-      scrollToTop();
+  const handleClick = (e) => {
+    // If it's a long press, don't do normal scroll
+    if (isLongPressing) {
+      e.preventDefault();
+      return;
+    }
+    
+    // If long press timer is still running, it's a quick tap
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+      scrollToTop(); // Normal smooth scroll
     }
   };
 
