@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Instagram, Youtube, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Instagram, Youtube } from 'lucide-react';
 
 // Creator data with 9:16 vertical videos
 const creators = [
@@ -65,8 +65,13 @@ export default function CreatorShowcase() {
   const [isPlaying, setIsPlaying] = useState({});
   const [isMuted, setIsMuted] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
   const videoRefs = useRef({});
   const sectionRef = useRef(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -112,6 +117,31 @@ export default function CreatorShowcase() {
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + creators.length) % creators.length);
+  };
+
+  // Touch handlers for swipe
+  const onTouchStart = (e) => {
+    setTouchEnd(0); // Reset
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    }
+    if (isRightSwipe) {
+      prevSlide();
+    }
   };
 
   // Auto-pause videos when scrolling away
@@ -166,7 +196,7 @@ export default function CreatorShowcase() {
         {/* Desktop View - Horizontal Scroll */}
         <div className="hidden lg:block">
           <div className="relative">
-            <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-8">
+            <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-8 px-4 justify-center">
               {creators.map((creator, index) => (
                 <div
                   key={creator.id}
@@ -191,32 +221,22 @@ export default function CreatorShowcase() {
 
         {/* Mobile/Tablet View - Carousel */}
         <div className="lg:hidden">
-          <div className="relative max-w-sm mx-auto">
-            {/* Navigation Buttons */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-xl hover:bg-copper hover:text-white transition-all duration-300 border border-copper/20"
-              aria-label="Previous creator"
+          <div className="relative max-w-md mx-auto px-4">
+            {/* Navigation Buttons - Removed for touch-only navigation */}
+            
+            {/* Carousel with touch support */}
+            <div 
+              className="overflow-hidden"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
             >
-              <ChevronLeft size={24} />
-            </button>
-
-            <button
-              onClick={nextSlide}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-xl hover:bg-copper hover:text-white transition-all duration-300 border border-copper/20"
-              aria-label="Next creator"
-            >
-              <ChevronRight size={24} />
-            </button>
-
-            {/* Carousel */}
-            <div className="overflow-hidden">
               <div 
                 className="flex transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
               >
                 {creators.map((creator) => (
-                  <div key={creator.id} className="w-full flex-shrink-0 px-2">
+                  <div key={creator.id} className="w-full flex-shrink-0 flex justify-center">
                     <VideoCard
                       creator={creator}
                       videoRef={(el) => videoRefs.current[creator.id] = el}
@@ -271,9 +291,9 @@ export default function CreatorShowcase() {
 // Video Card Component
 function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onToggleMute }) {
   return (
-    <div className="relative group">
+    <div className="relative group w-full max-w-[280px] sm:max-w-[320px] mx-auto">
       {/* 9:16 Video Container */}
-      <div className="relative w-72 h-[512px] rounded-3xl overflow-hidden bg-black shadow-2xl">
+      <div className="relative w-full aspect-[9/16] rounded-3xl overflow-hidden bg-black shadow-2xl">
         {/* Video Element */}
         <video
           ref={videoRef}

@@ -2,9 +2,5 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/product/[id]": "pages/product/[id].js",
-  "/": "pages/index.js",
-  "/api/create-checkout-session": "pages/api/create-checkout-session.js",
-  "/checkout": "pages/checkout.js",
-  "/api/create-cod-order": "pages/api/create-cod-order.js"
+  "/": "pages/index.js"
 }
