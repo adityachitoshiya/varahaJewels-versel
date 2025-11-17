@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import AnnouncementBar from '../components/AnnouncementBar';
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check } from 'lucide-react';
 
 export default function Checkout() {
@@ -468,6 +469,15 @@ export default function Checkout() {
       </Head>
 
       <Header />
+      
+      {/* Payment Gateway Notice */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white py-2.5 px-4 shadow-lg border-b-2 border-amber-600">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-center text-sm sm:text-base font-medium animate-pulse">
+            ⚠️ Notice: Our online payment gateway is currently under maintenance. Please use Cash on Delivery (COD) option for now. Thank you for your patience! 🙏
+          </p>
+        </div>
+      </div>
 
       <main className="min-h-screen bg-warm-sand py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
