@@ -6,6 +6,7 @@ import FeaturedCollections from '../components/homepage/FeaturedCollections';
 import ProductSpotlight from '../components/homepage/ProductSpotlight';
 import HeritageSection from '../components/homepage/HeritageSection';
 import TestimonialsSection from '../components/homepage/TestimonialsSection';
+import CreatorShowcase from '../components/homepage/CreatorShowcase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AnnouncementBar from '../components/AnnouncementBar';
@@ -193,6 +194,7 @@ export default function Home() {
             <ProductSpotlight />
             <HeritageSection />
             <TestimonialsSection />
+            <CreatorShowcase />
           </main>
 
           <Footer />
