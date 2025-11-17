@@ -95,8 +95,8 @@ export default function ProductSpotlight() {
                 <ChevronRight size={28} />
               </button>
 
-              {/* Slide Indicators */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
+              {/* Slide Indicators - Hidden for cleaner mobile UX */}
+              <div className="hidden">
                 {spotlightProducts.map((_, index) => (
                   <button
                     key={index}

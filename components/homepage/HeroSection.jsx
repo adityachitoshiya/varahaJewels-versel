@@ -140,8 +140,8 @@ export default function HeroSection() {
         <ChevronRight size={28} />
       </button>
 
-      {/* Slide Indicators */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+      {/* Slide Indicators - Hidden for cleaner mobile UX */}
+      <div className="hidden">
         {heroSlides.map((_, index) => (
           <button
             key={index}

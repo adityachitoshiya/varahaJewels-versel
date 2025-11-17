@@ -142,8 +142,8 @@ export default function ProductCarousel({ images = [] }) {
             <ChevronRight size={24} />
           </button>
 
-          {/* Indicators */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+          {/* Indicators - Hidden for cleaner mobile UX */}
+          <div className="hidden">
             {images.map((_, index) => (
               <button
                 key={index}

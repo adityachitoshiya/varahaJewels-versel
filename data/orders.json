@@ -415,5 +415,59 @@
       "variantId": "v1",
       "address": "Surya Citya 394 agra road, Jaipur, Rajasthan - 302031"
     }
+  },
+  {
+    "orderId": "COD-1763391861664-CG1F7BJBU",
+    "paymentId": "COD-1763391861664",
+    "productId": "prod_001",
+    "variantId": "v1",
+    "quantity": 1,
+    "amount": 2558,
+    "paymentMethod": "cod",
+    "codCharges": 59,
+    "customerDetails": {
+      "name": "aditya Chitoshiya",
+      "email": "royalfrd0909@gmail.com",
+      "contact": "7727088810",
+      "address": "Tilak Hospital And Research Centre Agra Road Paldi Meena\n394 Surya city near, JAIPUR, Rajasthan - 302031"
+    },
+    "couponCode": null,
+    "discount": 0,
+    "status": "pending",
+    "paymentStatus": "pending",
+    "createdAt": "2025-11-17T15:04:21.664Z",
+    "isCartCheckout": false
+  },
+  {
+    "id": "ORD-1763391882942",
+    "paymentId": "pending",
+    "razorpayOrderId": null,
+    "amount": 2499,
+    "currency": "INR",
+    "status": "pending",
+    "customer": {
+      "name": "aditya Chitoshiya",
+      "email": "royalfrd0909@gmail.com",
+      "contact": "7727088810",
+      "address": "Tilak Hospital And Research Centre Agra Road Paldi Meena\n394 Surya city near, JAIPUR, Rajasthan - 302031"
+    },
+    "product": {
+      "productId": "prod_001",
+      "variantId": "v1",
+      "productName": "Product prod_001",
+      "quantity": 1
+    },
+    "discount": {
+      "couponCode": null,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "originalAmount": 2499
+    },
+    "createdAt": "2025-11-17T15:04:42.942Z",
+    "updatedAt": "2025-11-17T15:04:42.942Z",
+    "notes": {
+      "variantId": "v1",
+      "address": "Tilak Hospital And Research Centre Agra Road Paldi Meena\n394 Surya city near, JAIPUR, Rajasthan - 302031"
+    }
   }
 ]
