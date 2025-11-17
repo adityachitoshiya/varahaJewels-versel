@@ -1,20 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
   "framework": "nextjs",
-  "installCommand": "echo 'Using pre-built bundle from GitHub Actions'",
-  "buildCommand": "echo 'Already built by GitHub Actions'",
   "outputDirectory": ".next",
-  "env": {
-    "RAZORPAY_KEY_ID": "@razorpay_key_id",
-    "RAZORPAY_KEY_SECRET": "@razorpay_key_secret",
-    "NEXT_PUBLIC_SITE_URL": "@next_public_site_url"
-  },
   "regions": ["bom1"],
   "functions": {
     "pages/api/**/*.js": {

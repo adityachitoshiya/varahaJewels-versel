@@ -9,14 +9,12 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
         
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -34,40 +32,13 @@ jobs:
           RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
       
-      - name: Create bundle directory
-        run: |
-          mkdir -p bundle
-          cp -r .next bundle/
-          cp -r public bundle/
-          cp -r node_modules bundle/
-          cp package.json bundle/
-          cp package-lock.json bundle/
-          cp next.config.js bundle/ || true
-          echo "Bundle created successfully"
-          
-      - name: Commit and push bundle
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add bundle/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-build: Update bundle [skip ci]" && git push)
-          
-      - name: Deploy to Vercel (Production)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: amondnet/vercel-action@v25
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod --prebuilt'
-          working-directory: ./bundle
-          
-      - name: Deploy to Vercel (Preview)
-        if: github.event_name == 'pull_request'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./bundle
+          name: nextjs-build
+          path: |
+            .next
+            public
+            package.json
+            package-lock.json
+          retention-days: 7
