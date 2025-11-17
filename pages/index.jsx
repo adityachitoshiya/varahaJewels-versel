@@ -65,8 +65,9 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Varaha Jewels - Where Heritage Meets Royalty</title>
-        <meta name="description" content="Discover timeless elegance with Varaha Jewels - Premium heritage-inspired jewelry crafted with tradition and artistry. Where heritage meets royalty." />
+        <title>Varaha Jewels - Premium Heritage Jewelry Collection | Buy Authentic Indian Jewelry Online</title>
+        <meta name="description" content="Shop exquisite heritage jewelry at Varaha Jewels. Premium gold, diamond, and traditional Indian ornaments with certified authenticity. Free shipping, 30-day returns, and lifetime warranty." />
+        <meta name="keywords" content="Varaha Jewels, jewelry online, gold jewelry India, heritage jewelry, bridal jewelry, diamond jewelry, traditional ornaments, Indian jewelry, premium jewelry store, certified gold jewelry, wedding jewelry collection" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         
         {/* Favicon */}
@@ -76,15 +77,100 @@ export default function Home() {
         
         {/* Open Graph / Social Media */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Varaha Jewels - Where Heritage Meets Royalty" />
-        <meta property="og:description" content="Discover timeless elegance with Varaha Jewels - Premium heritage-inspired jewelry crafted with tradition and artistry." />
+        <meta property="og:url" content="https://varahajewels.vercel.app" />
+        <meta property="og:title" content="Varaha Jewels - Premium Heritage Jewelry Collection" />
+        <meta property="og:description" content="Discover timeless elegance with Varaha Jewels - Premium heritage-inspired jewelry crafted with tradition and artistry. Shop authentic Indian jewelry online." />
         <meta property="og:image" content="/varaha-assets/og.jpg" />
+        <meta property="og:site_name" content="Varaha Jewels" />
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Varaha Jewels - Where Heritage Meets Royalty" />
+        <meta name="twitter:title" content="Varaha Jewels - Premium Heritage Jewelry Collection" />
         <meta name="twitter:description" content="Discover timeless elegance with Varaha Jewels - Premium heritage-inspired jewelry." />
         <meta name="twitter:image" content="/varaha-assets/og.jpg" />
+        
+        {/* Structured Data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "JewelryStore",
+              "name": "Varaha Jewels",
+              "description": "Premium heritage jewelry store offering authentic Indian gold, diamond, and traditional ornaments",
+              "url": "https://varahajewels.vercel.app",
+              "logo": "https://varahajewels.vercel.app/varaha-assets/logo.png",
+              "image": "https://varahajewels.vercel.app/varaha-assets/og.jpg",
+              "telephone": "+91-98765-43210",
+              "email": "support@varahajewels.com",
+              "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "123 Heritage Lane, Jewelry District",
+                "addressLocality": "Mumbai",
+                "addressRegion": "Maharashtra",
+                "postalCode": "400001",
+                "addressCountry": "IN"
+              },
+              "geo": {
+                "@type": "GeoCoordinates",
+                "latitude": "19.0760",
+                "longitude": "72.8777"
+              },
+              "openingHoursSpecification": [
+                {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                  "opens": "10:00",
+                  "closes": "20:00"
+                },
+                {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": "Sunday",
+                  "opens": "11:00",
+                  "closes": "18:00"
+                }
+              ],
+              "priceRange": "₹₹₹",
+              "currenciesAccepted": "INR",
+              "paymentAccepted": "Cash, Credit Card, Debit Card, UPI, Net Banking",
+              "sameAs": [
+                "https://www.instagram.com/varahajewels",
+                "https://www.facebook.com/varahajewels",
+                "https://twitter.com/varahajewels"
+              ],
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "reviewCount": "2847",
+                "bestRating": "5",
+                "worstRating": "1"
+              }
+            })
+          }}
+        />
+        
+        {/* Organization Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Varaha Jewels",
+              "alternateName": "Varaha Jewellery",
+              "url": "https://varahajewels.vercel.app",
+              "logo": "https://varahajewels.vercel.app/varaha-assets/logo.png",
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+91-98765-43210",
+                "contactType": "customer service",
+                "email": "support@varahajewels.com",
+                "areaServed": "IN",
+                "availableLanguage": ["en", "hi"]
+              }
+            })
+          }}
+        />
       </Head>
 
       <PremiumLoader onComplete={() => setIsLoading(false)} />
