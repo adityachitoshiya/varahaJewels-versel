@@ -287,10 +287,19 @@ export default function CreatorShowcase() {
 function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onToggleMute }) {
   const [thumbnailGenerated, setThumbnailGenerated] = useState(false);
   const canvasRef = useRef(null);
+  const localVideoRef = useRef(null);
+
+  // Handle both callback ref and local ref
+  const setVideoRef = (element) => {
+    localVideoRef.current = element;
+    if (typeof videoRef === 'function') {
+      videoRef(element);
+    }
+  };
 
   // Generate thumbnail from video
   useEffect(() => {
-    const video = videoRef;
+    const video = localVideoRef.current;
     if (!video || thumbnailGenerated) return;
 
     const handleLoadedData = () => {
@@ -331,7 +340,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('seeked', handleSeeked);
     };
-  }, [videoRef, thumbnailGenerated]);
+  }, [thumbnailGenerated]);
 
   return (
     <div className="relative group w-full max-w-[280px] sm:max-w-[320px] mx-auto">
@@ -349,7 +358,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
         
         {/* Video Element */}
         <video
-          ref={videoRef}
+          ref={setVideoRef}
           className="w-full h-full object-cover"
           loop
           playsInline
