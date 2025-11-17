@@ -1,9 +1,14 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
   "framework": "nextjs",
+  "installCommand": "echo 'Using pre-built bundle from GitHub Actions'",
+  "buildCommand": "echo 'Already built by GitHub Actions'",
   "outputDirectory": ".next",
   "env": {
     "RAZORPAY_KEY_ID": "@razorpay_key_id",
@@ -16,11 +21,5 @@
       "memory": 1024,
       "maxDuration": 10
     }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ]
+  }
 }
