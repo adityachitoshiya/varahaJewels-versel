@@ -31,6 +31,8 @@ export default function PremiumLoader({ onComplete }) {
               src="/varaha-assets/loader.jpg"
               alt="Varaha Jewels"
               fill
+              sizes="80px"
+              priority
               className="object-cover animate-pulse"
             />
           </div>
