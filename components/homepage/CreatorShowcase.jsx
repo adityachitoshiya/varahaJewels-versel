@@ -88,7 +88,16 @@ export default function CreatorShowcase() {
 
   const togglePlay = async (creatorId) => {
     const video = videoRefs.current[creatorId];
-    if (!video) return;
+    if (!video) {
+      console.error('Video not found for ID:', creatorId);
+      return;
+    }
+
+    console.log('Toggling video:', creatorId);
+    console.log('Video element:', video);
+    console.log('Video src:', video.currentSrc);
+    console.log('Video ready state:', video.readyState);
+    console.log('Video paused:', video.paused);
 
     // Pause all other videos
     Object.entries(videoRefs.current).forEach(([id, v]) => {
@@ -101,14 +110,17 @@ export default function CreatorShowcase() {
     // Toggle current video
     try {
       if (video.paused) {
-        await video.play();
+        console.log('Attempting to play...');
+        const playPromise = await video.play();
+        console.log('Play success!');
         setIsPlaying(prev => ({ ...prev, [creatorId]: true }));
       } else {
+        console.log('Pausing video');
         video.pause();
         setIsPlaying(prev => ({ ...prev, [creatorId]: false }));
       }
     } catch (err) {
-      console.error('Playback error:', err);
+      console.error('Playback error:', err.name, err.message);
       setIsPlaying(prev => ({ ...prev, [creatorId]: false }));
     }
   };
@@ -317,8 +329,10 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
           className="w-full h-full object-cover"
           loop
           playsInline
+          webkit-playsinline="true"
           muted={isMuted}
           preload="metadata"
+          style={{ backgroundColor: '#000' }}
         >
           <source src={creator.videoUrl} type="video/mp4" />
         </video>
