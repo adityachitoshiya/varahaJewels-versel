@@ -88,11 +88,19 @@ export default function CreatorShowcase() {
 
   const togglePlay = (creatorId) => {
     const video = videoRefs.current[creatorId];
-    if (!video) return;
+    if (!video) {
+      console.error('Video not found for ID:', creatorId);
+      return;
+    }
+
+    console.log('Toggle play for:', creatorId, 'Current state:', video.paused ? 'paused' : 'playing');
+    console.log('Video readyState:', video.readyState, 'networkState:', video.networkState);
+    console.log('Video src:', video.currentSrc);
 
     // First, pause all other videos
     Object.entries(videoRefs.current).forEach(([id, v]) => {
       if (v && id !== creatorId.toString() && !v.paused) {
+        console.log('Pausing video:', id);
         v.pause();
         setIsPlaying(prev => ({ ...prev, [id]: false }));
       }
@@ -100,18 +108,21 @@ export default function CreatorShowcase() {
 
     // Then toggle the current video
     if (video.paused) {
+      console.log('Attempting to play video:', creatorId);
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
+            console.log('Video playing successfully:', creatorId);
             setIsPlaying(prev => ({ ...prev, [creatorId]: true }));
           })
           .catch(err => {
-            console.error('Play error:', err);
+            console.error('Play error for', creatorId, ':', err);
             setIsPlaying(prev => ({ ...prev, [creatorId]: false }));
           });
       }
     } else {
+      console.log('Pausing video:', creatorId);
       video.pause();
       setIsPlaying(prev => ({ ...prev, [creatorId]: false }));
     }
@@ -319,30 +330,53 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
     if (!video) return;
 
     const handleLoadedData = () => {
+      console.log('Video loaded:', creator.name);
       setIsLoading(false);
       setHasError(false);
     };
 
     const handleError = (e) => {
-      console.error('Video error:', e);
+      console.error('Video error for', creator.name, ':', e);
+      console.error('Video src:', video.src);
+      console.error('Error details:', {
+        error: video.error,
+        networkState: video.networkState,
+        readyState: video.readyState
+      });
       setIsLoading(false);
       setHasError(true);
     };
 
     const handleCanPlay = () => {
+      console.log('Video can play:', creator.name);
       setIsLoading(false);
     };
 
+    const handleLoadStart = () => {
+      console.log('Video load started:', creator.name);
+    };
+
+    const handleProgress = () => {
+      console.log('Video loading progress:', creator.name, 'buffered:', video.buffered.length);
+    };
+
+    video.addEventListener('loadstart', handleLoadStart);
+    video.addEventListener('progress', handleProgress);
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('error', handleError);
 
+    // Log initial state
+    console.log('Video element created for:', creator.name, 'src:', creator.videoUrl);
+
     return () => {
+      video.removeEventListener('loadstart', handleLoadStart);
+      video.removeEventListener('progress', handleProgress);
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('error', handleError);
     };
-  }, []);
+  }, [creator.name, creator.videoUrl]);
 
   return (
     <div className="relative group w-full max-w-[280px] sm:max-w-[300px] md:max-w-[320px] mx-auto">
@@ -371,17 +405,20 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
         {/* Video Element */}
         <video
           ref={setVideoRef}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover bg-black"
           loop
           playsInline
-          webkit-playsinline="true"
           muted={isMuted}
-          preload="metadata"
-          controlsList="nodownload nofullscreen noremoteplayback"
-          disablePictureInPicture
+          preload="auto"
+          crossOrigin="anonymous"
+          x5-video-player-type="h5"
+          x5-video-player-fullscreen="true"
+          x5-video-orientation="portraint"
+          webkit-playsinline=""
+          x-webkit-airplay="allow"
         >
           <source src={creator.videoUrl} type="video/mp4" />
-          Your browser does not support the video tag.
+          <p className="text-white text-center p-4">Your browser doesn't support HTML5 video.</p>
         </video>
 
         {/* Overlay Gradient */}
