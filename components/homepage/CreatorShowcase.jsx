@@ -86,44 +86,29 @@ export default function CreatorShowcase() {
     return () => observer.disconnect();
   }, []);
 
-  const togglePlay = (creatorId) => {
+  const togglePlay = async (creatorId) => {
     const video = videoRefs.current[creatorId];
-    if (!video) {
-      console.error('Video not found for ID:', creatorId);
-      return;
-    }
+    if (!video) return;
 
-    console.log('Toggle play for:', creatorId, 'Current state:', video.paused ? 'paused' : 'playing');
-    console.log('Video readyState:', video.readyState, 'networkState:', video.networkState);
-    console.log('Video src:', video.currentSrc);
-
-    // First, pause all other videos
+    // Pause all other videos
     Object.entries(videoRefs.current).forEach(([id, v]) => {
       if (v && id !== creatorId.toString() && !v.paused) {
-        console.log('Pausing video:', id);
         v.pause();
         setIsPlaying(prev => ({ ...prev, [id]: false }));
       }
     });
 
-    // Then toggle the current video
-    if (video.paused) {
-      console.log('Attempting to play video:', creatorId);
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            console.log('Video playing successfully:', creatorId);
-            setIsPlaying(prev => ({ ...prev, [creatorId]: true }));
-          })
-          .catch(err => {
-            console.error('Play error for', creatorId, ':', err);
-            setIsPlaying(prev => ({ ...prev, [creatorId]: false }));
-          });
+    // Toggle current video
+    try {
+      if (video.paused) {
+        await video.play();
+        setIsPlaying(prev => ({ ...prev, [creatorId]: true }));
+      } else {
+        video.pause();
+        setIsPlaying(prev => ({ ...prev, [creatorId]: false }));
       }
-    } else {
-      console.log('Pausing video:', creatorId);
-      video.pause();
+    } catch (err) {
+      console.error('Playback error:', err);
       setIsPlaying(prev => ({ ...prev, [creatorId]: false }));
     }
   };
@@ -313,9 +298,6 @@ export default function CreatorShowcase() {
 // Video Card Component
 function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onToggleMute }) {
   const localVideoRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
 
   // Handle both callback ref and local ref
   const setVideoRef = (element) => {
@@ -325,105 +307,20 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
     }
   };
 
-  // Video event handlers
-  useEffect(() => {
-    const video = localVideoRef.current;
-    if (!video) return;
-
-    const handleLoadedData = () => {
-      console.log('Video loaded:', creator.name);
-      setIsLoading(false);
-      setHasError(false);
-      setVideoReady(true);
-    };
-
-    const handleError = (e) => {
-      console.error('Video error for', creator.name, ':', e);
-      console.error('Video src:', video.src);
-      console.error('Error details:', {
-        error: video.error,
-        networkState: video.networkState,
-        readyState: video.readyState
-      });
-      setIsLoading(false);
-      setHasError(true);
-      setVideoReady(false);
-    };
-
-    const handleCanPlay = () => {
-      console.log('Video can play:', creator.name);
-      setIsLoading(false);
-      setVideoReady(true);
-    };
-
-    const handleLoadStart = () => {
-      console.log('Video load started:', creator.name);
-    };
-
-    const handleProgress = () => {
-      console.log('Video loading progress:', creator.name, 'buffered:', video.buffered.length);
-    };
-
-    video.addEventListener('loadstart', handleLoadStart);
-    video.addEventListener('progress', handleProgress);
-    video.addEventListener('loadeddata', handleLoadedData);
-    video.addEventListener('canplay', handleCanPlay);
-    video.addEventListener('error', handleError);
-
-    // Log initial state
-    console.log('Video element created for:', creator.name, 'src:', creator.videoUrl);
-
-    return () => {
-      video.removeEventListener('loadstart', handleLoadStart);
-      video.removeEventListener('progress', handleProgress);
-      video.removeEventListener('loadeddata', handleLoadedData);
-      video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('error', handleError);
-    };
-  }, [creator.name, creator.videoUrl]);
-
   return (
     <div className="relative group w-full max-w-[280px] sm:max-w-[300px] md:max-w-[320px] mx-auto">
       {/* 9:16 Video Container */}
       <div className="relative w-full aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-black shadow-2xl">
-        {/* Loading State */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-gradient-to-br from-copper/20 to-heritage/20 flex items-center justify-center z-20">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-copper mx-auto mb-3"></div>
-              <p className="text-white text-sm">Loading video...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {hasError && (
-          <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-heritage/20 flex items-center justify-center z-20">
-            <div className="text-center text-white px-4">
-              <p className="text-lg mb-2">⚠️ Video Error</p>
-              <p className="text-sm opacity-80">Could not load video</p>
-            </div>
-          </div>
-        )}
-
         {/* Video Element */}
         <video
           ref={setVideoRef}
-          className={`w-full h-full object-cover bg-black ${!videoReady && 'opacity-0'}`}
+          className="w-full h-full object-cover"
           loop
           playsInline
           muted={isMuted}
-          preload="auto"
-          crossOrigin="anonymous"
-          x5-video-player-type="h5"
-          x5-video-player-fullscreen="true"
-          x5-video-orientation="portraint"
-          webkit-playsinline=""
-          x-webkit-airplay="allow"
-          style={{ objectFit: 'cover' }}
+          preload="metadata"
         >
           <source src={creator.videoUrl} type="video/mp4" />
-          <p className="text-white text-center p-4">Your browser doesn't support HTML5 video.</p>
         </video>
 
         {/* Overlay Gradient */}
