@@ -315,6 +315,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
   const localVideoRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   // Handle both callback ref and local ref
   const setVideoRef = (element) => {
@@ -333,6 +334,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
       console.log('Video loaded:', creator.name);
       setIsLoading(false);
       setHasError(false);
+      setVideoReady(true);
     };
 
     const handleError = (e) => {
@@ -345,11 +347,13 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
       });
       setIsLoading(false);
       setHasError(true);
+      setVideoReady(false);
     };
 
     const handleCanPlay = () => {
       console.log('Video can play:', creator.name);
       setIsLoading(false);
+      setVideoReady(true);
     };
 
     const handleLoadStart = () => {
@@ -405,7 +409,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
         {/* Video Element */}
         <video
           ref={setVideoRef}
-          className="w-full h-full object-cover bg-black"
+          className={`w-full h-full object-cover bg-black ${!videoReady && 'opacity-0'}`}
           loop
           playsInline
           muted={isMuted}
@@ -416,6 +420,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
           x5-video-orientation="portraint"
           webkit-playsinline=""
           x-webkit-airplay="allow"
+          style={{ objectFit: 'cover' }}
         >
           <source src={creator.videoUrl} type="video/mp4" />
           <p className="text-white text-center p-4">Your browser doesn't support HTML5 video.</p>
