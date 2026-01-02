@@ -17,8 +17,12 @@ import DeliveryBar from '../components/DeliveryBar';
 import PremiumLoader from '../components/PremiumLoader';
 import SpinWheelPopup from '../components/SpinWheelPopup';
 
-export default function Home() {
-  const [showFullPageCountdown, setShowFullPageCountdown] = useState(true);
+export default function Home({ heroSlides, initialSettings }) {
+  // Initialize from SSG props
+  const [showFullPageCountdown, setShowFullPageCountdown] = useState(
+    initialSettings?.show_full_page_countdown ?? true
+  );
+  
   const [userSkipped, setUserSkipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -44,54 +48,32 @@ export default function Home() {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Fetch Settings (Maintenance Mode & Countdown) and control preloader
+  // Handle Maintenance Mode redirection & Loader
   useEffect(() => {
+    if (initialSettings?.is_maintenance_mode) {
+      router.push('/coming-soon');
+      return; 
+    }
+
     // Check if preloader has already been shown in this session
     const hasSeenPreloader = sessionStorage.getItem('preloaderShown');
 
     // If already seen, skip loading immediately
     if (hasSeenPreloader) {
       setIsLoading(false);
+    } else {
+      const startTime = Date.now();
+      const MIN_LOADER_TIME = 800; // Reduced from 2000ms/1500ms to 800ms for better UX/LCP
+
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, MIN_LOADER_TIME - elapsed);
+
+      setTimeout(() => {
+        setIsLoading(false);
+        sessionStorage.setItem('preloaderShown', 'true');
+      }, remainingTime);
     }
-
-    const startTime = Date.now();
-    const MIN_LOADER_TIME = 1500; // Reduced to 1.5 seconds for faster load
-
-    const fetchSettings = async () => {
-      try {
-        const API_URL = getApiUrl();
-        const res = await fetch(`${API_URL}/api/settings`);
-        if (res.ok) {
-          const settings = await res.json();
-
-          if (settings.is_maintenance_mode) {
-            router.push('/coming-soon');
-            return;
-          }
-
-          if (settings.show_full_page_countdown === false) {
-            // Only update if not already skipped manually
-            if (!userSkipped) setShowFullPageCountdown(false);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to fetch settings", e);
-      }
-
-      // If we haven't seen preloader, enforce the delay
-      if (!hasSeenPreloader) {
-        const elapsed = Date.now() - startTime;
-        const remainingTime = Math.max(0, MIN_LOADER_TIME - elapsed);
-
-        setTimeout(() => {
-          setIsLoading(false);
-          sessionStorage.setItem('preloaderShown', 'true');
-        }, remainingTime);
-      }
-    };
-
-    fetchSettings();
-  }, [router]);
+  }, [router, initialSettings]);
 
   // Calculate total cart count
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -242,7 +224,10 @@ export default function Home() {
         <LaunchCountdown onSkip={handleSkip} />
       )}
 
-      {!isLoading && !showFullPageCountdown && (
+      {/* Render content even if loading to prep LCP, but hide via loader overlay */}
+      {/* Optimization: Render Header/Hero hidden under loader to start browser paint early */}
+      
+      {(!isLoading || true) && !showFullPageCountdown && (
         <>
           <Header
             cartCount={cartCount}
@@ -251,7 +236,8 @@ export default function Home() {
           <DeliveryBar variant="mobile" />
 
           <main className="bg-warm-sand">
-            <HeroSection />
+            {/* Pass SSG props to HeroSection */}
+            <HeroSection initialSlides={heroSlides} />
             <FeaturedCollections />
             <ProductSpotlight />
             <TestimonialsSection />
@@ -289,4 +275,39 @@ export default function Home() {
       )}
     </>
   );
+}
+
+export async function getStaticProps() {
+  const API_URL = getApiUrl();
+  let heroSlides = null;
+  let initialSettings = null;
+
+  try {
+    const [heroRes, settingsRes] = await Promise.allSettled([
+      fetch(`${API_URL}/api/content/hero`),
+      fetch(`${API_URL}/api/settings`)
+    ]);
+
+    if (heroRes.status === 'fulfilled' && heroRes.value.ok) {
+      heroSlides = await heroRes.value.json();
+    }
+    
+    if (settingsRes.status === 'fulfilled' && settingsRes.value.ok) {
+      initialSettings = await settingsRes.value.json();
+    }
+  } catch (error) {
+    console.error('SSG Fetch Error:', error);
+  }
+
+  // Fallback to simpler defaults happens in component if null is passed
+  // But we return what we got.
+  
+  return {
+    props: {
+      heroSlides: heroSlides || null,
+      initialSettings: initialSettings || null
+    },
+    // Revalidate every 60 seconds
+    revalidate: 60,
+  };
 }

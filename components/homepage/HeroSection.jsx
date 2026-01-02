@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { getApiUrl } from '../../lib/config';
 import ShimmerImage from '../ShimmerImage';
 
-const heroSlides = [
+// Default slides constant moved outside for reusability
+const defaultSlides = [
   {
     id: 1,
     image: '/varaha-assets/heroimage.avif',
@@ -25,36 +26,18 @@ const heroSlides = [
   }
 ];
 
-export default function HeroSection() {
-  const [slides, setSlides] = useState([]);
+export default function HeroSection({ initialSlides }) {
+  // Initialize with passed props to ensure immediate render (Hyperspeed LCP)
+  const [slides, setSlides] = useState(initialSlides || defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  // Fallback defaults
-  const defaultSlides = [
-    {
-      id: 1,
-      image: '/varaha-assets/heroimage.avif',
-      title: 'Timeless Elegance',
-      subtitle: 'Heritage-inspired masterpieces crafted with tradition and artistry'
-    },
-    {
-      id: 2,
-      image: '/varaha-assets/Jimage2.avif',
-      title: 'Royal Heritage',
-      subtitle: 'Exquisite pieces that celebrate India\'s rich cultural legacy'
-    },
-    {
-      id: 3,
-      image: '/varaha-assets/Jimage3.webp',
-      title: 'Artisan Excellence',
-      subtitle: 'Every piece handcrafted by master artisans with devotion and precision'
-    }
-  ];
-
+  // Still fetch on mount to get updates if any (stale-while-revalidate strategy)
   useEffect(() => {
-    fetchSlides();
-  }, []);
+    if (!initialSlides) {
+      fetchSlides();
+    }
+  }, [initialSlides]);
 
   const fetchSlides = async () => {
     try {
@@ -64,15 +47,11 @@ export default function HeroSection() {
         const data = await res.json();
         if (data && data.length > 0) {
           setSlides(data);
-        } else {
-          setSlides(defaultSlides);
         }
-      } else {
-        setSlides(defaultSlides);
       }
     } catch (err) {
       console.error("Failed to fetch hero slides:", err);
-      setSlides(defaultSlides);
+      // Keep existing slides
     }
   };
 
