@@ -1,13 +1,57 @@
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { Star, ArrowRight, ShoppingBag } from 'lucide-react';
 import SpotlightSkeleton from '../SpotlightSkeleton';
 
-// ... imports ...
-
 export default function ProductSpotlight() {
-  // ... state ...
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(true); // Force visible for debugging
+  const ref = useRef(null);
 
-  // ... useEffect ...
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
 
-  // ... fetchFeaturedProducts ...
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) observer.unobserve(ref.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data = await response.json();
+
+      // Filter for featured products (example logic)
+      const featured = data.filter(p => p.tag === 'Featured' || p.tag === 'Bestseller' || p.premium);
+      // Fallback to first few if no featured
+      setProducts(featured.length > 0 ? featured : data.slice(0, 5));
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Safe fallback if no products
   if (isLoading) return <SpotlightSkeleton />;
@@ -23,7 +67,7 @@ export default function ProductSpotlight() {
 
   const currentProduct = products[currentIndex];
 
-  // Check if products are featured or new arrivals
+  // Check if products are featured or new arrivals state derived from current set
   const hasFeaturedProducts = products.some(p => p.tag === 'Featured' || p.tag === 'Bestseller' || p.premium);
 
   return (
@@ -48,7 +92,7 @@ export default function ProductSpotlight() {
         {/* Header */}
         <div
           ref={ref}
-          className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-100 translate-y-0'}`}
+          className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
         >
           <span className="text-copper font-medium tracking-[0.2em] uppercase text-sm mb-2 block animate-pulse">
             {hasFeaturedProducts ? 'Exquisite Collection' : 'Fresh Designs'}
@@ -59,7 +103,7 @@ export default function ProductSpotlight() {
         </div>
 
         {/* Main Showcase */}
-        <div className={`relative transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 scale-100' : 'opacity-100 scale-100'}`}>
+        <div className={`relative transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           <div className="grid lg:grid-cols-12 gap-8 items-center">
 
             {/* Image Area - Spans 7 cols - WITH FLOATING EFFECT */}

@@ -11,8 +11,11 @@ import Footer from '../components/Footer';
 import PremiumPayButton from '../components/PremiumPayButton';
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, ChevronDown } from 'lucide-react';
 
+import { useCart } from '../context/CartContext';
+
 export default function Checkout() {
   const router = useRouter();
+  const { cartItems: contextCartItems } = useCart(); // Get items from Context
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState(null);
@@ -47,7 +50,7 @@ export default function Checkout() {
   // COD Confirmation Modal state
   const [showCODConfirmation, setShowCODConfirmation] = useState(false);
 
-  // Cart items state
+  // Cart items state (Local state used for checkout logic)
   const [cartItems, setCartItems] = useState([]);
 
   // Product details from URL params (for direct checkout from product page)
@@ -59,14 +62,19 @@ export default function Checkout() {
     const { productId, variantId, quantity, amount, productName, fromCart } = router.query;
 
     if (fromCart === 'true') {
-      // Load cart items from localStorage
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        try {
-          const items = JSON.parse(savedCart);
-          setCartItems(items);
-        } catch (e) {
-          console.error('Failed to parse cart:', e);
+      // Use items from Context if available
+      if (contextCartItems && contextCartItems.length > 0) {
+        setCartItems(contextCartItems);
+      } else {
+        // Fallback: Try loading from localStorage if context is empty (e.g., hard refresh)
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+          try {
+            const items = JSON.parse(savedCart);
+            setCartItems(items);
+          } catch (e) {
+            console.error('Failed to parse cart:', e);
+          }
         }
       }
     } else if (productId && variantId && quantity && amount) {
@@ -82,7 +90,7 @@ export default function Checkout() {
         description: description || ''
       });
     }
-  }, [router.query]);
+  }, [router.query, contextCartItems]); // Re-run when context updates
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
