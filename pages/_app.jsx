@@ -37,8 +37,30 @@ function MyApp({ Component, pageProps }) {
 
     // Subscribe to route changes
     router.events.on('routeChangeComplete', trackVisit);
+
+    // --- Global Error Logging ---
+    const handleError = (event) => {
+      // Avoid loops
+      if (event?.message?.includes?.('api/log-frontend')) return;
+
+      const API_URL = getApiUrl();
+      fetch(`${API_URL}/api/log-frontend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: 'ERROR',
+          message: event?.message || event?.reason?.toString() || 'Unknown Error'
+        })
+      }).catch(e => console.error("Logger failed:", e));
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleError);
+
     return () => {
       router.events.off('routeChangeComplete', trackVisit);
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleError);
     };
   }, [router.asPath]);
 
@@ -62,6 +84,7 @@ function MyApp({ Component, pageProps }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#F4E6D8" />
         <link rel="icon" href="/favicon-circle.png" />
+        <link rel="canonical" href={`https://www.varahajewels.in${router.asPath === '/' ? '' : router.asPath.split('?')[0]}`} />
       </Head>
 
       <NotificationProvider>

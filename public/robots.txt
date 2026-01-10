@@ -9,7 +9,7 @@ Disallow: /api/
 Disallow: /orders
 
 # Sitemap
-Sitemap: https://varahajewels.vercel.app/sitemap.xml
+Sitemap: https://www.varahajewels.in/sitemap.xml
 
 # Crawl Delay
 Crawl-delay: 1

@@ -3,6 +3,8 @@ import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, Chevro
 import { formatCurrency } from '../lib/productData';
 import WishlistButton from './WishlistButton';
 
+import { getApiUrl } from '../lib/config';
+
 export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || {});
   const [quantity, setQuantity] = useState(1);
@@ -26,7 +28,8 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
   const checkPincode = async () => {
     if (pincode.length === 6) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/serviceability`, {
+        const API_URL = getApiUrl();
+        const response = await fetch(`${API_URL}/api/serviceability`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

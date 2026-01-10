@@ -180,8 +180,37 @@ export default function Shop() {
     return (
         <>
             <Head>
-                <title>Shop All - Varaha Jewels</title>
-                <meta name="description" content="Browse our exquisite collection of heritage jewelry. Shop gold, silver, kundan, and bridal jewelry with authentic craftsmanship." />
+                <title>Buy Certified Gold & Diamond Jewellery | Varaha Jewels Collection</title>
+                <meta name="description" content="Browse our exquisite collection of heritage jewelry. Shop certified gold, diamond, kundan, and bridal jewelry online with authentic craftsmanship and lifetime warranty." />
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            "@context": "https://schema.org",
+                            "@type": "CollectionPage",
+                            "name": "Varaha Jewels Collection",
+                            "description": "Browse our exquisite collection of heritage jewelry. Shop gold, silver, kundan, and bridal jewelry.",
+                            "url": "https://www.varahajewels.in/shop",
+                            "breadcrumb": {
+                                "@type": "BreadcrumbList",
+                                "itemListElement": [
+                                    {
+                                        "@type": "ListItem",
+                                        "position": 1,
+                                        "name": "Home",
+                                        "item": "https://www.varahajewels.in"
+                                    },
+                                    {
+                                        "@type": "ListItem",
+                                        "position": 2,
+                                        "name": "Shop",
+                                        "item": "https://www.varahajewels.in/shop"
+                                    }
+                                ]
+                            }
+                        })
+                    }}
+                />
             </Head>
             <Header />
             <main className="min-h-screen bg-warm-sand pt-24 pb-32">

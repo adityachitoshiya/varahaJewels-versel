@@ -9,8 +9,8 @@ export default function About() {
     return (
         <>
             <Head>
-                <title>About Us - Varaha Jewels | Our Heritage & Craftsmanship</title>
-                <meta name="description" content="Discover the story behind Varaha Jewels. Learn about our heritage, craftsmanship, and commitment to creating authentic, premium jewelry." />
+                <title>About Varaha Jewels | Heritage Gold & Diamond Jewellery Experts</title>
+                <meta name="description" content="Discover the legacy of Varaha Jewels. Experts in authentic handcrafted Indian gold and diamond jewelry since generations. Learn about our master craftsmanship." />
             </Head>
 
             <Header />

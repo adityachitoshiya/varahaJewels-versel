@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
+import { getApiUrl } from '../lib/config';
+
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -14,9 +16,7 @@ export default function Footer() {
     // Fetch base rates from database
     const fetchBaseRates = async () => {
       try {
-        const API_URL = typeof window !== 'undefined' ?
-          (process.env.NEXT_PUBLIC_API_URL || `http://${window.location.hostname}:8000`) :
-          'http://127.0.0.1:8000';
+        const API_URL = getApiUrl();
 
         const response = await fetch(`${API_URL}/api/metal-rates`);
         const data = await response.json();

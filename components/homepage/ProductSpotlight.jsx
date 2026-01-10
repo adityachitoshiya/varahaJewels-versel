@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Star, ArrowRight, ShoppingBag } from 'lucide-react';
 import SpotlightSkeleton from '../SpotlightSkeleton';
 
+import { getApiUrl } from '../../lib/config'; // Import config
+
 export default function ProductSpotlight() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +39,8 @@ export default function ProductSpotlight() {
 
   const fetchFeaturedProducts = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/products`);
       if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
 

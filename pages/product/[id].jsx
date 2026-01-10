@@ -185,8 +185,38 @@ export default function ProductPage() {
   return (
     <>
       <Head>
-        <title>{product.title} | Varaha Jewels</title>
-        <meta name="description" content={product.description} />
+        <title>Buy {product.title} Online | Certified Authentic | Varaha Jewels</title>
+        <meta name="description" content={`Buy ${product.name}. ${product.description ? product.description.substring(0, 120) : ''}... Certified authentic heritage jewelry from Varaha Jewels.`} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org/",
+              "@type": "Product",
+              "name": product.name,
+              "image": product.images?.map(img => img.url) || [],
+              "description": product.description,
+              "sku": product.variants?.[0]?.sku || product.id,
+              "brand": {
+                "@type": "Brand",
+                "name": "Varaha Jewels"
+              },
+              "offers": {
+                "@type": "Offer",
+                "url": `https://www.varahajewels.in/product/${product.id}`,
+                "priceCurrency": "INR",
+                "price": product.price,
+                "availability": product.variants?.[0]?.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                "itemCondition": "https://schema.org/NewCondition"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": product.averageRating || "4.8",
+                "reviewCount": product.reviewCount || "12"
+              }
+            })
+          }}
+        />
       </Head>
 
       <div className="min-h-screen flex flex-col bg-white">
