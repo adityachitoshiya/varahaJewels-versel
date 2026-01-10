@@ -21,11 +21,19 @@ export default function AdminDashboard() {
 
     const fetchData = async () => {
         try {
+            const token = localStorage.getItem('admin_token');
+            if (!token) {
+                // Optionally redirect or show empty
+                return;
+            }
+
             const API_URL = getApiUrl();
-            const ordersRes = await fetch(`${API_URL}/api/orders`);
+            const headers = { 'Authorization': `Bearer ${token}` };
+
+            const ordersRes = await fetch(`${API_URL}/api/orders`, { headers });
             const orders = ordersRes.ok ? await ordersRes.json() : [];
 
-            const productsRes = await fetch(`${API_URL}/api/products`);
+            const productsRes = await fetch(`${API_URL}/api/products`, { headers });
             const products = productsRes.ok ? await productsRes.json() : [];
 
             const totalSales = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
