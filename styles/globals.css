@@ -21,7 +21,12 @@
 }
 
 /* App-like touch response (disables 300ms delay) */
-a, button, input, select, textarea, .clickable {
+a,
+button,
+input,
+select,
+textarea,
+.clickable {
   touch-action: manipulation;
 }
 
@@ -31,6 +36,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--warm-sand);
   color: var(--heritage-brown);
+
+  /* Optimize for 120Hz/High Refresh Rate Displays */
+  text-rendering: optimizeLegibility;
+  transform: translateZ(0);
+  /* Hardware Acceleration Trigger */
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 h1,
