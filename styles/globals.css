@@ -20,6 +20,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* App-like touch response (disables 300ms delay) */
+a, button, input, select, textarea, .clickable {
+  touch-action: manipulation;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
