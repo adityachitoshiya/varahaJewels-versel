@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Loader2, Play } from 'lucide-react';
 import { getApiUrl } from '../../lib/config';
 
@@ -8,6 +8,10 @@ export default function VideoUpload({ onUpload, initialVideo = '', label = 'Prod
     const [error, setError] = useState('');
     const [progress, setProgress] = useState(0);
     const videoRef = useRef(null);
+
+    useEffect(() => {
+        setPreview(initialVideo);
+    }, [initialVideo]);
 
     const handleVideoChange = async (event) => {
         const file = event.target.files[0];
