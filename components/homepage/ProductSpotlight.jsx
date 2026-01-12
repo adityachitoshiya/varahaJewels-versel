@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Star, ArrowRight, ShoppingBag } from 'lucide-react';
 import SpotlightSkeleton from '../SpotlightSkeleton';
 
@@ -112,10 +113,12 @@ export default function ProductSpotlight() {
             {/* Image Area - Spans 7 cols - WITH FLOATING EFFECT */}
             <div className="lg:col-span-7 relative group animate-float">
               <div className="aspect-[4/5] md:aspect-[16/10] lg:h-[600px] w-full relative rounded-2xl overflow-hidden shadow-[0_20px_50px_-12px_rgba(183,110,121,0.3)] border border-white/20">
-                <img
+                <Image
                   src={currentProduct.image}
                   alt={currentProduct.name}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  fill
+                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   onError={(e) => { e.target.src = '/varaha-assets/logo.png'; }}
                 />
 
@@ -186,12 +189,14 @@ export default function ProductSpotlight() {
                   <button
                     key={p.id}
                     onClick={() => setCurrentIndex(idx)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${idx === currentIndex ? 'border-copper scale-110 shadow-lg ring-2 ring-copper/20' : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'}`}
+                    className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 relative ${idx === currentIndex ? 'border-copper scale-110 shadow-lg ring-2 ring-copper/20' : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'}`}
                   >
-                    <img
+                    <Image
                       src={p.image}
                       alt={p.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="80px"
                       onError={(e) => { e.target.src = '/varaha-assets/logo.png'; }}
                     />
                   </button>

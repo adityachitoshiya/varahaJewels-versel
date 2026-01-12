@@ -4,6 +4,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ... existing styles ... */
+
+@media screen and (max-width: 768px) {
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 :root {
   /* Varaha Jewels Logo-Inspired Royal Color Palette */
   --royal-orange: #E07A24;
