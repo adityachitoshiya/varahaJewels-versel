@@ -53,36 +53,47 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     // Get order details from URL params
-    const {
-      orderId,
-      amount,
-      paymentId,
-      productName,
-      quantity,
-      email,
-      name,
-      testMode,
-      codMode
-    } = router.query;
+    const { orderId } = router.query;
 
-    if (orderId && amount) {
-      setOrderDetails({
-        orderId,
-        amount: parseFloat(amount),
-        paymentId: paymentId || (codMode === 'true' ? 'COD' : 'N/A'),
-        productName: productName || 'Varaha Jewels Product',
-        quantity: quantity || '1',
-        email: email || '',
-        name: name || 'Customer',
-        isCod: codMode === 'true'
-      });
-
-      // Update order status to 'completed' in database (ONLY for online payments usually, but let's keep it consistent or handle COD)
-      // For COD, status starts as 'Pending'. online starts as 'Pending' -> 'Paid'.
-      // If we are here, order is placed.
-      // We don't need to call update-order-status for COD here ideally, unless we want to mark 'confirmed'.
+    if (orderId) {
+      fetchOrder(orderId);
     }
   }, [router.query]);
+
+  const fetchOrder = async (id) => {
+    try {
+      const API_URL = getApiUrl();
+      // Support fetching by Razorpay ID or internal ID
+      const res = await fetch(`${API_URL}/api/orders/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+
+        // Parse items
+        let items = [];
+        try { items = JSON.parse(data.items_json); } catch (e) { console.error(e); }
+
+        setFullOrderData(data); // Store raw for invoice
+
+        setOrderDetails({
+          orderId: data.id, // Use NUMERIC ID for display
+          displayId: `Order #${data.id}`,
+          amount: data.total_amount,
+          paymentId: data.payment_method === 'online' ? id : 'COD', // Use Razorpay ID as ref if needed? Or check history.
+          productName: items.length > 0 ? (items.length > 1 ? `${items[0].productName} + ${items.length - 1} more` : items[0].productName) : 'Product',
+          quantity: items.reduce((sum, item) => sum + (item.quantity || 1), 0),
+          email: data.email,
+          name: data.customer_name,
+          isCod: data.payment_method === 'cod',
+          items: items // Store full items
+        });
+
+      } else {
+        console.error("Failed to fetch order");
+      }
+    } catch (err) {
+      console.error("Error fetching order:", err);
+    }
+  };
 
   // Preload Audio to prevent delay
   const [successAudio] = useState(() => {
@@ -123,14 +134,13 @@ export default function PaymentSuccess() {
   // ... (keep useEffect for countdown)
 
   if (!orderDetails) {
-    // ... (keep loading)
     return (
       <>
         <Header />
         <div className="min-h-screen bg-warm-sand flex items-center justify-center px-4">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-copper border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-heritage/70">Loading order details...</p>
+            <p className="text-heritage/70">Verifying Order...</p>
           </div>
         </div>
         <Footer />
@@ -188,13 +198,13 @@ export default function PaymentSuccess() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-heritage/60 mb-1">Order ID</p>
-                  <p className="font-semibold text-heritage text-lg">{orderDetails.orderId}</p>
+                  <p className="font-semibold text-heritage text-lg">{orderDetails.displayId}</p>
                 </div>
 
                 {!orderDetails.isCod && (
                   <div>
-                    <p className="text-sm text-heritage/60 mb-1">Payment ID</p>
-                    <p className="font-semibold text-heritage text-sm font-mono">{orderDetails.paymentId}</p>
+                    <p className="text-sm text-heritage/60 mb-1">Razorpay Ref</p>
+                    <p className="font-semibold text-heritage text-sm font-mono truncate">{router.query.paymentId || 'N/A'}</p>
                   </div>
                 )}
                 {orderDetails.isCod && (
@@ -206,20 +216,35 @@ export default function PaymentSuccess() {
               </div>
             </div>
 
-            {/* Product Details */}
+            {/* Product Details - Dynamic List */}
             <div className="border-b border-copper/30 pb-6 mb-6">
               <h3 className="text-lg font-semibold text-heritage mb-4">Product Information</h3>
 
-              <div className="flex items-center justify-between">
+              <div className="space-y-4">
+                {orderDetails.items && orderDetails.items.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between border-b border-dashed border-copper/10 pb-2 last:border-0">
+                    <div>
+                      <p className="font-medium text-heritage mb-1">{item.productName || item.name}</p>
+                      <p className="text-sm text-heritage/60">
+                        Qty: {item.quantity}
+                        {item.variantName && <span className="text-xs ml-1">({item.variantName})</span>}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-copper">₹{item.price}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total Row */}
+              <div className="flex items-center justify-between mt-4 params-t-4 border-t border-copper/20 pt-4">
+                <p className="font-bold text-heritage">Total Paid</p>
                 <div>
-                  <p className="font-medium text-heritage mb-1">{orderDetails.productName}</p>
-                  <p className="text-sm text-heritage/60">Quantity: {orderDetails.quantity}</p>
-                </div>
-                <div className="text-right">
                   <p className="text-2xl font-royal font-bold text-copper">
                     ₹{orderDetails.amount.toLocaleString('en-IN')}
                   </p>
-                  <p className={`text-xs mt-1 font-medium ${orderDetails.isCod ? 'text-orange-600' : 'text-green-600'}`}>
+                  <p className={`text-xs mt-1 font-medium text-right ${orderDetails.isCod ? 'text-orange-600' : 'text-green-600'}`}>
                     {orderDetails.isCod ? 'Payment Pending' : 'Paid'}
                   </p>
                 </div>
