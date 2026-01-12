@@ -487,7 +487,7 @@ export default function Checkout() {
           prefill: {
             name: formData.name,
             email: formData.email,
-            contact: formData.contact
+            contact: formData.contact.startsWith('+') ? formData.contact : `+91${formData.contact.replace(/^0+/, '')}` // Ensure E.164
           },
           theme: {
             color: "#B76E79" // Copper color
