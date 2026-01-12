@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
+import VideoUpload from '../../../components/admin/VideoUpload';
 import Head from 'next/head';
 import { Save, Plus, Trash2, X, Check, ShieldCheck } from 'lucide-react';
 
@@ -264,6 +265,22 @@ export default function Settings() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
                                 <input value={settings.logo_url} onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })} className="w-full p-2 border rounded-lg" />
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
+                        <h2 className="text-lg font-bold text-gray-800 mb-4">Heritage Page Video Intro</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <VideoUpload
+                                label="Desktop Video URL (16:9)"
+                                initialVideo={settings.heritage_video_desktop || ''}
+                                onUpload={(url) => setSettings({ ...settings, heritage_video_desktop: url })}
+                            />
+                            <VideoUpload
+                                label="Mobile Video URL (9:16 or 16:9)"
+                                initialVideo={settings.heritage_video_mobile || ''}
+                                onUpload={(url) => setSettings({ ...settings, heritage_video_mobile: url })}
+                            />
                         </div>
                     </div>
 

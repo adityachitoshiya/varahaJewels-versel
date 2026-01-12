@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import { getApiUrl } from '../lib/config';
 import { Search, SlidersHorizontal, Grid, List, Heart, ChevronDown, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import HeritageWaiting from '../components/HeritageWaiting';
 
 export default function Heritage() {
   // Initialize products empty
@@ -166,6 +167,53 @@ export default function Heritage() {
     selectedTags.length +
     (priceRange[0] !== 0 || priceRange[1] !== 5000000 ? 1 : 0);
 
+  // Fetch Settings for Video
+  const [videoSettings, setVideoSettings] = useState({ desktop: '', mobile: '' });
+  const [showVideo, setShowVideo] = useState(true);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const API_URL = getApiUrl();
+      const res = await fetch(`${API_URL}/api/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.heritage_video_desktop || data.heritage_video_mobile) {
+          setVideoSettings({
+            desktop: data.heritage_video_desktop,
+            mobile: data.heritage_video_mobile
+          });
+        } else {
+          // If no video, skip straight to content
+          setShowVideo(false);
+          setContentVisible(true);
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching settings", e);
+      setShowVideo(false);
+      setContentVisible(true);
+    }
+  };
+
+  const handleVideoEnd = () => {
+    setVideoEnded(true);
+    setShowVideo(false); // Hide video container
+    setShowAnimation(true); // Start text animation
+
+    // After animation duration, show content (e.g., 4 seconds)
+    setTimeout(() => {
+      setShowAnimation(false);
+      setContentVisible(true);
+    }, 4000);
+  };
+
   return (
     <>
       <Head>
@@ -173,174 +221,88 @@ export default function Heritage() {
         <meta name="description" content="Explore the Heritage Collection by Varaha Jewels. Royal antique designs, polki work, and traditional craftsmanship." />
       </Head>
 
-      <Header />
-
-      <main className="min-h-screen bg-warm-sand py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-12">
-            <h1 className="text-4xl md:text-5xl font-royal font-bold text-heritage mb-4">Heritage Collection</h1>
-            <p className="text-heritage/70 max-w-2xl">
-              A tribute to our royal legacy. Discover hand-crafted pieces that embody the spirit of tradition.
-            </p>
-            <div className="w-20 h-px bg-copper mt-4"></div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-heritage/40" size={20} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search heritage jewelry..."
-                className="w-full pl-12 pr-4 py-3 border-2 border-copper/30 rounded-sm focus:outline-none focus:ring-2 focus:ring-copper focus:border-copper transition-all"
+      {/* VIDEO OVERLAY */}
+      {showVideo && (videoSettings.desktop || videoSettings.mobile) && (
+        <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
+          {/* Mobile Video */}
+          <div className="block md:hidden w-full h-full">
+            {videoSettings.mobile ? (
+              <video
+                className="w-full h-full object-cover"
+                src={videoSettings.mobile}
+                autoPlay
+                muted
+                playsInline
+                onEnded={handleVideoEnd}
               />
-            </div>
-
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="sm:hidden px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2"
-            >
-              <SlidersHorizontal size={20} />
-              Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
-            </button>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-3 border-2 border-copper/30 rounded-sm focus:outline-none focus:ring-2 focus:ring-copper transition-all font-medium text-heritage"
-            >
-              <option value="featured">Newest First</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="name">Name: A to Z</option>
-            </select>
-
-            <div className="hidden sm:flex border-2 border-copper/30 rounded-sm overflow-hidden">
-              <button onClick={() => setViewMode('grid')} className={`p-3 transition-colors ${viewMode === 'grid' ? 'bg-copper text-warm-sand' : 'text-heritage hover:bg-copper/10'}`}>
-                <Grid size={20} />
-              </button>
-              <button onClick={() => setViewMode('list')} className={`p-3 transition-colors ${viewMode === 'list' ? 'bg-copper text-warm-sand' : 'text-heritage hover:bg-copper/10'}`}>
-                <List size={20} />
-              </button>
-            </div>
+            ) : (
+              /* Fallback if only desktop video exists */
+              <video
+                className="w-full h-full object-cover"
+                src={videoSettings.desktop}
+                autoPlay
+                muted
+                playsInline
+                onEnded={handleVideoEnd}
+              />
+            )}
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            <aside className={`lg:w-64 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-              <div className="bg-white border border-copper/30 rounded-sm p-6 sticky top-24">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-royal font-bold text-heritage flex items-center gap-2">
-                    <SlidersHorizontal size={20} className="text-copper" />
-                    Filters
-                  </h2>
-                  <button onClick={clearAllFilters} className="text-sm text-copper hover:text-heritage font-medium">Reset</button>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-semibold text-heritage mb-3">Category</h3>
-                    {categories.length === 0 ? <p className="text-sm text-gray-400">Loading...</p> :
-                      <div className="space-y-2">
-                        {categories.map(category => (
-                          <label key={category} className="flex items-center gap-2 cursor-pointer group">
-                            <input
-                              type="checkbox"
-                              checked={selectedCategories.includes(category)}
-                              onChange={() => toggleFilter(selectedCategories, setSelectedCategories, category)}
-                              className="w-4 h-4 text-copper focus:ring-copper rounded"
-                            />
-                            <span className="text-sm text-heritage/70 group-hover:text-heritage transition-colors">{category}</span>
-                          </label>
-                        ))}
-                      </div>}
-                  </div>
-
-                  <div className="pt-4 border-t border-copper/20">
-                    <h3 className="font-semibold text-heritage mb-3">Metal</h3>
-                    <div className="space-y-2">
-                      {metals.map(metal => (
-                        <label key={metal} className="flex items-center gap-2 cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            checked={selectedMetals.includes(metal)}
-                            onChange={() => toggleFilter(selectedMetals, setSelectedMetals, metal)}
-                            className="w-4 h-4 text-copper focus:ring-copper rounded"
-                          />
-                          <span className="text-sm text-heritage/70 group-hover:text-heritage transition-colors">{metal}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </aside>
-
-            <div className="flex-1">
-              <div className="mb-6 flex justify-between items-center">
-                <p className="text-heritage/70">
-                  Showing <span className="font-semibold text-heritage">{filteredProducts.length}</span> results
-                </p>
-                {isLoading && <span className="text-copper animate-pulse">Loading collection...</span>}
-              </div>
-
-              {filteredProducts.length === 0 && !isLoading ? (
-                <div className="bg-white border border-copper/30 rounded-sm p-12 text-center">
-                  <h3 className="text-2xl font-royal font-bold text-heritage mb-2">No heritage pieces found</h3>
-                  <button onClick={clearAllFilters} className="mt-4 px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm">Reset Filters</button>
-                </div>
-              ) : (
-                <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}>
-                  {filteredProducts.map((product) => (
-                    <div key={product.id} className={`group bg-white border border-copper/30 rounded-sm overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col ${viewMode === 'list' ? 'sm:flex-row' : 'h-full'}`}>
-                      <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 h-48 sm:h-auto flex-shrink-0' : 'aspect-square'}`}>
-                        <Link href={`/product/${product.id}`} className="block h-full cursor-pointer">
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            width={400}
-                            height={400}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            onError={(e) => { e.target.srcset = ''; e.target.src = '/varaha-assets/logo.png'; }}
-                          />
-                        </Link>
-                        {product.tag && <span className="absolute top-3 left-3 px-3 py-1 bg-copper text-warm-sand text-xs font-bold rounded-full">{product.tag}</span>}
-                        <button onClick={() => toggleWishlist(product.id, product.name)} className="absolute top-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white transition-colors z-10">
-                          <Heart size={20} className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'} />
-                        </button>
-                      </div>
-                      <div className="p-6 flex flex-col flex-1">
-                        <div className="flex-grow">
-                          <Link href={`/product/${product.id}`} className="block group-hover:text-copper transition-colors">
-                            <h3 className="text-lg font-royal font-bold text-heritage mb-1 line-clamp-2">{product.name}</h3>
-                          </Link>
-                          <p className="text-sm text-heritage/60">{product.category} • {product.metal}</p>
-                          <div className="mt-4 mb-4">
-                            {product.price ? <p className="text-2xl font-bold text-heritage">₹{product.price.toLocaleString('en-IN')}</p> : <p className="text-lg font-semibold text-copper">Price on Request</p>}
-                          </div>
-                        </div>
-                        {product.price ? (
-                          <button
-                            onClick={() => handleAddToCart(product)}
-                            className="mt-auto w-full px-6 py-3 bg-heritage text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-copper transition-all group-hover:shadow-md"
-                          >
-                            Add to Cart <ShoppingBag size={18} />
-                          </button>
-                        ) : (
-                          <Link href={`/product/${product.id}`} className="mt-auto w-full px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-heritage transition-all group-hover:shadow-md">
-                            View Details <ShoppingBag size={18} />
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* Desktop Video */}
+          <div className="hidden md:block w-full h-full">
+            {videoSettings.desktop ? (
+              <video
+                className="w-full h-full object-cover"
+                src={videoSettings.desktop}
+                autoPlay
+                muted
+                playsInline
+                onEnded={handleVideoEnd}
+              />
+            ) : (
+              /* Fallback if only mobile video exists */
+              <video
+                className="w-full h-full object-cover"
+                src={videoSettings.mobile}
+                autoPlay
+                muted
+                playsInline
+                onEnded={handleVideoEnd}
+              />
+            )}
           </div>
+
+          <button
+            onClick={handleVideoEnd}
+            className="absolute top-8 right-8 text-white/50 hover:text-white text-sm border border-white/30 rounded-full px-4 py-2 z-50 uppercase tracking-widest"
+          >
+            Skip Intro
+          </button>
         </div>
-      </main>
-      <Footer />
+      )}
+
+      {/* ROYAL ANIMATION OVERLAY */}
+      {showAnimation && (
+        <div className="fixed inset-0 z-[50] bg-heritage flex flex-col items-center justify-center text-center px-4 animate-fadeIn">
+          <h2 className="text-3xl md:text-5xl font-royal text-warm-sand mb-6 leading-tight animate-fadeUp">
+            Our craftsmen work hard <br /> to bring you
+          </h2>
+          <h1 className="text-4xl md:text-7xl font-royal font-bold text-copper mb-4 animate-scaleIn delay-500">
+            Royal Rajasthani Jewellery
+          </h1>
+          <div className="w-32 h-1 bg-warm-sand mt-8 animate-width-expand"></div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT (Hidden until intro done) */}
+      <div className={`transition-opacity duration-1000 ${contentVisible ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+        <Header />
+
+        <main className="min-h-screen bg-warm-sand">
+          <HeritageWaiting />
+        </main>
+        <Footer />
+      </div>
     </>
   );
 }
