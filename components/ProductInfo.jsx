@@ -202,15 +202,25 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
               type="text"
               placeholder="Enter pincode"
               value={pincode}
-              onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(e) => {
+                setPincode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                if (deliveryInfo) setDeliveryInfo(null); // Reset info if user types
+              }}
               className="w-full px-4 py-3 border border-copper/30 rounded-md text-sm focus:outline-none focus:border-copper bg-warm-sand/30"
             />
           </div>
           <button
-            onClick={checkPincode}
+            onClick={() => {
+              if (deliveryInfo) {
+                setDeliveryInfo(null);
+                setPincode('');
+              } else {
+                checkPincode();
+              }
+            }}
             className="px-4 py-3 text-copper font-semibold text-sm hover:text-heritage transition"
           >
-            Change
+            {deliveryInfo ? "Change" : "Check"}
           </button>
         </div>
 
