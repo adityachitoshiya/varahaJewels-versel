@@ -231,8 +231,8 @@ export default function Heritage() {
                 className="w-full h-full object-cover"
                 src={videoSettings.mobile}
                 autoPlay
-                muted
                 playsInline
+                ref={(el) => { if (el) el.volume = 0.3; }}
                 onEnded={handleVideoEnd}
               />
             ) : (
@@ -241,8 +241,8 @@ export default function Heritage() {
                 className="w-full h-full object-cover"
                 src={videoSettings.desktop}
                 autoPlay
-                muted
                 playsInline
+                ref={(el) => { if (el) el.volume = 0.3; }}
                 onEnded={handleVideoEnd}
               />
             )}
@@ -255,8 +255,8 @@ export default function Heritage() {
                 className="w-full h-full object-cover"
                 src={videoSettings.desktop}
                 autoPlay
-                muted
                 playsInline
+                ref={(el) => { if (el) el.volume = 0.3; }}
                 onEnded={handleVideoEnd}
               />
             ) : (
@@ -265,8 +265,8 @@ export default function Heritage() {
                 className="w-full h-full object-cover"
                 src={videoSettings.mobile}
                 autoPlay
-                muted
                 playsInline
+                ref={(el) => { if (el) el.volume = 0.3; }}
                 onEnded={handleVideoEnd}
               />
             )}
