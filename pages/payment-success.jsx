@@ -60,10 +60,11 @@ export default function PaymentSuccess() {
     }
   }, [router.query]);
 
-  const fetchOrder = async (id) => {
+  const fetchOrder = async (id, attempt = 1) => {
     try {
       const API_URL = getApiUrl();
-      // Support fetching by Razorpay ID or internal ID
+      console.log(`Fetching order: ${id} (Attempt ${attempt})`);
+
       const res = await fetch(`${API_URL}/api/orders/${id}`);
       if (res.ok) {
         const data = await res.json();
@@ -88,7 +89,16 @@ export default function PaymentSuccess() {
         });
 
       } else {
-        console.error("Failed to fetch order");
+        console.error(`Failed to fetch order (Status: ${res.status})`);
+
+        // Retry logic for 404 (Order might be creating in background)
+        if (res.status === 404 && attempt < 5) {
+          console.log(`Order not found yet, retrying in 2s...`);
+          setTimeout(() => fetchOrder(id, attempt + 1), 2000);
+        } else if (attempt >= 5) {
+          alert("Order processing is taking longer than expected. Please check your email for confirmation.");
+          // Fallback to basic display if needed, or let user wait
+        }
       }
     } catch (err) {
       console.error("Error fetching order:", err);
