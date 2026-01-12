@@ -10,10 +10,27 @@ export default function Orders() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showShipModal, setShowShipModal] = useState(false);
+    const [shipDims, setShipDims] = useState({ length: 10, breadth: 10, height: 5, weight: 0.5 });
+    const [isShipping, setIsShipping] = useState(false);
+    const [shippingOrderId, setShippingOrderId] = useState(null);
 
     useEffect(() => {
         fetchOrders();
     }, []);
+
+    const initiateShipping = (order) => {
+        setShippingOrderId(order.order_id);
+        setShowShipModal(true);
+    };
+
+    const confirmShipment = async () => {
+        if (!shippingOrderId) return;
+        setIsShipping(true);
+        await shipOrder(shippingOrderId, shipDims);
+        setIsShipping(false);
+        setShowShipModal(false);
+    };
 
     const fetchOrders = async () => {
         const token = localStorage.getItem('admin_token');
@@ -52,9 +69,7 @@ export default function Orders() {
         }
     };
 
-    const shipOrder = async (orderId) => {
-        if (!confirm('Are you sure you want to ship this order with RapidShyp?')) return;
-
+    const shipOrder = async (orderId, dims) => {
         try {
             const API_URL = getApiUrl();
             const token = localStorage.getItem('admin_token');
@@ -72,7 +87,12 @@ export default function Orders() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({}) // Send empty object for defaults
+                body: JSON.stringify({
+                    length: dims.length,
+                    breadth: dims.breadth,
+                    height: dims.height,
+                    weight: dims.weight
+                })
             });
 
             console.log(`Ship Response Status: ${res.status}`);
@@ -80,9 +100,6 @@ export default function Orders() {
             if (res.ok) {
                 const data = await res.json();
                 const shipment = data.shipment;
-                // Handle case where keys might be camelCase (RapidShyp) or snake_case (our mock)
-                // Mock: courierName, awb
-                // Real: courierName, awb
                 if (shipment.courierName === 'Mock Courier') {
                     alert(`Order shipped (SIMULATION). AWB: ${shipment.awb}`);
                 } else {
@@ -331,7 +348,7 @@ export default function Orders() {
                                         ) : (
                                             selectedOrder.status !== 'cancelled' ? (
                                                 <button
-                                                    onClick={() => shipOrder(selectedOrder.order_id)}
+                                                    onClick={() => initiateShipping(selectedOrder)}
                                                     className="w-full py-2 bg-copper text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
                                                 >
                                                     <Truck size={16} /> Ship with RapidShyp
@@ -340,6 +357,82 @@ export default function Orders() {
                                         )}
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shipping Dimensions Modal */}
+            {showShipModal && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fadeIn">
+                        <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <Truck size={18} className="text-copper" /> Shipment Details
+                            </h3>
+                            <button onClick={() => setShowShipModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-gray-500 mb-2">Enter package dimensions to calculate shipping.</p>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Length (cm)</label>
+                                    <input
+                                        type="number"
+                                        value={shipDims.length}
+                                        onChange={(e) => setShipDims({ ...shipDims, length: parseFloat(e.target.value) })}
+                                        className="w-full p-2 border border-gray-200 rounded focus:ring-1 focus:ring-copper focus:border-copper outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Breadth (cm)</label>
+                                    <input
+                                        type="number"
+                                        value={shipDims.breadth}
+                                        onChange={(e) => setShipDims({ ...shipDims, breadth: parseFloat(e.target.value) })}
+                                        className="w-full p-2 border border-gray-200 rounded focus:ring-1 focus:ring-copper focus:border-copper outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Height (cm)</label>
+                                    <input
+                                        type="number"
+                                        value={shipDims.height}
+                                        onChange={(e) => setShipDims({ ...shipDims, height: parseFloat(e.target.value) })}
+                                        className="w-full p-2 border border-gray-200 rounded focus:ring-1 focus:ring-copper focus:border-copper outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-600 mb-1 block">Weight (kg)</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={shipDims.weight}
+                                        onChange={(e) => setShipDims({ ...shipDims, weight: parseFloat(e.target.value) })}
+                                        className="w-full p-2 border border-gray-200 rounded focus:ring-1 focus:ring-copper focus:border-copper outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                                <button
+                                    onClick={() => setShowShipModal(false)}
+                                    className="flex-1 py-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmShipment}
+                                    disabled={isShipping}
+                                    className="flex-1 py-2 bg-copper text-white rounded-lg font-medium hover:bg-amber-700 flex items-center justify-center gap-2"
+                                >
+                                    {isShipping ? 'Shipping...' : 'Confirm Ship'}
+                                </button>
                             </div>
                         </div>
                     </div>
