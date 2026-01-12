@@ -89,9 +89,9 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
 
         {/* Rating - Hidden on mobile (shown on carousel) */}
         <div className="hidden lg:flex items-center mt-3 space-x-2">
-          <div className="flex items-center bg-heritage text-cream px-2 py-0.5 rounded text-sm font-semibold">
+          <div className="flex items-center bg-royal-orange text-white px-2 py-0.5 rounded text-sm font-semibold">
             <span>{product.averageRating || 4.5}</span>
-            <Star size={12} className="ml-1 fill-white" />
+            <Star size={12} className="ml-1 fill-white text-white" />
           </div>
           <span className="text-matte-brown text-sm border-b border-copper/40 cursor-pointer hover:text-heritage">
             {product.reviewCount || 124} Ratings
