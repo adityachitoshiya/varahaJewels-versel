@@ -134,6 +134,10 @@ export default function Header({ cartCount = 0, onCartClick }) {
               <Link href="/shop" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Collections
               </Link>
+              <Link href="/synora" className="group flex flex-col items-center justify-center text-center leading-tight text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+                <span>SYNORA</span>
+                <span className="text-[9px] font-normal tracking-wide opacity-80 group-hover:opacity-100">by varaha fashion</span>
+              </Link>
               <Link href="/heritage" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Heritage
               </Link>
@@ -315,10 +319,27 @@ export default function Header({ cartCount = 0, onCartClick }) {
               </Link>
 
               <Link
-                href="/heritage"
+                href="/synora"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
                 style={{ animationDelay: '50ms' }}
+              >
+                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                  <div className="flex flex-col items-center justify-center text-center w-full">
+                    <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium leading-tight">
+                      SYNORA
+                    </span>
+                    <span className="text-[10px] text-heritage/60 group-hover:text-copper/80 font-normal">by varaha fashion</span>
+                  </div>
+                  <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300 flex-shrink-0 ml-2"></div>
+                </div>
+              </Link>
+
+              <Link
+                href="/heritage"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="group block relative overflow-hidden"
+                style={{ animationDelay: '100ms' }}
               >
                 <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
                   <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
@@ -332,7 +353,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 href="/new-arrivals"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
-                style={{ animationDelay: '100ms' }}
+                style={{ animationDelay: '150ms' }}
               >
                 <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
                   <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
@@ -346,7 +367,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 href="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
-                style={{ animationDelay: '150ms' }}
+                style={{ animationDelay: '200ms' }}
               >
                 <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
                   <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
@@ -361,7 +382,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 href="/wishlist"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
-                style={{ animationDelay: '200ms' }}
+                style={{ animationDelay: '250ms' }}
               >
                 <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 backdrop-blur-sm border border-red-200 hover:border-red-400 hover:bg-red-100 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
                   <div className="flex items-center gap-3">
