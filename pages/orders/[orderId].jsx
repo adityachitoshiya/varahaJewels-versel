@@ -29,6 +29,55 @@ export default function OrderDetails() {
         }
     }, [orderId]);
 
+    // Live Tracking Effect
+    useEffect(() => {
+        if (order && order.awb_number && !['delivered', 'completed', 'cancelled'].includes(order.statusLower)) {
+            fetchLiveTracking();
+        }
+    }, [order]);
+
+    const fetchLiveTracking = async () => {
+        try {
+            const API_URL = getApiUrl();
+            const response = await fetch(`${API_URL}/api/orders/${order.order_id}/track`);
+            if (response.ok) {
+                const trackData = await response.json();
+
+                // RapidShyp Response Structure: { status: "success", data: { ...scans } }
+                // or just { ...scans } depending on endpoint implementation. 
+                // Our endpoint returns rapidshyp_client.track_order(awb) result.
+
+                const scans = trackData.data?.scans || [];
+
+                if (scans.length > 0) {
+                    // Update History with specific scans
+                    const newHistory = [...order.history];
+
+                    // Simple Mapping: Just populate recent interesting scans
+                    // Ideally we merge them based on timestamp to avoid duplicates
+                    // For now, let's just append the latest scan if it's new
+
+                    const latestScan = scans[scans.length - 1];
+                    const lastHistory = newHistory[newHistory.length - 1];
+
+                    // Avoid duplicate showing same status title
+                    if (latestScan.flow.toLowerCase() !== lastHistory.status.toLowerCase()) {
+                        setOrder(prev => ({
+                            ...prev,
+                            history: [...prev.history, {
+                                status: latestScan.flow, // e.g., "In Transit"
+                                timestamp: latestScan.scan_date_time,
+                                comment: latestScan.scan // Description
+                            }]
+                        }));
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Live track error", e);
+        }
+    };
+
     const fetchOrderDetails = async () => {
         try {
             const API_URL = getApiUrl();
