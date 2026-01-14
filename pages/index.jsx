@@ -11,7 +11,7 @@ import CreatorShowcase from '../components/homepage/CreatorShowcase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import LaunchCountdown from '../components/LaunchCountdown';
-import AddToCartModal from '../components/AddToCartModal';
+import LaunchCountdown from '../components/LaunchCountdown';
 import BackToTop from '../components/BackToTop';
 import DeliveryBar from '../components/DeliveryBar';
 import PremiumLoader from '../components/PremiumLoader';
@@ -27,26 +27,7 @@ export default function Home({ heroSlides, initialSettings }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Cart State
-  const [cartItems, setCartItems] = useState([]);
-  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (e) {
-        console.error('Failed to parse cart:', e);
-      }
-    }
-  }, []);
-
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
 
   // Handle Maintenance Mode redirection & Loader
   useEffect(() => {
@@ -75,8 +56,7 @@ export default function Home({ heroSlides, initialSettings }) {
     }
   }, [router, initialSettings]);
 
-  // Calculate total cart count
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
 
   // Set body attribute when countdown is showing to hide nav elements
   useEffect(() => {
@@ -92,19 +72,7 @@ export default function Home({ heroSlides, initialSettings }) {
     setUserSkipped(true);
   };
 
-  const handleUpdateQuantity = (itemId, newQuantity) => {
-    if (newQuantity <= 0) {
-      handleRemoveItem(itemId);
-      return;
-    }
-    setCartItems(cartItems.map(item =>
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
-    ));
-  };
 
-  const handleRemoveItem = (itemId) => {
-    setCartItems(cartItems.filter(item => item.id !== itemId));
-  };
 
   return (
     <>
@@ -266,10 +234,7 @@ export default function Home({ heroSlides, initialSettings }) {
 
       {(!isLoading || true) && !showFullPageCountdown && (
         <>
-          <Header
-            cartCount={cartCount}
-            onCartClick={() => setIsCartModalOpen(true)}
-          />
+          <Header />
           <DeliveryBar variant="mobile" />
 
           <main className="bg-warm-sand">
@@ -289,25 +254,7 @@ export default function Home({ heroSlides, initialSettings }) {
           {/* Spin Wheel Popup - Only on Homepage */}
           <SpinWheelPopup isHomepage={true} />
 
-          {/* Cart Modal */}
-          <AddToCartModal
-            isOpen={isCartModalOpen}
-            onClose={() => setIsCartModalOpen(false)}
-            cartItems={cartItems}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemoveItem={handleRemoveItem}
-            onViewCart={() => {
-              setIsCartModalOpen(false);
-            }}
-            onCheckout={() => {
-              setIsCartModalOpen(false);
-              // Navigate to checkout with cart items
-              window.location.href = '/checkout?fromCart=true';
-            }}
-            onContinueShopping={() => {
-              setIsCartModalOpen(false);
-            }}
-          />
+
         </>
       )}
     </>

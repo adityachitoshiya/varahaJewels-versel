@@ -173,6 +173,15 @@ export default function Heritage() {
   const [showAnimation, setShowAnimation] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check initial size and listen for resize
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchSettings();
@@ -224,53 +233,56 @@ export default function Heritage() {
       {/* VIDEO OVERLAY */}
       {showVideo && (videoSettings.desktop || videoSettings.mobile) && (
         <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
-          {/* Mobile Video */}
-          <div className="block md:hidden w-full h-full">
-            {videoSettings.mobile ? (
-              <video
-                className="w-full h-full object-cover"
-                src={videoSettings.mobile}
-                autoPlay
-                playsInline
-                ref={(el) => { if (el) el.volume = 0.3; }}
-                onEnded={handleVideoEnd}
-              />
-            ) : (
-              /* Fallback if only desktop video exists */
-              <video
-                className="w-full h-full object-cover"
-                src={videoSettings.desktop}
-                autoPlay
-                playsInline
-                ref={(el) => { if (el) el.volume = 0.3; }}
-                onEnded={handleVideoEnd}
-              />
-            )}
-          </div>
 
-          {/* Desktop Video */}
-          <div className="hidden md:block w-full h-full">
-            {videoSettings.desktop ? (
-              <video
-                className="w-full h-full object-cover"
-                src={videoSettings.desktop}
-                autoPlay
-                playsInline
-                ref={(el) => { if (el) el.volume = 0.3; }}
-                onEnded={handleVideoEnd}
-              />
-            ) : (
-              /* Fallback if only mobile video exists */
-              <video
-                className="w-full h-full object-cover"
-                src={videoSettings.mobile}
-                autoPlay
-                playsInline
-                ref={(el) => { if (el) el.volume = 0.3; }}
-                onEnded={handleVideoEnd}
-              />
-            )}
-          </div>
+          {/* Responsive Video Rendering */}
+          {isMobile ? (
+            <div className="w-full h-full">
+              {videoSettings.mobile ? (
+                <video
+                  className="w-full h-full object-cover"
+                  src={videoSettings.mobile}
+                  autoPlay
+                  playsInline
+                  ref={(el) => { if (el) el.volume = 0.3; }}
+                  onEnded={handleVideoEnd}
+                />
+              ) : (
+                /* Fallback if only desktop video exists */
+                <video
+                  className="w-full h-full object-cover"
+                  src={videoSettings.desktop}
+                  autoPlay
+                  playsInline
+                  ref={(el) => { if (el) el.volume = 0.3; }}
+                  onEnded={handleVideoEnd}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-full">
+              {videoSettings.desktop ? (
+                <video
+                  className="w-full h-full object-cover"
+                  src={videoSettings.desktop}
+                  autoPlay
+                  playsInline
+                  ref={(el) => { if (el) el.volume = 0.3; }}
+                  onEnded={handleVideoEnd}
+                />
+              ) : (
+                /* Fallback if only mobile video exists */
+                <video
+                  className="w-full h-full object-cover"
+                  src={videoSettings.mobile}
+                  autoPlay
+                  playsInline
+                  ref={(el) => { if (el) el.volume = 0.3; }}
+                  onEnded={handleVideoEnd}
+                />
+              )}
+            </div>
+          )}
+
 
           <button
             onClick={handleVideoEnd}

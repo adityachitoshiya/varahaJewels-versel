@@ -30,9 +30,7 @@ export default function Collections({ initialProducts = [] }) {
   // Grid view
   const [gridCols, setGridCols] = useState(3);
 
-  // Cart state
-  const [cartItems, setCartItems] = useState([]);
-  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+
 
   useEffect(() => {
     // Read search query from URL
@@ -43,16 +41,6 @@ export default function Collections({ initialProducts = [] }) {
     // Only fetch if we somehow don't have products (fallback)
     if (products.length === 0) {
       fetchProducts();
-    }
-
-    // Load cart from localStorage
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (e) {
-        console.error('Failed to parse cart:', e);
-      }
     }
   }, [router.query.search]);
 
@@ -75,7 +63,7 @@ export default function Collections({ initialProducts = [] }) {
     }
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
 
   // Extract unique values for filters
   const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
@@ -184,7 +172,7 @@ export default function Collections({ initialProducts = [] }) {
         <meta name="description" content="Explore our exquisite collection of handcrafted jewelry" />
       </Head>
 
-      <Header cartCount={cartCount} onCartClick={() => setIsCartModalOpen(true)} />
+      <Header />
 
       <div className="min-h-screen bg-gradient-to-b from-warm-sand/30 via-ivory/50 to-warm-sand/30">
         {/* Hero Section */}
