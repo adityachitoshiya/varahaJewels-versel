@@ -53,6 +53,8 @@ export default function Checkout() {
   // Product details from URL params (for direct checkout from product page)
   const [orderDetails, setOrderDetails] = useState(null);
   const [edd, setEdd] = useState(null); // Estimated Delivery Date state
+  const [isFlashDelivery, setIsFlashDelivery] = useState(false);
+  const [serviceabilityMsg, setServiceabilityMsg] = useState("");
 
   useEffect(() => {
     // Check if coming from cart or direct product checkout
@@ -191,10 +193,20 @@ export default function Checkout() {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.available && data.date) {
-          setEdd(data.date);
+        if (data.available) {
+          if (data.is_flash) {
+            setIsFlashDelivery(true);
+            setEdd(data.date); // "Today (2-4 Hrs)"
+            setServiceabilityMsg(data.message);
+          } else if (data.date) {
+            setIsFlashDelivery(false);
+            setEdd(data.date);
+            setServiceabilityMsg("");
+          }
         } else {
           setEdd(null); // Fallback to default logic if not available
+          setIsFlashDelivery(false);
+          setServiceabilityMsg("");
         }
       }
     } catch (err) {
@@ -617,6 +629,11 @@ export default function Checkout() {
 
                   <div>
                     <input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    {isFlashDelivery && (
+                      <p className="text-xs font-bold text-green-600 mt-1 flex items-center gap-1 animate-pulse">
+                        {serviceabilityMsg}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <input name="city" placeholder="City" value={formData.city} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
@@ -649,6 +666,8 @@ export default function Checkout() {
               appliedCoupon={appliedCoupon}
               setAppliedCoupon={setAppliedCoupon}
               setDiscount={setDiscount}
+              isFlashDelivery={isFlashDelivery}
+              edd={edd}
             />
           )}
 

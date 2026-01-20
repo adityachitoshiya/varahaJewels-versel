@@ -16,7 +16,11 @@ const PaymentLayout = ({
     couponError,
     appliedCoupon,
     setAppliedCoupon,
-    setDiscount
+    appliedCoupon,
+    setAppliedCoupon,
+    setDiscount,
+    isFlashDelivery,
+    edd
 }) => {
     const [activeTab, setActiveTab] = useState('recommended');
 
@@ -144,6 +148,11 @@ const PaymentLayout = ({
                     <h2 className="text-base font-bold text-heritage flex items-center gap-2">
                         <Lock size={16} /> Choose Payment Mode
                     </h2>
+                    {isFlashDelivery && (
+                        <div className="mt-2 bg-green-50 text-green-700 px-3 py-2 text-xs font-bold rounded flex items-center gap-2 animate-pulse border border-green-200">
+                            <span className="text-sm">⚡</span> Flash Delivery Active: Get it within 2-4 Hours!
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col lg:flex-row min-h-[400px]">
