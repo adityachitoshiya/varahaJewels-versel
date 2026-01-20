@@ -319,7 +319,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
               </Link>
 
               <Link
-                href="/synora"
+                href="/ciplx"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
                 style={{ animationDelay: '50ms' }}
@@ -327,9 +327,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
                   <div className="flex flex-col items-center justify-center text-center w-full">
                     <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium leading-tight">
-                      SYNORA
+                      Ciplx
                     </span>
-                    <span className="text-[10px] text-heritage/60 group-hover:text-copper/80 font-normal">by varaha fashion</span>
+                    <span className="text-[10px] text-heritage/60 group-hover:text-copper/80 font-normal">by varaha heaths</span>
                   </div>
                   <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300 flex-shrink-0 ml-2"></div>
                 </div>
