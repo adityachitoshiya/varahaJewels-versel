@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, MapPin, Check, Gift, CreditCard, X } from 'lucide-react';
+import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, MapPin, Check, Gift, CreditCard, X, Zap } from 'lucide-react';
 import { formatCurrency } from '../lib/productData';
 import WishlistButton from './WishlistButton';
 
@@ -49,7 +49,9 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
             available: true,
             date: data.date,
             cod: data.cod,
-            freeDelivery: (selectedVariant.price || 0) > 999
+            freeDelivery: (selectedVariant.price || 0) > 999,
+            isFlash: data.is_flash || false,
+            message: data.message || null
           });
         } else {
           setDeliveryInfo(null);
@@ -226,14 +228,29 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
 
         {deliveryInfo ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-copper/10 rounded-full flex items-center justify-center">
-                <Truck size={16} className="text-copper" />
+            {/* Flash Delivery Banner */}
+            {deliveryInfo.isFlash && (
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg animate-pulse">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <Zap size={18} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-green-700">Flash Delivery Available</p>
+                  <p className="text-xs text-green-600">{deliveryInfo.date}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-heritage">Get it by <span className="font-semibold">{deliveryInfo.date}</span></p>
+            )}
+            {/* Standard Delivery Info */}
+            {!deliveryInfo.isFlash && (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-copper/10 rounded-full flex items-center justify-center">
+                  <Truck size={16} className="text-copper" />
+                </div>
+                <div>
+                  <p className="text-sm text-heritage">Get it by <span className="font-semibold">{deliveryInfo.date}</span></p>
+                </div>
               </div>
-            </div>
+            )}
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-red-50 rounded-full flex items-center justify-center">
                 <X size={16} className="text-red-500" />
