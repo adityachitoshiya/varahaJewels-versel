@@ -3,7 +3,7 @@ import { getApiUrl } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import VideoUpload from '../../../components/admin/VideoUpload';
 import Head from 'next/head';
-import { Save, Plus, Trash2, X, Check, ShieldCheck } from 'lucide-react';
+import { Save, Plus, Trash2, X, Check, ShieldCheck, Zap, MapPin } from 'lucide-react';
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('general'); // 'general' or 'payment'
@@ -25,6 +25,10 @@ export default function Settings() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [newGateway, setNewGateway] = useState({ name: '', provider: 'razorpay' });
 
+    // Flash Pincodes State
+    const [flashPincodes, setFlashPincodes] = useState([]);
+    const [newPincode, setNewPincode] = useState({ pincode: '', area_name: '' });
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -37,9 +41,10 @@ export default function Settings() {
             const token = localStorage.getItem('admin_token');
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-            const [settingsRes, gatewaysRes] = await Promise.all([
+            const [settingsRes, gatewaysRes, flashPincodesRes] = await Promise.all([
                 fetch(`${API_URL}/api/settings`),
-                fetch(`${API_URL}/api/gateways`, { headers })
+                fetch(`${API_URL}/api/gateways`, { headers }),
+                fetch(`${API_URL}/api/settings/flash-pincodes`)
             ]);
 
             if (settingsRes.ok) setSettings(await settingsRes.json());
@@ -55,6 +60,8 @@ export default function Settings() {
                 // For settings page, 401 on gateways might mean session expired
                 console.warn("Unauthorized to fetch gateways");
             }
+
+            if (flashPincodesRes.ok) setFlashPincodes(await flashPincodesRes.json());
         } catch (error) {
             console.error('Error fetching settings:', error);
         } finally {
@@ -245,6 +252,12 @@ export default function Settings() {
                 >
                     Payment Gateways
                 </button>
+                <button
+                    onClick={() => setActiveTab('delivery')}
+                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'delivery' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Flash Delivery
+                </button>
             </div>
 
             {/* GENERAL TAB */}
@@ -381,6 +394,86 @@ export default function Settings() {
                                 <button type="submit" className="px-4 py-2 bg-copper text-white rounded">Add</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* DELIVERY TAB */}
+            {activeTab === 'delivery' && (
+                <div className="max-w-3xl animate-fadeIn">
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <Zap size={20} className="text-yellow-500" /> Flash Delivery PIN Codes
+                            </h2>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6">Customers in these PIN codes will see "⚡ Flash Delivery (2-4 Hrs)" during checkout.</p>
+
+                        {/* Add Form */}
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (!newPincode.pincode) return;
+                            try {
+                                const API_URL = getApiUrl();
+                                const res = await fetch(`${API_URL}/api/settings/flash-pincodes`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(newPincode)
+                                });
+                                if (res.ok) {
+                                    setNewPincode({ pincode: '', area_name: '' });
+                                    fetchData();
+                                } else {
+                                    const err = await res.json();
+                                    alert(err.detail || 'Failed to add');
+                                }
+                            } catch (err) { alert('Error adding pincode'); }
+                        }} className="flex flex-wrap gap-3 mb-6 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                            <input
+                                type="text"
+                                value={newPincode.pincode}
+                                onChange={(e) => setNewPincode({ ...newPincode, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                                placeholder="PIN Code (e.g., 302001)"
+                                className="flex-1 min-w-[120px] p-2 border rounded-lg text-sm"
+                                maxLength={6}
+                                required
+                            />
+                            <input
+                                type="text"
+                                value={newPincode.area_name}
+                                onChange={(e) => setNewPincode({ ...newPincode, area_name: e.target.value })}
+                                placeholder="Area Name (Optional)"
+                                className="flex-1 min-w-[180px] p-2 border rounded-lg text-sm"
+                            />
+                            <button type="submit" className="px-4 py-2 bg-copper text-white rounded-lg text-sm font-bold flex items-center gap-1 hover:bg-heritage"><Plus size={16} /> Add</button>
+                        </form>
+
+                        {/* List */}
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            {flashPincodes.length === 0 && <p className="text-sm text-gray-400 text-center py-6">No PIN codes added yet.</p>}
+                            {flashPincodes.map((pin) => (
+                                <div key={pin.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-copper transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <MapPin size={16} className="text-copper" />
+                                        <span className="font-mono font-bold text-gray-800">{pin.pincode}</span>
+                                        {pin.area_name && <span className="text-sm text-gray-500">— {pin.area_name}</span>}
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            if (!confirm(`Delete ${pin.pincode}?`)) return;
+                                            try {
+                                                const API_URL = getApiUrl();
+                                                await fetch(`${API_URL}/api/settings/flash-pincodes/${pin.pincode}`, { method: 'DELETE' });
+                                                fetchData();
+                                            } catch (err) { alert('Error'); }
+                                        }}
+                                        className="text-red-400 hover:text-red-600 p-1"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
