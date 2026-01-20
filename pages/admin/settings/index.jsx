@@ -308,6 +308,22 @@ export default function Settings() {
                         </div>
                     </div>
 
+                    <div className="bg-white rounded-xl border border-emerald-200 p-6 shadow-sm mb-6">
+                        <h2 className="text-lg font-bold text-emerald-800 mb-4">Ciplx Page Video Intro</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <VideoUpload
+                                label="Desktop Video URL (16:9)"
+                                initialVideo={settings.ciplx_video_desktop || ''}
+                                onUpload={(url) => setSettings({ ...settings, ciplx_video_desktop: url })}
+                            />
+                            <VideoUpload
+                                label="Mobile Video URL (9:16 or 16:9)"
+                                initialVideo={settings.ciplx_video_mobile || ''}
+                                onUpload={(url) => setSettings({ ...settings, ciplx_video_mobile: url })}
+                            />
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
                         <h2 className="text-lg font-bold text-gray-800 mb-4">Announcement Bar</h2>
                         <div className="space-y-4">

@@ -134,9 +134,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
               <Link href="/shop" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Collections
               </Link>
-              <Link href="/synora" className="group flex flex-col items-center justify-center text-center leading-tight text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
-                <span>SYNORA</span>
-                <span className="text-[9px] font-normal tracking-wide opacity-80 group-hover:opacity-100">by varaha fashion</span>
+              <Link href="/ciplx" className="group flex flex-col items-center justify-center text-center leading-tight text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+                <span>Ciplx</span>
+                <span className="text-[9px] font-normal tracking-wide opacity-80 group-hover:opacity-100">by varaha heaths</span>
               </Link>
               <Link href="/heritage" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Heritage
