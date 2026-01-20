@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getApiUrl } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import VideoUpload from '../../../components/admin/VideoUpload';
+import MediaUpload from '../../../components/admin/MediaUpload';
 import Head from 'next/head';
 import { Save, Plus, Trash2, X, Check, ShieldCheck, Zap, MapPin, Globe, ToggleLeft, ToggleRight } from 'lucide-react';
 
@@ -309,16 +310,16 @@ export default function Settings() {
                     </div>
 
                     <div className="bg-white rounded-xl border border-emerald-200 p-6 shadow-sm mb-6">
-                        <h2 className="text-lg font-bold text-emerald-800 mb-4">Ciplx Page Video Intro</h2>
+                        <h2 className="text-lg font-bold text-emerald-800 mb-4">Ciplx Page Media (Image/Video)</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <VideoUpload
-                                label="Desktop Video URL (16:9)"
-                                initialVideo={settings.ciplx_video_desktop || ''}
+                            <MediaUpload
+                                label="Desktop (Image or Video)"
+                                initialMedia={settings.ciplx_video_desktop || ''}
                                 onUpload={(url) => setSettings({ ...settings, ciplx_video_desktop: url })}
                             />
-                            <VideoUpload
-                                label="Mobile Video URL (9:16 or 16:9)"
-                                initialVideo={settings.ciplx_video_mobile || ''}
+                            <MediaUpload
+                                label="Mobile (Image or Video)"
+                                initialMedia={settings.ciplx_video_mobile || ''}
                                 onUpload={(url) => setSettings({ ...settings, ciplx_video_mobile: url })}
                             />
                         </div>
