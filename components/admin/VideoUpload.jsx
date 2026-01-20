@@ -7,19 +7,24 @@ export default function VideoUpload({ onUpload, initialVideo = '', label = 'Prod
     const [preview, setPreview] = useState(initialVideo);
     const [error, setError] = useState('');
     const [progress, setProgress] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
     const videoRef = useRef(null);
+    const dropRef = useRef(null);
 
     useEffect(() => {
         setPreview(initialVideo);
     }, [initialVideo]);
 
-    const handleVideoChange = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
+    const uploadFile = async (file) => {
         // Validation (Max 100MB)
         if (file.size > 100 * 1024 * 1024) {
             setError('Video size must be less than 100MB');
+            return;
+        }
+
+        // Check file type
+        if (!file.type.startsWith('video/')) {
+            setError('Please upload a video file');
             return;
         }
 
@@ -80,6 +85,41 @@ export default function VideoUpload({ onUpload, initialVideo = '', label = 'Prod
         }
     };
 
+    const handleVideoChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        await uploadFile(file);
+    };
+
+    // Drag and Drop handlers
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            await uploadFile(files[0]);
+        }
+    };
+
     const clearVideo = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -109,7 +149,18 @@ export default function VideoUpload({ onUpload, initialVideo = '', label = 'Prod
                         </button>
                     </div>
                 ) : (
-                    <label className="flex flex-col items-center justify-center w-full sm:w-64 h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors relative overflow-hidden">
+                    <label
+                        ref={dropRef}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        className={`flex flex-col items-center justify-center w-full sm:w-64 h-48 border-2 border-dashed rounded-lg cursor-pointer transition-all relative overflow-hidden
+                            ${isDragging
+                                ? 'border-copper bg-copper/10 scale-105'
+                                : 'border-gray-300 hover:bg-gray-50'
+                            }`}
+                    >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
                             {uploading ? (
                                 <>
@@ -123,11 +174,16 @@ export default function VideoUpload({ onUpload, initialVideo = '', label = 'Prod
                                     </div>
                                     <p className="text-[10px] text-gray-500 mt-1">{progress}%</p>
                                 </>
+                            ) : isDragging ? (
+                                <>
+                                    <Upload className="w-10 h-10 text-copper mb-2 animate-bounce" />
+                                    <p className="text-sm text-copper font-semibold">Drop video here!</p>
+                                </>
                             ) : (
                                 <>
                                     <Upload className="w-8 h-8 text-gray-400 mb-2" />
                                     <p className="text-xs text-gray-500">
-                                        <span className="font-semibold text-copper">Click to upload video</span>
+                                        <span className="font-semibold text-copper">Click or drag video</span>
                                         <br />
                                         <span className="text-[10px]">MP4, MOV (Max 100MB)</span>
                                     </p>
