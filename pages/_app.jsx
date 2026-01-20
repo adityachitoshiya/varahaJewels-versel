@@ -18,6 +18,8 @@ function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const isHomePage = router.pathname === '/';
   const isAdmin = router.pathname.startsWith('/admin');
+  const isCiplx = router.pathname === '/ciplx';
+  const isHeritage = router.pathname === '/heritage';
 
   useEffect(() => {
     const trackVisit = async () => {
@@ -91,7 +93,7 @@ function MyApp({ Component, pageProps }) {
         <NotificationPopup />
         <CartProvider>
           {isHomePage && <DeliveryBar variant="desktop" />}
-          {!isHomePage && <AnnouncementBar />}
+          {!isHomePage && !isCiplx && !isHeritage && <AnnouncementBar />}
 
           {/* Main Content with Transition */}
           <Component {...pageProps} />
@@ -100,8 +102,8 @@ function MyApp({ Component, pageProps }) {
           <CookieConsent />
           <SpinWheelPopup />
 
-          {/* Mobile Bottom Nav - Hidden on Product & Checkout Pages */}
-          {!router.pathname.startsWith('/product/') && router.pathname !== '/checkout' && (
+          {/* Mobile Bottom Nav - Hidden on Product, Checkout, Ciplx & Heritage Pages */}
+          {!router.pathname.startsWith('/product/') && router.pathname !== '/checkout' && !isCiplx && !isHeritage && (
             <MobileBottomNav />
           )}
 
