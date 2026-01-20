@@ -16,8 +16,6 @@ const PaymentLayout = ({
     couponError,
     appliedCoupon,
     setAppliedCoupon,
-    appliedCoupon,
-    setAppliedCoupon,
     setDiscount,
     isFlashDelivery,
     edd
