@@ -286,6 +286,7 @@ export default function Checkout() {
           contact: formData.contact,
           address: formData.address,
           city: formData.city,
+          state: formData.state,
           pincode: formData.pincode,
           isCartCheckout: true,
           paymentMethod: 'online'
@@ -300,6 +301,7 @@ export default function Checkout() {
           contact: formData.contact,
           address: formData.address,
           city: formData.city,
+          state: formData.state,
           pincode: formData.pincode,
           paymentMethod: 'online'
         };
@@ -407,6 +409,7 @@ export default function Checkout() {
           contact: formData.contact,
           address: formData.address,
           city: formData.city,
+          state: formData.state,
           pincode: formData.pincode,
           isCartCheckout: true,
           paymentMethod: 'cod'
@@ -421,6 +424,7 @@ export default function Checkout() {
           contact: formData.contact,
           address: formData.address,
           city: formData.city,
+          state: formData.state,
           pincode: formData.pincode,
           paymentMethod: 'cod'
         };
@@ -472,6 +476,7 @@ export default function Checkout() {
           contact: formData.contact,
           address: formData.address,
           city: formData.city,
+          state: formData.state,
           pincode: formData.pincode,
           isCartCheckout: true,
           paymentMethod: 'online'
@@ -486,6 +491,7 @@ export default function Checkout() {
           contact: formData.contact,
           address: formData.address,
           city: formData.city,
+          state: formData.state,
           pincode: formData.pincode,
           paymentMethod: 'online'
         };

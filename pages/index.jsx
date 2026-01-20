@@ -11,7 +11,6 @@ import CreatorShowcase from '../components/homepage/CreatorShowcase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import LaunchCountdown from '../components/LaunchCountdown';
-import LaunchCountdown from '../components/LaunchCountdown';
 import BackToTop from '../components/BackToTop';
 import DeliveryBar from '../components/DeliveryBar';
 import PremiumLoader from '../components/PremiumLoader';
