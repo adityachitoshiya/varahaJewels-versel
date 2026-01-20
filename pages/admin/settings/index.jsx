@@ -3,7 +3,7 @@ import { getApiUrl } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import VideoUpload from '../../../components/admin/VideoUpload';
 import Head from 'next/head';
-import { Save, Plus, Trash2, X, Check, ShieldCheck, Zap, MapPin } from 'lucide-react';
+import { Save, Plus, Trash2, X, Check, ShieldCheck, Zap, MapPin, Globe, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('general'); // 'general' or 'payment'
@@ -29,6 +29,9 @@ export default function Settings() {
     const [flashPincodes, setFlashPincodes] = useState([]);
     const [newPincode, setNewPincode] = useState({ pincode: '', area_name: '' });
 
+    // Geo-Blocking State
+    const [blockedRegions, setBlockedRegions] = useState([]);
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -41,10 +44,11 @@ export default function Settings() {
             const token = localStorage.getItem('admin_token');
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-            const [settingsRes, gatewaysRes, flashPincodesRes] = await Promise.all([
+            const [settingsRes, gatewaysRes, flashPincodesRes, blockedRegionsRes] = await Promise.all([
                 fetch(`${API_URL}/api/settings`),
                 fetch(`${API_URL}/api/gateways`, { headers }),
-                fetch(`${API_URL}/api/settings/flash-pincodes`)
+                fetch(`${API_URL}/api/settings/flash-pincodes`),
+                fetch(`${API_URL}/api/settings/blocked-regions`)
             ]);
 
             if (settingsRes.ok) setSettings(await settingsRes.json());
@@ -62,6 +66,7 @@ export default function Settings() {
             }
 
             if (flashPincodesRes.ok) setFlashPincodes(await flashPincodesRes.json());
+            if (blockedRegionsRes.ok) setBlockedRegions(await blockedRegionsRes.json());
         } catch (error) {
             console.error('Error fetching settings:', error);
         } finally {
@@ -257,6 +262,12 @@ export default function Settings() {
                     className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'delivery' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Flash Delivery
+                </button>
+                <button
+                    onClick={() => setActiveTab('geoblocking')}
+                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'geoblocking' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Geo-Blocking
                 </button>
             </div>
 
@@ -470,6 +481,68 @@ export default function Settings() {
                                         className="text-red-400 hover:text-red-600 p-1"
                                     >
                                         <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* GEO-BLOCKING TAB */}
+            {activeTab === 'geoblocking' && (
+                <div className="max-w-4xl animate-fadeIn">
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <Globe size={20} className="text-copper" /> Geo-Blocking (Region Control)
+                            </h2>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-6">
+                            Toggle states to block/unblock visitors from those regions. Blocked visitors will see a "Service Not Available" page.
+                        </p>
+
+                        {/* Stats */}
+                        <div className="flex gap-4 mb-6 text-sm">
+                            <div className="bg-red-50 text-red-700 px-3 py-1 rounded-full font-medium">
+                                {blockedRegions.filter(r => r.is_blocked).length} Blocked
+                            </div>
+                            <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full font-medium">
+                                {blockedRegions.filter(r => !r.is_blocked).length} Allowed
+                            </div>
+                        </div>
+
+                        {/* Grid of regions */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto">
+                            {blockedRegions.map((region) => (
+                                <div
+                                    key={region.id}
+                                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${region.is_blocked
+                                        ? 'bg-red-50 border-red-200'
+                                        : 'bg-gray-50 border-gray-100 hover:border-copper'}`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-mono px-2 py-0.5 rounded ${region.is_blocked ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
+                                            {region.region_code}
+                                        </span>
+                                        <span className="text-sm font-medium text-gray-800">{region.region_name}</span>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const API_URL = getApiUrl();
+                                                const res = await fetch(`${API_URL}/api/settings/blocked-regions/${region.region_code}`, {
+                                                    method: 'PUT'
+                                                });
+                                                if (res.ok) fetchData();
+                                            } catch (err) { alert('Error toggling region'); }
+                                        }}
+                                        className="text-2xl"
+                                    >
+                                        {region.is_blocked
+                                            ? <ToggleRight size={28} className="text-red-500" />
+                                            : <ToggleLeft size={28} className="text-gray-400" />
+                                        }
                                     </button>
                                 </div>
                             ))}
