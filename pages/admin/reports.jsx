@@ -18,7 +18,7 @@ export default function Reports() {
         setLoading(true);
         try {
             const API_URL = getApiUrl();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('admin_token');
 
             const params = new URLSearchParams();
             if (startDate) params.append('start_date', startDate);
@@ -46,7 +46,7 @@ export default function Reports() {
     const handleExport = async () => {
         try {
             const API_URL = getApiUrl();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('admin_token');
             const params = new URLSearchParams();
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
@@ -77,7 +77,7 @@ export default function Reports() {
     const handleGSTR1Export = async () => {
         try {
             const API_URL = getApiUrl();
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('admin_token');
             const params = new URLSearchParams();
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
