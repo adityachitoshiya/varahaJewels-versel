@@ -99,7 +99,7 @@ const PaymentLayout = ({
                                         <CreditCard size={20} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-semibold text-gray-800">Pay Online (Razorpay)</p>
+                                        <p className="text-sm font-semibold text-gray-800">Pay Online</p>
                                         <p className="text-xs text-gray-500">GooglePay, PhonePe, Cards, Netbanking & More</p>
                                     </div>
                                     <div className="w-4 h-4 rounded-full border border-gray-300"></div>
