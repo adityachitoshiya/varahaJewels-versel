@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom'; // Import portal
-import { getApiUrl } from '../lib/config';
+import { getApiUrl, getAuthHeaders } from '../lib/config';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -9,7 +9,8 @@ import Script from 'next/script'; // Import Script for Razorpay
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
-import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle } from 'lucide-react';
+import { useMsg91OTP } from '../hooks/useMsg91OTP';
 
 import { useCart } from '../context/CartContext';
 
@@ -55,6 +56,70 @@ export default function Checkout() {
   const [edd, setEdd] = useState(null); // Estimated Delivery Date state
   const [isFlashDelivery, setIsFlashDelivery] = useState(false);
   const [serviceabilityMsg, setServiceabilityMsg] = useState("");
+
+  // OTP Verification States (for guest checkout)
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+      setIsPhoneVerified(true); // Logged in users are already verified
+    }
+  }, []);
+
+  // MSG91 OTP Hook
+  const { initOTP, isLoaded: isOtpReady } = useMsg91OTP({
+    onSuccess: async (data) => {
+      console.log('OTP Verified:', data);
+      setIsOtpLoading(true);
+
+      try {
+        // Verify with backend and create account
+        const response = await fetch(`${getApiUrl()}/api/guest/verify-and-create`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            access_token: data.token || data.accessToken,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.contact
+          })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setIsPhoneVerified(true);
+
+          // If account was created and token returned, save it
+          if (result.auth_token) {
+            localStorage.setItem('customer_token', result.auth_token);
+            setIsLoggedIn(true);
+          }
+
+          // Proceed to payment step
+          setCurrentStep(2);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setError(result.detail || 'Phone verification failed');
+        }
+      } catch (err) {
+        console.error('Backend verification error:', err);
+        setError('Verification failed. Please try again.');
+      } finally {
+        setIsOtpLoading(false);
+      }
+    },
+    onFailure: (error) => {
+      console.error('OTP Failed:', error);
+      setError(error.message || 'OTP verification failed');
+      setIsOtpLoading(false);
+    }
+  });
 
   useEffect(() => {
     // Check if coming from cart or direct product checkout
@@ -521,6 +586,20 @@ export default function Checkout() {
 
       if (!response.ok) throw new Error(data.detail || 'Failed to initiate payment');
 
+      // Handle different payment providers
+      if (data.provider === 'phonepe' && data.redirectUrl) {
+        // PhonePe - Redirect to payment page
+        // Store order data in sessionStorage for callback
+        sessionStorage.setItem('pending_order', JSON.stringify({
+          ...orderData,
+          transactionId: data.orderId
+        }));
+
+        window.location.href = data.redirectUrl;
+        return;
+      }
+
+      // Razorpay flow
       if (data && data.key && data.orderId) {
         const options = {
           key: data.key,
@@ -566,8 +645,28 @@ export default function Checkout() {
 
   const handleContinueToStep2 = () => {
     if (handleValidation()) {
-      setCurrentStep(2);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // If logged in or already verified, go directly to step 2
+      if (isLoggedIn || isPhoneVerified) {
+        setCurrentStep(2);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Guest checkout - trigger OTP verification
+      if (!isOtpReady) {
+        setError('OTP service is loading. Please wait...');
+        return;
+      }
+
+      // Clean phone number for OTP
+      const phone = formData.contact.replace(/[^0-9]/g, '');
+      if (phone.length < 10) {
+        setError('Please enter a valid 10-digit mobile number');
+        return;
+      }
+
+      setIsOtpLoading(true);
+      initOTP(phone);
     }
   };
 
@@ -643,9 +742,37 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <button type="submit" className="w-full bg-heritage text-white py-4 rounded-lg font-bold uppercase tracking-wider hover:bg-heritage/90 shadow-lg mt-8 transition-transform transform active:scale-[0.99]">
-                  Continue to Payment
+                <button
+                  type="submit"
+                  disabled={isOtpLoading}
+                  className={`w-full py-4 rounded-lg font-bold uppercase tracking-wider shadow-lg mt-8 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 ${isOtpLoading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-heritage text-white hover:bg-heritage/90'
+                    }`}
+                >
+                  {isOtpLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Verifying...
+                    </>
+                  ) : isLoggedIn ? (
+                    <>
+                      <CheckCircle size={18} />
+                      Continue to Payment
+                    </>
+                  ) : (
+                    <>
+                      <Phone size={18} />
+                      Verify Phone & Continue
+                    </>
+                  )}
                 </button>
+
+                {!isLoggedIn && (
+                  <p className="text-xs text-gray-500 text-center mt-3">
+                    📱 We'll send an OTP to verify your phone number
+                  </p>
+                )}
               </form>
             </div>
           )}

@@ -202,7 +202,7 @@ export default function Settings() {
             const token = localStorage.getItem('admin_token');
             let initialCreds = {};
             if (newGateway.provider === 'razorpay') initialCreds = { key_id: '', key_secret: '' };
-            if (newGateway.provider === 'phonepe') initialCreds = { merchant_id: '', salt_key: '', salt_index: '1' };
+            if (newGateway.provider === 'phonepe') initialCreds = { merchant_id: '', salt_key: '', salt_index: '1', environment: 'SANDBOX' };
             if (newGateway.provider === 'pinelabs') initialCreds = { merchant_id: '', api_key: '' };
 
             const API_URL = getApiUrl();
