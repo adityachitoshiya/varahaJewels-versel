@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { getApiUrl } from '../lib/config';
+import { getApiUrl, getAuthHeaders } from '../lib/config';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 export default function PaymentCallback() {
     const router = useRouter();
-    const [status, setStatus] = useState('checking'); // checking, success, failed
+    const [status, setStatus] = useState('checking'); // checking, confirming, success, failed
     const [message, setMessage] = useState('Verifying your payment...');
     const [orderData, setOrderData] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const MAX_RETRIES = 10;
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -22,6 +24,77 @@ export default function PaymentCallback() {
             return;
         }
 
+        // Get stored order data from sessionStorage
+        const getPendingOrder = () => {
+            try {
+                const stored = sessionStorage.getItem('pending_order');
+                if (stored) {
+                    return JSON.parse(stored);
+                }
+            } catch (e) {
+                console.error('Error parsing pending order:', e);
+            }
+            return null;
+        };
+
+        // Confirm order with backend (creates order in DB)
+        const confirmOrder = async (pendingOrder) => {
+            try {
+                setStatus('confirming');
+                setMessage('Creating your order...');
+
+                const API_URL = getApiUrl();
+                const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
+
+                const response = await fetch(`${API_URL}/api/phonepe/confirm-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({
+                        transaction_id: transactionId,
+                        orderId: transactionId,
+                        order_data: pendingOrder
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Order Confirmation Response:', data);
+
+                if (data.ok) {
+                    // Clear pending order
+                    sessionStorage.removeItem('pending_order');
+                    localStorage.removeItem('cart');
+
+                    setStatus('success');
+                    setMessage('Order placed successfully!');
+                    setOrderData(data);
+
+                    // Redirect to success page
+                    setTimeout(() => {
+                        router.push({
+                            pathname: '/payment-success',
+                            query: {
+                                orderId: data.orderId || transactionId,
+                                amount: data.amount || pendingOrder?.amount || 0,
+                                provider: 'phonepe',
+                                email: pendingOrder?.email,
+                                name: pendingOrder?.name
+                            }
+                        });
+                    }, 2000);
+                } else {
+                    setStatus('failed');
+                    setMessage(data.message || 'Order confirmation failed');
+                }
+            } catch (error) {
+                console.error('Order confirmation error:', error);
+                setStatus('failed');
+                setMessage('Failed to create order. Please contact support.');
+            }
+        };
+
         // Check payment status with backend
         const checkPaymentStatus = async () => {
             try {
@@ -32,35 +105,56 @@ export default function PaymentCallback() {
                 console.log('Payment Status:', data);
 
                 if (data.success && data.status === 'SUCCESS') {
-                    setStatus('success');
-                    setMessage('Payment successful! Your order has been placed.');
-                    setOrderData(data);
+                    // Payment successful - now confirm order
+                    const pendingOrder = getPendingOrder();
 
-                    // Redirect to success page after delay
-                    setTimeout(() => {
-                        router.push({
-                            pathname: '/payment-success',
-                            query: {
-                                orderId: transactionId,
-                                amount: data.amount ? data.amount / 100 : 0,
-                                provider: 'phonepe'
-                            }
-                        });
-                    }, 2000);
-                } else if (data.status === 'PENDING' || data.status === 'PAYMENT_PENDING') {
+                    if (pendingOrder) {
+                        await confirmOrder(pendingOrder);
+                    } else {
+                        // No pending order data - maybe already processed or lost
+                        setStatus('success');
+                        setMessage('Payment successful! Redirecting...');
+
+                        setTimeout(() => {
+                            router.push({
+                                pathname: '/payment-success',
+                                query: {
+                                    orderId: transactionId,
+                                    amount: data.amount ? data.amount / 100 : 0,
+                                    provider: 'phonepe'
+                                }
+                            });
+                        }, 2000);
+                    }
+                } else if (data.status === 'PENDING' || data.status === 'PAYMENT_PENDING' || data.status === 'INITIATED') {
                     setStatus('checking');
                     setMessage('Payment is being processed. Please wait...');
 
-                    // Retry after 3 seconds
-                    setTimeout(checkPaymentStatus, 3000);
+                    // Retry with exponential backoff
+                    if (retryCount < MAX_RETRIES) {
+                        setRetryCount(prev => prev + 1);
+                        setTimeout(checkPaymentStatus, Math.min(3000 + retryCount * 1000, 10000));
+                    } else {
+                        setStatus('failed');
+                        setMessage('Payment verification timed out. If amount was deducted, please contact support.');
+                    }
+                } else if (data.status === 'AUTH_FAILED') {
+                    setStatus('failed');
+                    setMessage('Payment verification failed. Please contact support.');
                 } else {
                     setStatus('failed');
                     setMessage(data.message || 'Payment failed or was cancelled.');
                 }
             } catch (error) {
                 console.error('Payment status check error:', error);
-                setStatus('failed');
-                setMessage('Unable to verify payment status. Please contact support.');
+
+                if (retryCount < 3) {
+                    setRetryCount(prev => prev + 1);
+                    setTimeout(checkPaymentStatus, 3000);
+                } else {
+                    setStatus('failed');
+                    setMessage('Unable to verify payment status. Please contact support.');
+                }
             }
         };
 
@@ -78,7 +172,7 @@ export default function PaymentCallback() {
 
                     {/* Status Icon */}
                     <div className="mb-6">
-                        {status === 'checking' && (
+                        {(status === 'checking' || status === 'confirming') && (
                             <div className="w-20 h-20 mx-auto bg-amber-100 rounded-full flex items-center justify-center">
                                 <Loader2 className="w-10 h-10 text-amber-600 animate-spin" />
                             </div>
@@ -98,6 +192,7 @@ export default function PaymentCallback() {
                     {/* Title */}
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">
                         {status === 'checking' && 'Verifying Payment'}
+                        {status === 'confirming' && 'Creating Order'}
                         {status === 'success' && 'Payment Successful!'}
                         {status === 'failed' && 'Payment Failed'}
                     </h1>
@@ -105,10 +200,17 @@ export default function PaymentCallback() {
                     {/* Message */}
                     <p className="text-gray-600 mb-6">{message}</p>
 
+                    {/* Retry Count */}
+                    {status === 'checking' && retryCount > 0 && (
+                        <p className="text-xs text-gray-400 mb-4">
+                            Checking... ({retryCount}/{MAX_RETRIES})
+                        </p>
+                    )}
+
                     {/* Transaction ID */}
-                    {router.query.txnId && (
+                    {(router.query.txnId || router.query.orderId) && (
                         <p className="text-xs text-gray-400 mb-6">
-                            Transaction ID: {router.query.txnId}
+                            Transaction ID: {router.query.txnId || router.query.orderId}
                         </p>
                     )}
 
