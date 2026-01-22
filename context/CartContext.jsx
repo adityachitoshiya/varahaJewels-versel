@@ -13,13 +13,40 @@ export function CartProvider({ children }) {
 
     // Initialize: Load token & Local Cart & Listen for Auth Changes
     useEffect(() => {
-        // 1. Load Local Cart immediately
+        // 1. Load Local Cart immediately with VALIDATION
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
             try {
-                setCartItems(JSON.parse(savedCart));
+                const parsedCart = JSON.parse(savedCart);
+
+                // Validate cart items - filter out any invalid entries
+                const validCart = Array.isArray(parsedCart)
+                    ? parsedCart.filter(item => {
+                        // Must have productId, variant with sku & price, and quantity
+                        const isValid = item
+                            && (item.productId || item.product_id)
+                            && item.variant
+                            && item.variant.sku
+                            && typeof item.variant.price === 'number'
+                            && item.quantity > 0;
+
+                        if (!isValid) {
+                            console.warn('Invalid cart item filtered out:', item);
+                        }
+                        return isValid;
+                    })
+                    : [];
+
+                // Only set if valid items exist
+                if (validCart.length > 0) {
+                    setCartItems(validCart);
+                } else {
+                    // Clear corrupted/empty cart
+                    localStorage.removeItem('cart');
+                }
             } catch (e) {
-                console.error("Failed to parse local cart", e);
+                console.error("Failed to parse local cart, clearing...", e);
+                localStorage.removeItem('cart');
             }
         }
 

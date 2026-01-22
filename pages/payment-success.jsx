@@ -6,13 +6,25 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { CheckCircle, Package, Mail, Phone, Home, Download } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 export default function PaymentSuccess() {
   const router = useRouter();
+  const { clearCart } = useCart();
   const [orderDetails, setOrderDetails] = useState(null);
   const [fullOrderData, setFullOrderData] = useState(null);
   const [countdown, setCountdown] = useState(10);
   const [invoiceDownloaded, setInvoiceDownloaded] = useState(false);
+
+  // Clear cart when payment success page loads
+  useEffect(() => {
+    // Clear cart from context and localStorage
+    clearCart();
+    localStorage.removeItem('cart');
+    localStorage.removeItem('pending_order');
+    sessionStorage.removeItem('pending_order');
+    console.log('Cart cleared after successful payment');
+  }, []);
 
   const handleDownloadInvoice = async (orderData = fullOrderData) => {
     if (!orderData) {
