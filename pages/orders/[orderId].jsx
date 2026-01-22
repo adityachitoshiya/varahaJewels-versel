@@ -8,7 +8,7 @@ import Footer from '../../components/Footer';
 import OrderStepper from '../../components/OrderStepper';
 import {
     Package, Truck, CheckCircle, Clock, MapPin,
-    ChevronLeft, Star, Upload, Video, Image as ImageIcon, RefreshCw
+    ChevronLeft, Star, Upload, Video, Image as ImageIcon, RefreshCw, RotateCcw
 } from 'lucide-react';
 
 // Status to step mapping
@@ -94,6 +94,13 @@ export default function OrderDetails() {
     const [mediaUrl, setMediaUrl] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
     const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+    // Return State
+    const [showReturnForm, setShowReturnForm] = useState(false);
+    const [returnReason, setReturnReason] = useState('');
+    const [returnDescription, setReturnDescription] = useState('');
+    const [submittingReturn, setSubmittingReturn] = useState(false);
+    const [returnSubmitted, setReturnSubmitted] = useState(false);
 
     useEffect(() => {
         if (orderId) {
@@ -184,6 +191,43 @@ export default function OrderDetails() {
             alert("Error submitting review.");
         } finally {
             setSubmittingReview(false);
+        }
+    };
+
+    const handleSubmitReturn = async (e) => {
+        e.preventDefault();
+        if (!returnReason) return;
+
+        setSubmittingReturn(true);
+        try {
+            const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
+
+            const response = await fetch(`${getApiUrl()}/api/customer/returns`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    order_id: order.order_id,
+                    reason: returnReason,
+                    description: returnDescription || null
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setReturnSubmitted(true);
+                setShowReturnForm(false);
+            } else {
+                alert(data.detail || "Failed to submit return request.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error submitting return request. Please try again.");
+        } finally {
+            setSubmittingReturn(false);
         }
     };
 
@@ -315,6 +359,92 @@ export default function OrderDetails() {
                             })()}
                         </div>
                     </div>
+
+                    {/* Return Request Section - Only if Delivered */}
+                    {isDelivered && !returnSubmitted && (
+                        <div className="bg-white p-8 rounded-xl border border-copper/30 mb-8 shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-royal font-bold text-heritage">Request Return</h2>
+                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">7-day return policy</span>
+                            </div>
+                            <p className="text-heritage/60 mb-6">If you're not satisfied with your purchase, you can request a return within 7 days of delivery.</p>
+
+                            {!showReturnForm ? (
+                                <button
+                                    onClick={() => setShowReturnForm(true)}
+                                    className="flex items-center gap-2 px-6 py-3 bg-heritage/10 text-heritage rounded-lg hover:bg-heritage/20 transition-colors"
+                                >
+                                    <RotateCcw size={18} />
+                                    Request Return
+                                </button>
+                            ) : (
+                                <form onSubmit={handleSubmitReturn} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-heritage mb-2">Reason for Return *</label>
+                                        <select
+                                            value={returnReason}
+                                            onChange={(e) => setReturnReason(e.target.value)}
+                                            className="w-full p-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-copper focus:border-copper"
+                                            required
+                                        >
+                                            <option value="">Select a reason</option>
+                                            <option value="defective">Product is defective/damaged</option>
+                                            <option value="wrong_item">Wrong item received</option>
+                                            <option value="not_as_expected">Product not as expected</option>
+                                            <option value="size_issue">Size/Fit issue</option>
+                                            <option value="quality">Quality not satisfactory</option>
+                                            <option value="changed_mind">Changed my mind</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-heritage mb-2">Additional Details</label>
+                                        <textarea
+                                            value={returnDescription}
+                                            onChange={(e) => setReturnDescription(e.target.value)}
+                                            className="w-full p-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-copper focus:border-copper"
+                                            rows="3"
+                                            placeholder="Please describe the issue..."
+                                        ></textarea>
+                                    </div>
+
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                        <p className="text-sm text-amber-800">
+                                            <strong>Note:</strong> Once approved, you'll receive a return shipping label.
+                                            Refund will be processed within 5-7 business days after we receive the product.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="submit"
+                                            disabled={submittingReturn || !returnReason}
+                                            className="flex-1 py-3 bg-heritage text-warm-sand font-bold rounded-lg hover:bg-copper transition-colors disabled:opacity-50"
+                                        >
+                                            {submittingReturn ? 'Submitting...' : 'Submit Return Request'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowReturnForm(false)}
+                                            className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Return Submitted Success */}
+                    {returnSubmitted && (
+                        <div className="bg-green-50 border border-green-200 p-6 rounded-xl mb-8 text-center">
+                            <CheckCircle className="mx-auto text-green-600 mb-2" size={40} />
+                            <h3 className="text-lg font-bold text-green-800">Return Request Submitted!</h3>
+                            <p className="text-green-700 text-sm mt-1">We'll review your request and get back to you within 24-48 hours.</p>
+                        </div>
+                    )}
 
                     {/* Review Section - Only if Delivered */}
                     {isDelivered && !reviewSubmitted && (
