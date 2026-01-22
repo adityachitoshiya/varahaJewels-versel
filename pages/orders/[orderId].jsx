@@ -99,6 +99,7 @@ export default function OrderDetails() {
     const [showReturnForm, setShowReturnForm] = useState(false);
     const [returnReason, setReturnReason] = useState('');
     const [returnDescription, setReturnDescription] = useState('');
+    const [returnImages, setReturnImages] = useState('');
     const [submittingReturn, setSubmittingReturn] = useState(false);
     const [returnSubmitted, setReturnSubmitted] = useState(false);
 
@@ -211,7 +212,8 @@ export default function OrderDetails() {
                 body: JSON.stringify({
                     order_id: order.order_id,
                     reason: returnReason,
-                    description: returnDescription || null
+                    description: returnDescription || null,
+                    images: returnImages ? returnImages.split(',').map(url => url.trim()).filter(url => url) : []
                 })
             });
 
@@ -407,6 +409,18 @@ export default function OrderDetails() {
                                             rows="3"
                                             placeholder="Please describe the issue..."
                                         ></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-heritage mb-2">Product Images (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={returnImages}
+                                            onChange={(e) => setReturnImages(e.target.value)}
+                                            className="w-full p-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-copper focus:border-copper"
+                                            placeholder="Paste image URL(s) separated by comma..."
+                                        />
+                                        <p className="text-xs text-heritage/50 mt-1">Upload images to any image host and paste links here</p>
                                     </div>
 
                                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
