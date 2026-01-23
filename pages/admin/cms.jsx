@@ -668,6 +668,90 @@ export default function ContentManagement() {
                             ));
                         })()}
                     </div>
+
+                    {/* Background Music Section */}
+                    <div className="mt-8 border-t pt-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Background Music</h3>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            {settings.ciplx_music_url ? (
+                                <div className="space-y-4">
+                                    {/* Current Music */}
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Video className="w-5 h-5 text-copper" />
+                                            <div>
+                                                <p className="font-medium text-gray-800">Music Uploaded</p>
+                                                <p className="text-sm text-gray-500">Playing on Ciplx page</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm('Remove background music?')) return;
+                                                await handleSettingsUpdate({ ciplx_music_url: null });
+                                            }}
+                                            className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+
+                                    {/* Volume Slider */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Volume: {Math.round((settings.ciplx_music_volume || 0.4) * 100)}%
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            value={(settings.ciplx_music_volume || 0.4) * 100}
+                                            onChange={(e) => {
+                                                const volume = parseInt(e.target.value) / 100;
+                                                handleSettingsUpdate({ ciplx_music_volume: volume });
+                                            }}
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-copper"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-6">
+                                    <Video className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                    <p className="text-gray-500 mb-4">No background music uploaded</p>
+                                    <label className="inline-flex items-center gap-2 px-6 py-3 bg-copper text-white rounded-lg hover:bg-heritage transition-colors cursor-pointer">
+                                        <Plus size={18} />
+                                        {isUploading ? 'Uploading...' : 'Upload Music'}
+                                        <input
+                                            type="file"
+                                            accept="audio/*"
+                                            className="hidden"
+                                            disabled={isUploading}
+                                            onChange={async (e) => {
+                                                if (!e.target.files[0]) return;
+                                                setIsUploading(true);
+                                                setUploadProgress(0);
+                                                try {
+                                                    const API_URL = getApiUrl();
+                                                    const formData = new FormData();
+                                                    formData.append('file', e.target.files[0]);
+
+                                                    const res = await uploadWithProgress(`${API_URL}/api/upload`, formData);
+                                                    await handleSettingsUpdate({ ciplx_music_url: res.url });
+
+                                                } catch (error) {
+                                                    console.error("Upload error:", error);
+                                                    alert("Failed to upload music");
+                                                } finally {
+                                                    setIsUploading(false);
+                                                    setUploadProgress(0);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 

@@ -109,6 +109,21 @@ export default function Ciplx() {
             </Head>
 
             <div className="fixed inset-0 w-full h-full bg-black">
+                {/* Background Music */}
+                {settings && settings.ciplx_music_url && (
+                    <audio
+                        src={settings.ciplx_music_url}
+                        autoPlay
+                        loop
+                        volume={settings.ciplx_music_volume || 0.4}
+                        ref={(audio) => {
+                            if (audio) {
+                                audio.volume = settings.ciplx_music_volume || 0.4;
+                            }
+                        }}
+                    />
+                )}
+
                 {isLoading ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
