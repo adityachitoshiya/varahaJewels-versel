@@ -15,6 +15,7 @@ export default function ContentManagement() {
     const [isUploading, setIsUploading] = useState(false);
     const [savingRates, setSavingRates] = useState(false);
     const [rateMessage, setRateMessage] = useState('');
+    const [isDragging, setIsDragging] = useState(false);
 
     // Form States
     const [showHeroForm, setShowHeroForm] = useState(false);
@@ -79,6 +80,12 @@ export default function ContentManagement() {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open('POST', url);
+
+            // Add admin token from localStorage
+            const token = localStorage.getItem('admin_token');
+            if (token) {
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            }
 
             xhr.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
@@ -244,6 +251,12 @@ export default function ContentManagement() {
                     className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'metal-rates' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Metal Rates
+                </button>
+                <button
+                    onClick={() => setActiveTab('ciplx')}
+                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'ciplx' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Ciplx Images
                 </button>
             </div>
 
@@ -500,6 +513,161 @@ export default function ContentManagement() {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* CIPLX IMAGES CONTENT */}
+            {activeTab === 'ciplx' && settings && (
+                <div className="animate-fadeIn">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-6">Ciplx Slideshow Images</h2>
+
+                    {/* Drag and Drop Upload Zone */}
+                    <div
+                        className={`mb-6 border-2 border-dashed rounded-xl p-8 text-center transition-all ${isDragging
+                            ? 'border-copper bg-copper/5 scale-[1.02]'
+                            : 'border-gray-300 bg-gray-50 hover:border-copper/50'
+                            }`}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsDragging(true);
+                        }}
+                        onDragLeave={(e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+                        }}
+                        onDrop={async (e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+
+                            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                            if (files.length === 0) {
+                                alert('Please drop image files only');
+                                return;
+                            }
+
+                            // Upload first file
+                            const file = files[0];
+                            setIsUploading(true);
+                            setUploadProgress(0);
+
+                            try {
+                                const API_URL = getApiUrl();
+                                const formData = new FormData();
+                                formData.append('file', file);
+
+                                const res = await uploadWithProgress(`${API_URL}/api/upload`, formData);
+
+                                let currentImages = [];
+                                try {
+                                    currentImages = JSON.parse(settings.ciplx_images_json || "[]");
+                                } catch (e) { currentImages = []; }
+
+                                const newImages = [...currentImages, res.url];
+                                await handleSettingsUpdate({ ciplx_images_json: JSON.stringify(newImages) });
+
+                            } catch (error) {
+                                console.error("Upload error:", error);
+                                alert("Failed to upload image");
+                            } finally {
+                                setIsUploading(false);
+                                setUploadProgress(0);
+                            }
+                        }}
+                    >
+                        <ImageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-lg font-medium text-gray-700 mb-2">
+                            {isDragging ? 'Drop your image here!' : 'Drag & Drop your image here'}
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">or</p>
+                        <label className="inline-flex items-center gap-2 px-6 py-3 bg-copper text-white rounded-lg hover:bg-heritage transition-colors cursor-pointer">
+                            <Plus size={18} />
+                            {isUploading ? 'Uploading...' : 'Browse Files'}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={isUploading}
+                                onChange={async (e) => {
+                                    if (!e.target.files[0]) return;
+                                    setIsUploading(true);
+                                    setUploadProgress(0);
+                                    try {
+                                        const API_URL = getApiUrl();
+                                        const formData = new FormData();
+                                        formData.append('file', e.target.files[0]);
+
+                                        const res = await uploadWithProgress(`${API_URL}/api/upload`, formData);
+
+                                        let currentImages = [];
+                                        try {
+                                            currentImages = JSON.parse(settings.ciplx_images_json || "[]");
+                                        } catch (e) { currentImages = []; }
+
+                                        const newImages = [...currentImages, res.url];
+                                        await handleSettingsUpdate({ ciplx_images_json: JSON.stringify(newImages) });
+
+                                    } catch (error) {
+                                        console.error("Upload error:", error);
+                                        alert("Failed to upload image");
+                                    } finally {
+                                        setIsUploading(false);
+                                        setUploadProgress(0);
+                                    }
+                                }}
+                            />
+                        </label>
+                    </div>
+
+                    {isUploading && (
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                            <div className="bg-copper h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                            <p className="text-center text-xs mt-1 text-gray-600">{uploadProgress}% Uploading...</p>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {(() => {
+                            let images = [];
+                            try {
+                                images = JSON.parse(settings.ciplx_images_json || "[]");
+                            } catch (e) { images = []; }
+
+                            if (images.length === 0) {
+                                return (
+                                    <div className="col-span-full py-12 text-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                        <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                        <p className="text-gray-500">No images uploaded for Ciplx slideshow yet.</p>
+                                        <p className="text-sm text-gray-400 mt-1">Upload images to start the slideshow.</p>
+                                    </div>
+                                );
+                            }
+
+                            return images.map((url, index) => (
+                                <div key={index} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group relative">
+                                    <div className="aspect-[3/4] relative bg-gray-100">
+                                        <img src={url} alt={`Slide ${index + 1}`} className="w-full h-full object-cover" />
+                                        <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                            Slide {index + 1}
+                                        </div>
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm('Delete this image?')) return;
+                                                    let current = [];
+                                                    try { current = JSON.parse(settings.ciplx_images_json || "[]"); } catch (e) { }
+                                                    const newImages = current.filter((_, i) => i !== index);
+                                                    await handleSettingsUpdate({ ciplx_images_json: JSON.stringify(newImages) });
+                                                }}
+                                                className="p-3 bg-white text-red-500 rounded-full hover:bg-red-50 transition-colors"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ));
+                        })()}
+                    </div>
                 </div>
             )}
 

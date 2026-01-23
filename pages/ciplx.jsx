@@ -56,6 +56,44 @@ export default function Ciplx() {
         return settings.ciplx_video_desktop || settings.ciplx_video_mobile;
     };
 
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    // Placeholder slides - In a real scenario, these might come from settings or a CMS
+    // For now, we use the settings image + some high-quality placeholders/duplicates to demonstrate the effect
+    // Placeholder slides - In a real scenario, these might come from settings or a CMS
+    // For now, we use the settings image + some high-quality placeholders/duplicates to demonstrate the effect
+    const getSlides = () => {
+        // 1. Try to get images from new JSON list
+        if (settings && settings.ciplx_images_json) {
+            try {
+                const images = JSON.parse(settings.ciplx_images_json);
+                if (images.length > 0) return images;
+            } catch (e) {
+                console.error("Error parsing ciplx images", e);
+            }
+        }
+
+        // 2. Fallback to existing logic (Single Image + Placeholders if needed)
+        const primaryImage = getSource();
+        if (!primaryImage) return [];
+        return [
+            primaryImage,
+            // Only add placeholders if strictly needed for demo, otherwise if user uploaded images, we use those.
+        ];
+    };
+
+    const slides = getSlides();
+
+    useEffect(() => {
+        if (slides.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % slides.length);
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, [slides.length]);
+
     const currentUrl = getSource();
     const currentIsVideo = isVideo(currentUrl);
 
@@ -86,12 +124,25 @@ export default function Ciplx() {
                             }
                         }}
                     />
-                ) : currentUrl ? (
-                    <img
-                        src={currentUrl}
-                        alt="Ciplx by Varaha Heaths"
-                        className="w-full h-full object-cover"
-                    />
+                ) : slides.length > 0 ? (
+                    // Slideshow Container
+                    <div className="relative w-full h-full">
+                        {slides.map((slide, index) => (
+                            <div
+                                key={index}
+                                className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                                    }`}
+                            >
+                                <img
+                                    src={slide}
+                                    alt={`Ciplx Slide ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                />
+                                {/* Optional Overlay for better text readability if needed */}
+                                <div className="absolute inset-0 bg-black/20"></div>
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-white text-center px-4">
                         <h1 className="text-4xl font-royal font-bold mb-4">Ciplx</h1>
