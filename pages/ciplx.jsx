@@ -58,28 +58,29 @@ export default function Ciplx() {
 
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    // Placeholder slides - In a real scenario, these might come from settings or a CMS
-    // For now, we use the settings image + some high-quality placeholders/duplicates to demonstrate the effect
-    // Placeholder slides - In a real scenario, these might come from settings or a CMS
-    // For now, we use the settings image + some high-quality placeholders/duplicates to demonstrate the effect
+    // Get slides with uploaded images first (2 sec each) + hero image last (7 sec)
     const getSlides = () => {
-        // 1. Try to get images from new JSON list
+        let slides = [];
+
+        // 1. Add uploaded images from CMS first (2 seconds each)
         if (settings && settings.ciplx_images_json) {
             try {
-                const images = JSON.parse(settings.ciplx_images_json);
-                if (images.length > 0) return images;
+                const uploadedImages = JSON.parse(settings.ciplx_images_json);
+                uploadedImages.forEach(img => {
+                    slides.push({ url: img, duration: 2000, type: 'uploaded' });
+                });
             } catch (e) {
                 console.error("Error parsing ciplx images", e);
             }
         }
 
-        // 2. Fallback to existing logic (Single Image + Placeholders if needed)
-        const primaryImage = getSource();
-        if (!primaryImage) return [];
-        return [
-            primaryImage,
-            // Only add placeholders if strictly needed for demo, otherwise if user uploaded images, we use those.
-        ];
+        // 2. Add hero image last (if exists) - will display for 7 seconds
+        const heroImage = getSource();
+        if (heroImage && !isVideo(heroImage)) {
+            slides.push({ url: heroImage, duration: 7000, type: 'hero' });
+        }
+
+        return slides;
     };
 
     const slides = getSlides();
@@ -87,12 +88,15 @@ export default function Ciplx() {
     useEffect(() => {
         if (slides.length <= 1) return;
 
+        // Dynamic interval based on current slide's duration
+        const currentSlideDuration = slides[currentSlide]?.duration || 2000;
+
         const interval = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % slides.length);
-        }, 2000);
+        }, currentSlideDuration);
 
         return () => clearInterval(interval);
-    }, [slides.length]);
+    }, [slides.length, currentSlide, slides]);
 
     const currentUrl = getSource();
     const currentIsVideo = isVideo(currentUrl);
@@ -134,8 +138,8 @@ export default function Ciplx() {
                                     }`}
                             >
                                 <img
-                                    src={slide}
-                                    alt={`Ciplx Slide ${index + 1}`}
+                                    src={slide.url}
+                                    alt={`Ciplx ${slide.type === 'hero' ? 'Hero' : 'Slide'} ${index + 1}`}
                                     className="w-full h-full object-cover"
                                 />
                                 {/* Optional Overlay for better text readability if needed */}
