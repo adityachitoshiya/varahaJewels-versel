@@ -3,10 +3,11 @@ import Head from 'next/head';
 import { getApiUrl } from '../lib/config';
 
 export default function Ciplx() {
-    const [mediaUrl, setMediaUrl] = useState('');
+    const [settings, setSettings] = useState(null);
     const [mediaType, setMediaType] = useState(''); // 'image' or 'video'
     const [isMobile, setIsMobile] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [videoEnded, setVideoEnded] = useState(false);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -25,20 +26,7 @@ export default function Ciplx() {
             const res = await fetch(`${API_URL}/api/settings`);
             if (res.ok) {
                 const data = await res.json();
-                // Use mobile/desktop media based on screen size
-                const url = isMobile
-                    ? (data.ciplx_video_mobile || data.ciplx_video_desktop)
-                    : (data.ciplx_video_desktop || data.ciplx_video_mobile);
-
-                if (url) {
-                    setMediaUrl(url);
-                    // Detect type from URL
-                    if (url.match(/\.(mp4|mov|webm|avi)$/i) || url.includes('/video/')) {
-                        setMediaType('video');
-                    } else {
-                        setMediaType('image');
-                    }
-                }
+                setSettings(data);
             }
         } catch (e) {
             console.error("Error fetching settings", e);
@@ -47,12 +35,29 @@ export default function Ciplx() {
         }
     };
 
-    // Refetch when isMobile changes
-    useEffect(() => {
-        if (!isLoading) {
-            fetchSettings();
+    const isVideo = (url) => {
+        if (!url) return false;
+        return url.match(/\.(mp4|mov|webm|avi)(\?.*)?$/i) || url.includes('/video/');
+    };
+
+    const getSource = () => {
+        if (!settings) return null;
+
+        if (isMobile) {
+            // On mobile: if video ended, show desktop version (usually poster/image)
+            // Or if no mobile video, show desktop version
+            if (videoEnded) {
+                return settings.ciplx_video_desktop;
+            }
+            return settings.ciplx_video_mobile || settings.ciplx_video_desktop;
         }
-    }, [isMobile]);
+
+        // Desktop
+        return settings.ciplx_video_desktop || settings.ciplx_video_mobile;
+    };
+
+    const currentUrl = getSource();
+    const currentIsVideo = isVideo(currentUrl);
 
     return (
         <>
@@ -66,18 +71,24 @@ export default function Ciplx() {
                     <div className="w-full h-full flex items-center justify-center">
                         <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                     </div>
-                ) : mediaUrl && mediaType === 'video' ? (
+                ) : currentUrl && currentIsVideo ? (
                     <video
+                        key={currentUrl} // Re-render if URL changes
                         className="w-full h-full object-cover"
-                        src={mediaUrl}
+                        src={currentUrl}
                         autoPlay
-                        loop
+                        loop={!isMobile} // Loop on desktop, play once on mobile
                         muted
                         playsInline
+                        onEnded={() => {
+                            if (isMobile) {
+                                setVideoEnded(true);
+                            }
+                        }}
                     />
-                ) : mediaUrl && mediaType === 'image' ? (
+                ) : currentUrl ? (
                     <img
-                        src={mediaUrl}
+                        src={currentUrl}
                         alt="Ciplx by Varaha Heaths"
                         className="w-full h-full object-cover"
                     />

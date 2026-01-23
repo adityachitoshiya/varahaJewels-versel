@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getApiUrl } from '../../lib/config';
+import { processReturnImages } from '../../lib/imageUpload';
 import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../../components/Header';
@@ -99,9 +100,12 @@ export default function OrderDetails() {
     const [showReturnForm, setShowReturnForm] = useState(false);
     const [returnReason, setReturnReason] = useState('');
     const [returnDescription, setReturnDescription] = useState('');
-    const [returnImages, setReturnImages] = useState('');
+    const [returnImageFiles, setReturnImageFiles] = useState([]);
+    const [returnImageUrls, setReturnImageUrls] = useState([]);
+    const [uploadProgress, setUploadProgress] = useState(null);
     const [submittingReturn, setSubmittingReturn] = useState(false);
     const [returnSubmitted, setReturnSubmitted] = useState(false);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (orderId) {
@@ -203,6 +207,16 @@ export default function OrderDetails() {
         try {
             const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
 
+            // Process and upload images if any
+            let imageUrls = [];
+            if (returnImageFiles.length > 0) {
+                setUploadProgress({ current: 0, total: returnImageFiles.length, status: 'Starting upload...' });
+                imageUrls = await processReturnImages(returnImageFiles, setUploadProgress);
+                setReturnImageUrls(imageUrls);
+            }
+
+            setUploadProgress({ status: 'Submitting return request...' });
+
             const response = await fetch(`${getApiUrl()}/api/customer/returns`, {
                 method: 'POST',
                 headers: {
@@ -213,7 +227,7 @@ export default function OrderDetails() {
                     order_id: order.order_id,
                     reason: returnReason,
                     description: returnDescription || null,
-                    images: returnImages ? returnImages.split(',').map(url => url.trim()).filter(url => url) : []
+                    images: imageUrls
                 })
             });
 
@@ -230,7 +244,17 @@ export default function OrderDetails() {
             alert("Error submitting return request. Please try again.");
         } finally {
             setSubmittingReturn(false);
+            setUploadProgress(null);
         }
+    };
+
+    const handleImageSelect = (e) => {
+        const files = Array.from(e.target.files).slice(0, 5); // Max 5 images
+        setReturnImageFiles(files);
+    };
+
+    const removeImage = (index) => {
+        setReturnImageFiles(prev => prev.filter((_, i) => i !== index));
     };
 
     if (loading) {
@@ -412,15 +436,56 @@ export default function OrderDetails() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-heritage mb-2">Product Images (Optional)</label>
+                                        <label className="block text-sm font-medium text-heritage mb-2">Product Images (Optional, max 5)</label>
                                         <input
-                                            type="text"
-                                            value={returnImages}
-                                            onChange={(e) => setReturnImages(e.target.value)}
-                                            className="w-full p-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-copper focus:border-copper"
-                                            placeholder="Paste image URL(s) separated by comma..."
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleImageSelect}
+                                            className="hidden"
                                         />
-                                        <p className="text-xs text-heritage/50 mt-1">Upload images to any image host and paste links here</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-copper transition-colors text-center"
+                                        >
+                                            <Upload className="mx-auto mb-2 text-heritage/50" size={24} />
+                                            <span className="text-sm text-heritage/70">Click to upload images</span>
+                                            <p className="text-xs text-heritage/40 mt-1">Images will be compressed automatically</p>
+                                        </button>
+
+                                        {/* Image Previews */}
+                                        {returnImageFiles.length > 0 && (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {returnImageFiles.map((file, idx) => (
+                                                    <div key={idx} className="relative w-16 h-16">
+                                                        <img
+                                                            src={URL.createObjectURL(file)}
+                                                            alt={file.name}
+                                                            className="w-full h-full object-cover rounded-lg border border-gray-200"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeImage(idx)}
+                                                            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Upload Progress */}
+                                        {uploadProgress && (
+                                            <div className="mt-3 bg-copper/10 rounded-lg p-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 border-2 border-copper border-t-transparent rounded-full animate-spin"></div>
+                                                    <span className="text-sm text-heritage">{uploadProgress.status}</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
