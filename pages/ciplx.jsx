@@ -8,6 +8,8 @@ export default function Ciplx() {
     const [isMobile, setIsMobile] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [videoEnded, setVideoEnded] = useState(false);
+    const [audioStarted, setAudioStarted] = useState(false);
+    const audioRef = useState(null);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -108,17 +110,29 @@ export default function Ciplx() {
                 <meta name="description" content="Ciplx by Varaha Heaths - Premium Health & Wellness" />
             </Head>
 
-            <div className="fixed inset-0 w-full h-full bg-black">
+            <div
+                className="fixed inset-0 w-full h-full bg-black"
+                onClick={() => {
+                    // Start audio on first click (browser autoplay policy)
+                    if (!audioStarted && audioRef[0]) {
+                        audioRef[0].play().catch(err => console.log('Audio play failed:', err));
+                        setAudioStarted(true);
+                    }
+                }}
+            >
                 {/* Background Music */}
                 {settings && settings.ciplx_music_url && (
                     <audio
                         src={settings.ciplx_music_url}
-                        autoPlay
                         loop
-                        volume={settings.ciplx_music_volume || 0.4}
                         ref={(audio) => {
                             if (audio) {
+                                audioRef[1](audio);
                                 audio.volume = settings.ciplx_music_volume || 0.4;
+                                // Try autoplay, fallback to click
+                                audio.play().catch(() => {
+                                    console.log('Autoplay blocked, waiting for user click');
+                                });
                             }
                         }}
                     />
