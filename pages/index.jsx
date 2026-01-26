@@ -4,9 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
 import dynamic from 'next/dynamic';
-import HeroSection from '../components/homepage/HeroSection';
-import FeaturedCollections from '../components/homepage/FeaturedCollections';
-import ProductSpotlight from '../components/homepage/ProductSpotlight';
+const HeroSection = dynamic(() => import('../components/homepage/HeroSection'));
+// Lazy load below-fold components
+const FeaturedCollections = dynamic(() => import('../components/homepage/FeaturedCollections'), {
+  loading: () => <div className="h-96 w-full bg-warm-sand/20 animate-pulse rounded-sm" />
+});
+const ProductSpotlight = dynamic(() => import('../components/homepage/ProductSpotlight'), {
+  loading: () => <div className="h-96 w-full bg-white animate-pulse" />
+});
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BackToTop from '../components/BackToTop';
