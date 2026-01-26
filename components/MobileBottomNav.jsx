@@ -31,6 +31,7 @@ export default function MobileBottomNav({ wishlistCount = 0 }) {
                             <Link
                                 key={item.name}
                                 href={item.path}
+                                prefetch={false}
                                 className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${active ? 'text-royal-orange' : 'text-heritage/60 hover:text-heritage'
                                     }`}
                             >

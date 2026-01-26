@@ -3,18 +3,20 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
+import dynamic from 'next/dynamic';
 import HeroSection from '../components/homepage/HeroSection';
 import FeaturedCollections from '../components/homepage/FeaturedCollections';
 import ProductSpotlight from '../components/homepage/ProductSpotlight';
-import TestimonialsSection from '../components/homepage/TestimonialsSection';
-import CreatorShowcase from '../components/homepage/CreatorShowcase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import LaunchCountdown from '../components/LaunchCountdown';
 import BackToTop from '../components/BackToTop';
 import DeliveryBar from '../components/DeliveryBar';
 import PremiumLoader from '../components/PremiumLoader';
-import SpinWheelPopup from '../components/SpinWheelPopup';
+
+const TestimonialsSection = dynamic(() => import('../components/homepage/TestimonialsSection'));
+const CreatorShowcase = dynamic(() => import('../components/homepage/CreatorShowcase'));
+const LaunchCountdown = dynamic(() => import('../components/LaunchCountdown'), { ssr: false });
+const SpinWheelPopup = dynamic(() => import('../components/SpinWheelPopup'), { ssr: false });
 
 export default function Home({ heroSlides, initialSettings }) {
   // Initialize from SSG props

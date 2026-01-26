@@ -103,6 +103,8 @@ export default function HeroSection({ initialSlides }) {
                 alt={slide.title}
                 className="w-full h-full object-cover"
                 priority={index === 0}
+                quality={75}
+                sizes="100vw"
               />
             </div>
 
@@ -113,6 +115,8 @@ export default function HeroSection({ initialSlides }) {
                 alt={slide.title}
                 className="w-full h-full object-cover"
                 priority={index === 0}
+                quality={75}
+                sizes="100vw"
               />
             </div>
             {/* Soft warm lighting overlay */}

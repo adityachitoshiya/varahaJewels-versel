@@ -115,7 +115,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
-            <Link href="/" className="flex flex-col items-start sm:items-center justify-center group py-2 flex-shrink min-w-0">
+            <Link href="/" prefetch={false} className="flex flex-col items-start sm:items-center justify-center group py-2 flex-shrink min-w-0">
               <Image
                 src="/varaha-assets/logo.png"
                 alt="Varaha Jewels"
@@ -131,20 +131,20 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-10">
-              <Link href="/shop" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+              <Link href="/shop" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Collections
               </Link>
-              <Link href="/ciplx" className="group flex flex-col items-center justify-center text-center leading-tight text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+              <Link href="/ciplx" prefetch={false} className="group flex flex-col items-center justify-center text-center leading-tight text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 <span>Ciplx</span>
                 <span className="text-[9px] font-normal tracking-wide opacity-80 group-hover:opacity-100">by varaha heaths</span>
               </Link>
-              <Link href="/heritage" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+              <Link href="/heritage" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Heritage
               </Link>
-              <Link href="/new-arrivals" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+              <Link href="/new-arrivals" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 New Arrivals
               </Link>
-              <Link href="/contact" className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+              <Link href="/contact" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Contact
               </Link>
             </nav>
@@ -163,6 +163,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
               {/* Wishlist - Visible on desktop only now (moved to bottom nav for mobile) */}
               <Link
                 href="/wishlist"
+                prefetch={false}
                 className="hidden lg:flex relative items-center justify-center w-10 h-10 text-heritage hover:text-copper transition-colors duration-200 group flex-shrink-0"
                 aria-label="Wishlist"
               >
@@ -204,6 +205,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 ) : (
                   <Link
                     href="/login"
+                    prefetch={false}
                     className="flex items-center justify-center w-10 h-10 text-heritage hover:text-copper transition-colors duration-200 flex-shrink-0"
                     aria-label="Sign In"
                   >
@@ -296,6 +298,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 ) : (
                   <Link
                     href="/login"
+                    prefetch={false}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="block w-full text-center py-2.5 bg-heritage text-white rounded-lg font-medium hover:bg-heritage/90 transition-colors shadow-sm"
                   >
@@ -307,6 +310,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
               {/* Menu Items with staggered animation */}
               <Link
                 href="/shop"
+                prefetch={false}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
               >
@@ -320,6 +324,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
               <Link
                 href="/ciplx"
+                prefetch={false}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
                 style={{ animationDelay: '50ms' }}
@@ -337,6 +342,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
               <Link
                 href="/heritage"
+                prefetch={false}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
                 style={{ animationDelay: '100ms' }}
@@ -351,6 +357,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
               <Link
                 href="/new-arrivals"
+                prefetch={false}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
                 style={{ animationDelay: '150ms' }}
@@ -365,6 +372,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
               <Link
                 href="/contact"
+                prefetch={false}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
                 style={{ animationDelay: '200ms' }}
@@ -380,6 +388,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
               {/* Wishlist Link - Mobile Menu */}
               <Link
                 href="/wishlist"
+                prefetch={false}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="group block relative overflow-hidden"
                 style={{ animationDelay: '250ms' }}

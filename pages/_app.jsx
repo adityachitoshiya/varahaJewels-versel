@@ -1,18 +1,19 @@
 import { useEffect } from 'react';
 import Head from 'next/head';
 import { getApiUrl } from '../lib/config';
+import dynamic from 'next/dynamic';
 import '../lib/firebase'; // Initialize Firebase
 import '../styles/globals.css';
-import CookieConsent from '../components/CookieConsent';
 import DeliveryBar from '../components/DeliveryBar';
 import AnnouncementBar from '../components/AnnouncementBar';
-import SpinWheelPopup from '../components/SpinWheelPopup';
 import { useRouter } from 'next/router';
 import { CartProvider } from '../context/CartContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+const CookieConsent = dynamic(() => import('../components/CookieConsent'), { ssr: false });
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
@@ -100,7 +101,6 @@ function MyApp({ Component, pageProps }) {
           <SpeedInsights />
 
           <CookieConsent />
-          <SpinWheelPopup />
 
           {/* Mobile Bottom Nav - Hidden on Product, Checkout, Ciplx & Heritage Pages */}
           {!router.pathname.startsWith('/product/') && router.pathname !== '/checkout' && !isCiplx && !isHeritage && (

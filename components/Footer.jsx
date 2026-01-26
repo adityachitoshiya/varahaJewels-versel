@@ -260,7 +260,7 @@ export default function Footer() {
               <ul className="space-y-3 text-sm text-warm-sand/80">
                 {['Heritage', 'Bridal', 'Exclusive', 'New Arrivals', 'Best Sellers'].map((item) => (
                   <li key={item}>
-                    <Link href="/shop" className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
+                    <Link href="/shop" prefetch={false} className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-1">→</span>
                       {item}
                     </Link>
@@ -284,7 +284,7 @@ export default function Footer() {
                   { label: 'Size Guide', href: '/size-guide' }
                 ].map((item) => (
                   <li key={item.label}>
-                    <Link href={item.href} className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
+                    <Link href={item.href} prefetch={false} className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-1">→</span>
                       {item.label}
                     </Link>
@@ -311,6 +311,7 @@ export default function Footer() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
+                      prefetch={false}
                       className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group"
                     >
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-1">→</span>
