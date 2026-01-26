@@ -11,6 +11,7 @@ const creators = [
     platform: "instagram",
     followers: "2.5M",
     videoUrl: "/varaha-assets/creator1.mp4",
+    thumbnail: "/varaha-assets/creator1-thumb.jpg", // Fallback if regular thumb not avail
     product: "Heritage Kundan Necklace",
     verified: true
   },
@@ -21,6 +22,7 @@ const creators = [
     platform: "youtube",
     followers: "1.8M",
     videoUrl: "/varaha-assets/creator2.mp4",
+    thumbnail: "/varaha-assets/creator2-thumb.jpg",
     product: "Traditional Jhumka Earrings",
     verified: true
   },
@@ -31,6 +33,7 @@ const creators = [
     platform: "instagram",
     followers: "3.2M",
     videoUrl: "/varaha-assets/creator3.mp4",
+    thumbnail: "/varaha-assets/creator3-thumb.jpg",
     product: "Polki Diamond Bangles",
     verified: true
   },
@@ -41,6 +44,7 @@ const creators = [
     platform: "instagram",
     followers: "950K",
     videoUrl: "/varaha-assets/creator4.mp4",
+    thumbnail: "/varaha-assets/creator4-thumb.jpg",
     product: "Gold Maang Tikka",
     verified: true
   },
@@ -51,6 +55,7 @@ const creators = [
     platform: "youtube",
     followers: "2.1M",
     videoUrl: "/varaha-assets/creator5.mp4",
+    thumbnail: "/varaha-assets/creator5-thumb.jpg",
     product: "Temple Jewelry Collection",
     verified: true
   }
@@ -399,8 +404,9 @@ export default function CreatorShowcase() {
 function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onToggleMute }) {
   const localVideoRef = useRef(null);
   const [videoError, setVideoError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Initially false, facade handles it
   const [localIsPlaying, setLocalIsPlaying] = useState(false);
+  const [showVideo, setShowVideo] = useState(false); // New Facade State
 
   // Handle both callback ref and local ref
   const setVideoRef = (element) => {
@@ -459,32 +465,53 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
   return (
     <div className="relative group w-full max-w-[280px] sm:max-w-[300px] md:max-w-[320px] mx-auto">
       {/* 9:16 Video Container */}
-      <div className="relative w-full aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-black shadow-2xl">
-        {/* Video Element */}
-        <video
-          ref={setVideoRef}
-          src={creator.videoUrl}
-          className="w-full h-full object-cover"
-          loop
-          playsInline
-          webkit-playsinline="true"
-          x5-playsinline="true"
-          muted={isMuted}
-          preload="auto"
-          onLoadedData={handleLoadedData}
-          onError={handleVideoError}
-          onLoadedMetadata={(e) => console.log('Video metadata loaded:', creator.id, e.target.videoWidth, 'x', e.target.videoHeight)}
-          onCanPlay={(e) => console.log('Video can play:', creator.id)}
-          onPlaying={(e) => console.log('Video playing event:', creator.id)}
-          onTimeUpdate={(e) => {
-            // Only log occasionally to avoid spam
-            if (Math.floor(e.target.currentTime * 10) % 10 === 0) {
-              console.log('Video time update:', creator.id, 'Time:', e.target.currentTime.toFixed(2));
-            }
-          }}
-          style={{ backgroundColor: '#000', display: 'block' }}
-          controlsList="nodownload"
-        />
+      <div
+        className="relative w-full aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-black shadow-2xl"
+        onClick={() => {
+          if (!showVideo) {
+            setShowVideo(true);
+            // Small delay to let video render then play
+            setTimeout(onTogglePlay, 100);
+          } else {
+            onTogglePlay();
+          }
+        }}
+      >
+        {/* Video Element (Conditional) */}
+        {showVideo ? (
+          <video
+            ref={setVideoRef}
+            src={creator.videoUrl}
+            className="w-full h-full object-cover"
+            loop
+            playsInline
+            webkit-playsinline="true"
+            x5-playsinline="true"
+            muted={isMuted}
+            autoPlay
+            onLoadedData={() => setIsLoading(false)}
+            onError={handleVideoError}
+            style={{ backgroundColor: '#000', display: 'block' }}
+            controlsList="nodownload"
+          />
+        ) : (
+          // FACADE IMAGE
+          <div className="absolute inset-0 w-full h-full">
+            {/* Use the video as a poster? Or a specific image. 
+                   If no thumb, we can use a generic gradient or specific placeholder 
+               */}
+            <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+              <div className="text-white/20 font-royal text-4xl">Varaha</div>
+            </div>
+            {/* Could use ShimmerImage here if imported, but for now simple facade */}
+            <img
+              src={creator.thumbnail || "/varaha-assets/logo.png"}
+              alt={creator.name}
+              className="w-full h-full object-cover opacity-80"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+        )}
 
         {/* Loading Indicator */}
         {isLoading && !videoError && (
@@ -504,10 +531,7 @@ function VideoCard({ creator, videoRef, isPlaying, isMuted, onTogglePlay, onTogg
         )}
 
         {/* Overlay Click Handler - covers entire video for Play/Pause */}
-        <div
-          className="absolute inset-0 z-20 cursor-pointer"
-          onClick={onTogglePlay}
-        ></div>
+        {/* Moved click handler to container for smoother facade transition */}
 
         {/* Overlay Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none"></div>
