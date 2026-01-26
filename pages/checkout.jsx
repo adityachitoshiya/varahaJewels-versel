@@ -9,8 +9,8 @@ import Script from 'next/script'; // Import Script for Razorpay
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
-import GuestVerification from '../components/checkout/GuestVerification'; // NEW COMPONENT
-import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle } from 'lucide-react';
+import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
+import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User } from 'lucide-react';
 import { useMsg91OTP } from '../hooks/useMsg91OTP';
 
 import { useCart } from '../context/CartContext';
@@ -59,8 +59,8 @@ export default function Checkout() {
   const [serviceabilityMsg, setServiceabilityMsg] = useState("");
 
   // OTP Verification States (for guest checkout)
-  const [isPhoneVerified, setIsPhoneVerified] = useState(true); // Default to TRUE to bypass SMS verification
-  // const [isOtpLoading, setIsOtpLoading] = useState(false); // Removed in favor of GuestVerification component state
+  // const [isPhoneVerified, setIsPhoneVerified] = useState(true); // Removed - No Guest Checkout
+  // const [isOtpLoading, setIsOtpLoading] = useState(false); // Removed
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check if user is logged in
@@ -68,24 +68,14 @@ export default function Checkout() {
     const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
     if (token) {
       setIsLoggedIn(true);
-      setIsPhoneVerified(true); // Logged in users are already verified
+      setIsLoggedIn(true);
+      // setIsPhoneVerified(true); // Not needed anymore
     }
   }, []);
 
   // Guest Verification Success Handler
-  const handleGuestVerificationSuccess = (data) => {
-    setIsPhoneVerified(true);
-    setFormData(prev => ({
-      ...prev,
-      email: data.email,
-      contact: data.phone
-    }));
-
-    if (data.auth_token) {
-      localStorage.setItem('customer_token', data.auth_token);
-      setIsLoggedIn(true);
-    }
-  };
+  // REMOVED: handleGuestVerificationSuccess
+  // Guest checkout is disabled. Users ONLY proceed if logged in.
 
   useEffect(() => {
     // Check if coming from cart or direct product checkout
@@ -652,11 +642,38 @@ export default function Checkout() {
 
           {/* STEP 1: VERIFICATION or ADDRESS */}
           {currentStep === 1 && (
-            ((!isLoggedIn && !isPhoneVerified) && false) ? ( // Force skip GuestVerification for now
-              <GuestVerification onVerificationSuccess={handleGuestVerificationSuccess} />
+
+            !isLoggedIn ? (
+              // LOGIN REQUIRED PROMPT
+              <div className="max-w-md mx-auto bg-white rounded-2xl shadow-sm p-8 text-center animate-fadeIn border border-heritage/10 mt-12">
+                <div className="w-16 h-16 bg-heritage/10 text-heritage rounded-full flex items-center justify-center mx-auto mb-6">
+                  <User size={32} />
+                </div>
+                <h2 className="text-2xl font-bold text-heritage mb-3 font-royal">Login Required</h2>
+                <p className="text-gray-500 mb-8 leading-relaxed">
+                  To ensure a secure checkout and order tracking, please log in or create an account to proceed.
+                </p>
+                <div className="space-y-4">
+                  <Link
+                    href="/login?redirect=/checkout"
+                    className="block w-full py-4 bg-heritage text-white font-bold rounded-xl shadow-lg hover:bg-heritage/90 hover:shadow-xl transition-all transform hover:-translate-y-1"
+                  >
+                    Login / Sign Up
+                  </Link>
+                  <Link href="/cart" className="block text-sm text-heritage/60 hover:text-heritage font-medium">
+                    Return to Cart
+                  </Link>
+                </div>
+              </div>
             ) : (
+              // LOGGED IN - SHOW ADDRESS FORM
               <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm p-6 lg:p-10 animate-fadeIn">
-                <h2 className="text-2xl font-bold text-heritage mb-8 text-center font-royal">Shipping Details</h2>
+                <div className="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
+                  <h2 className="text-2xl font-bold text-heritage font-royal">Shipping Details</h2>
+                  <div className="text-sm text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 font-medium">
+                    <CheckCircle size={14} /> Logged In
+                  </div>
+                </div>
 
                 <form onSubmit={(e) => { e.preventDefault(); handleContinueToStep2(); }} className="space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

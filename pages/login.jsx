@@ -9,7 +9,7 @@ import TelegramLoginModal from '../components/TelegramLoginModal';
 
 export default function Login() {
     const router = useRouter();
-    const { registered, check_email } = router.query;
+    const { registered, check_email, redirect } = router.query;
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -51,7 +51,11 @@ export default function Login() {
                 window.history.replaceState(null, null, window.location.pathname);
             }
 
-            setTimeout(() => router.push('/'), 100);
+            if (redirect) {
+                setTimeout(() => router.push(redirect), 100);
+            } else {
+                setTimeout(() => router.push('/'), 100);
+            }
         };
 
         // Only auto-login if returning from OAuth (hash present)
@@ -193,7 +197,11 @@ export default function Login() {
                     console.log('Backend sync skipped:', syncErr);
                 }
 
-                router.push('/');
+                if (redirect) {
+                    router.push(redirect);
+                } else {
+                    router.push('/');
+                }
             }
         } catch (err) {
             console.error("Login Failed:", err);
@@ -250,7 +258,8 @@ export default function Login() {
                     (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
                         ? window.location.origin
                         : 'https://newvaraha-nwbd.vercel.app');
-                const redirectTo = `${siteUrl}/login`;
+                // Append current redirect param to the callback URL so it persists
+                const redirectTo = `${siteUrl}/login${redirect ? `?redirect=${redirect}` : ''}`;
 
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
@@ -299,7 +308,7 @@ export default function Login() {
                 localStorage.setItem('customer_user', JSON.stringify(userData));
 
                 setSuccessMsg("Logged in with Telegram!");
-                setTimeout(() => router.push('/'), 500);
+                setTimeout(() => router.push(redirect || '/'), 500);
             } else {
                 throw new Error("Telegram authentication failed");
             }
