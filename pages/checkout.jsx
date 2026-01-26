@@ -9,7 +9,7 @@ import Script from 'next/script'; // Import Script for Razorpay
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
-import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
+
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User } from 'lucide-react';
 import { useMsg91OTP } from '../hooks/useMsg91OTP';
 
@@ -68,7 +68,7 @@ export default function Checkout() {
     const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
     if (token) {
       setIsLoggedIn(true);
-      setIsLoggedIn(true);
+
       // setIsPhoneVerified(true); // Not needed anymore
     }
   }, []);
