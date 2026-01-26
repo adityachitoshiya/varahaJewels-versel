@@ -9,6 +9,7 @@ import Script from 'next/script'; // Import Script for Razorpay
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
+import GuestVerification from '../components/checkout/GuestVerification'; // NEW COMPONENT
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle } from 'lucide-react';
 import { useMsg91OTP } from '../hooks/useMsg91OTP';
 
@@ -58,8 +59,8 @@ export default function Checkout() {
   const [serviceabilityMsg, setServiceabilityMsg] = useState("");
 
   // OTP Verification States (for guest checkout)
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [isOtpLoading, setIsOtpLoading] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(true); // Default to TRUE to bypass SMS verification
+  // const [isOtpLoading, setIsOtpLoading] = useState(false); // Removed in favor of GuestVerification component state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check if user is logged in
@@ -71,55 +72,20 @@ export default function Checkout() {
     }
   }, []);
 
-  // MSG91 OTP Hook
-  const { initOTP, isLoaded: isOtpReady } = useMsg91OTP({
-    onSuccess: async (data) => {
-      console.log('OTP Verified:', data);
-      setIsOtpLoading(true);
+  // Guest Verification Success Handler
+  const handleGuestVerificationSuccess = (data) => {
+    setIsPhoneVerified(true);
+    setFormData(prev => ({
+      ...prev,
+      email: data.email,
+      contact: data.phone
+    }));
 
-      try {
-        // Verify with backend and create account
-        const response = await fetch(`${getApiUrl()}/api/guest/verify-and-create`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            access_token: data.token || data.accessToken,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.contact
-          })
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          setIsPhoneVerified(true);
-
-          // If account was created and token returned, save it
-          if (result.auth_token) {
-            localStorage.setItem('customer_token', result.auth_token);
-            setIsLoggedIn(true);
-          }
-
-          // Proceed to payment step
-          setCurrentStep(2);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          setError(result.detail || 'Phone verification failed');
-        }
-      } catch (err) {
-        console.error('Backend verification error:', err);
-        setError('Verification failed. Please try again.');
-      } finally {
-        setIsOtpLoading(false);
-      }
-    },
-    onFailure: (error) => {
-      console.error('OTP Failed:', error);
-      setError(error.message || 'OTP verification failed');
-      setIsOtpLoading(false);
+    if (data.auth_token) {
+      localStorage.setItem('customer_token', data.auth_token);
+      setIsLoggedIn(true);
     }
-  });
+  };
 
   useEffect(() => {
     // Check if coming from cart or direct product checkout
@@ -643,30 +609,11 @@ export default function Checkout() {
     return true;
   };
 
+
   const handleContinueToStep2 = () => {
     if (handleValidation()) {
-      // If logged in or already verified, go directly to step 2
-      if (isLoggedIn || isPhoneVerified) {
-        setCurrentStep(2);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      // Guest checkout - trigger OTP verification
-      if (!isOtpReady) {
-        setError('OTP service is loading. Please wait...');
-        return;
-      }
-
-      // Clean phone number for OTP
-      const phone = formData.contact.replace(/[^0-9]/g, '');
-      if (phone.length < 10) {
-        setError('Please enter a valid 10-digit mobile number');
-        return;
-      }
-
-      setIsOtpLoading(true);
-      initOTP(phone);
+      setCurrentStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -702,79 +649,62 @@ export default function Checkout() {
             <div className="w-1 h-1 rounded-full bg-red-500" /> {error}
           </div>}
 
-          {/* STEP 1: ADDRESS */}
+
+          {/* STEP 1: VERIFICATION or ADDRESS */}
           {currentStep === 1 && (
-            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm p-6 lg:p-10 animate-fadeIn">
-              <h2 className="text-2xl font-bold text-heritage mb-8 text-center font-royal">Shipping Details</h2>
+            ((!isLoggedIn && !isPhoneVerified) && false) ? ( // Force skip GuestVerification for now
+              <GuestVerification onVerificationSuccess={handleGuestVerificationSuccess} />
+            ) : (
+              <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm p-6 lg:p-10 animate-fadeIn">
+                <h2 className="text-2xl font-bold text-heritage mb-8 text-center font-royal">Shipping Details</h2>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleContinueToStep2(); }} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className='lg:col-span-2'>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contact Info</label>
-                    <input name="email" type="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                <form onSubmit={(e) => { e.preventDefault(); handleContinueToStep2(); }} className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className='lg:col-span-2'>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contact Info</label>
+                      <input name="email" type="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} readOnly={false} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    </div>
+
+                    <div>
+                      <input name="name" placeholder="Full Name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    </div>
+                    <div>
+                      <input name="contact" type="tel" placeholder="Mobile Number" value={formData.contact} onChange={handleInputChange} readOnly={false} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    </div>
+
+                    <div className='lg:col-span-2'>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Address</label>
+                      <input name="address" placeholder="Address (House No, Building, Street)" value={formData.address} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    </div>
+
+                    <div>
+                      <input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                      {isFlashDelivery && (
+                        <p className="text-xs font-bold text-green-600 mt-1 flex items-center gap-1 animate-pulse">
+                          {serviceabilityMsg}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <input name="city" placeholder="City" value={formData.city} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    </div>
+                    <div>
+                      <input name="state" placeholder="State" value={formData.state} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    </div>
                   </div>
 
-                  <div>
-                    <input name="name" placeholder="Full Name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                  </div>
-                  <div>
-                    <input name="contact" type="tel" placeholder="Mobile Number" value={formData.contact} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                  </div>
-
-                  <div className='lg:col-span-2'>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Address</label>
-                    <input name="address" placeholder="Address (House No, Building, Street)" value={formData.address} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                  </div>
-
-                  <div>
-                    <input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                    {isFlashDelivery && (
-                      <p className="text-xs font-bold text-green-600 mt-1 flex items-center gap-1 animate-pulse">
-                        {serviceabilityMsg}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <input name="city" placeholder="City" value={formData.city} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                  </div>
-                  <div>
-                    <input name="state" placeholder="State" value={formData.state} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isOtpLoading}
-                  className={`w-full py-4 rounded-lg font-bold uppercase tracking-wider shadow-lg mt-8 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 ${isOtpLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-heritage text-white hover:bg-heritage/90'
-                    }`}
-                >
-                  {isOtpLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Verifying...
-                    </>
-                  ) : isLoggedIn ? (
+                  <button
+                    type="submit"
+                    className="w-full py-4 rounded-lg font-bold uppercase tracking-wider shadow-lg mt-8 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 bg-heritage text-white hover:bg-heritage/90"
+                  >
                     <>
                       <CheckCircle size={18} />
                       Continue to Payment
                     </>
-                  ) : (
-                    <>
-                      <Phone size={18} />
-                      Verify Phone & Continue
-                    </>
-                  )}
-                </button>
-
-                {!isLoggedIn && (
-                  <p className="text-xs text-gray-500 text-center mt-3">
-                    📱 We'll send an OTP to verify your phone number
-                  </p>
-                )}
-              </form>
-            </div>
+                  </button>
+                </form>
+              </div>
+            )
           )}
 
           {/* STEP 2: PAYMENT LAYOUT */}
