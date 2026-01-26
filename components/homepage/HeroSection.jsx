@@ -31,6 +31,7 @@ export default function HeroSection({ initialSlides }) {
   const [slides, setSlides] = useState(initialSlides || defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [loadedSlides, setLoadedSlides] = useState([0]); // Track which slides have been allowed to load
 
   // Still fetch on mount to get updates if any (stale-while-revalidate strategy)
   useEffect(() => {
@@ -66,6 +67,25 @@ export default function HeroSection({ initialSlides }) {
     return () => clearInterval(timer);
   }, [isAutoPlaying, slides]);
 
+  // Progressive Loading Effect: Add current slide to loaded list
+  useEffect(() => {
+    if (!loadedSlides.includes(currentSlide)) {
+      setLoadedSlides(prev => [...prev, currentSlide]);
+    }
+    // Optional: Preload next slide for smoother auto-play transition
+    const nextIndex = (currentSlide + 1) % slides.length;
+    if (!loadedSlides.includes(nextIndex)) {
+      // Small delay to prioritize current slide render
+      const timer = setTimeout(() => {
+        setLoadedSlides(prev => {
+          if (!prev.includes(nextIndex)) return [...prev, nextIndex];
+          return prev;
+        });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentSlide, slides.length]);
+
   const goToSlide = (index) => {
     setCurrentSlide(index);
     setIsAutoPlaying(false);
@@ -96,29 +116,34 @@ export default function HeroSection({ initialSlides }) {
         >
           {/* Background Image */}
           <div className="absolute inset-0">
-            {/* Mobile Image */}
-            <div className="md:hidden w-full h-full">
-              <ShimmerImage
-                src={slide.mobile_image || slide.image}
-                alt={slide.title}
-                className="w-full h-full object-cover"
-                priority={index === 0}
-                quality={75}
-                sizes="100vw"
-              />
-            </div>
+            {/* Only load content if this slide has been triggered */}
+            {loadedSlides.includes(index) && (
+              <>
+                {/* Mobile Image */}
+                <div className="md:hidden w-full h-full">
+                  <ShimmerImage
+                    src={slide.mobile_image || slide.image}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                    priority={index === 0}
+                    quality={60} // Reduced quality for mobile data saving
+                    sizes="100vw"
+                  />
+                </div>
 
-            {/* Desktop Image */}
-            <div className="hidden md:block w-full h-full">
-              <ShimmerImage
-                src={slide.image}
-                alt={slide.title}
-                className="w-full h-full object-cover"
-                priority={index === 0}
-                quality={75}
-                sizes="100vw"
-              />
-            </div>
+                {/* Desktop Image */}
+                <div className="hidden md:block w-full h-full">
+                  <ShimmerImage
+                    src={slide.image}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                    priority={index === 0}
+                    quality={75}
+                    sizes="100vw"
+                  />
+                </div>
+              </>
+            )}
             {/* Soft warm lighting overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-warm-sand/70 via-warm-sand/50 to-warm-sand/70"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-warm-sand/60 via-transparent to-warm-sand/60"></div>
