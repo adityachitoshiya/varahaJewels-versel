@@ -11,7 +11,8 @@ export default function Header({ cartCount = 0, onCartClick }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
-  const { cartCount: contextCartCount, cartItems, removeFromCart, updateQuantity } = useCart();
+  const cartContext = useCart();
+  const { cartCount: contextCartCount = 0, cartItems = [], removeFromCart = () => { }, updateQuantity = () => { } } = cartContext || {};
   const [wishlistCount, setWishlistCount] = useState(0);
   const [user, setUser] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -135,7 +136,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
   return (
     <>
-      <header className="fixed lg:sticky top-0 z-[110] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
+      <header className="fixed lg:sticky top-0 left-0 right-0 z-[110] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
