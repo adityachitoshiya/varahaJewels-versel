@@ -275,186 +275,210 @@ export default function Header({ cartCount = 0, onCartClick }) {
           )}
         </div>
 
-        {/* Dark Blur Backdrop for Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[90] transition-opacity duration-300"
-            onClick={() => setIsMobileMenuOpen(false)}
-            onTouchEnd={() => setIsMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
+        {/* Search Bar - Desktop */}
+        {isSearchOpen && (
+          <div className="hidden md:block pb-4">
+            <div className="relative">
+              <input
+                ref={searchRef}
+                type="text"
+                placeholder="Search for jewelry..."
+                className="w-full px-4 py-3 pl-12 pr-4 border-2 border-copper/30 rounded-lg focus:outline-none focus:border-copper bg-white text-heritage"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setIsSearchOpen(false);
+                }}
+              />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-copper" size={20} />
+              <button
+                onClick={() => setIsSearchOpen(false)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-heritage/60 hover:text-copper"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
         )}
+      </header>
 
-        {/* Mobile Menu */}
+      {/* Dark Blur Backdrop for Mobile Menu */}
+      {isMobileMenuOpen && (
         <div
-          className={`lg:hidden fixed inset-x-0 bottom-0 top-16 sm:top-20 z-[100] transition-all duration-300 ease-in-out ${isMobileMenuOpen
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 translate-y-4 pointer-events-none'
-            }`}
-        >
-          <div className="h-full border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg overflow-y-auto">
-            <nav className="px-4 py-6 space-y-2">
-              {/* Mobile Search with animation */}
-              <div className="relative mb-6 transform transition-all duration-300 animate-slideDown">
-                <input
-                  type="text"
-                  value={mobileSearchQuery}
-                  onChange={(e) => setMobileSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && mobileSearchQuery.trim()) {
-                      setIsMobileMenuOpen(false);
-                      router.push(`/collections?search=${encodeURIComponent(mobileSearchQuery.trim())}`);
-                    }
-                  }}
-                  placeholder="Search for jewelry..."
-                  className="w-full px-4 py-3.5 pl-12 pr-4 border-2 border-copper/30 rounded-xl focus:outline-none focus:border-copper focus:ring-2 focus:ring-copper/20 bg-white text-heritage shadow-sm transition-all duration-200"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-copper" size={20} />
-              </div>
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[90] transition-opacity duration-300"
+          onClick={() => setIsMobileMenuOpen(false)}
+          onTouchEnd={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-              {/* Mobile Auth Status */}
-              <div className="mb-4">
-                {user ? (
-                  <div className="bg-white/50 rounded-lg p-3 flex items-center justify-between border border-heritage/10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-copper/10 flex items-center justify-center text-copper font-bold">
-                        {(user.full_name || user.name)?.charAt(0)?.toUpperCase() || 'U'}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-heritage">{user.full_name || user.name}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                      </div>
+      {/* Mobile Menu */}
+      <div
+        className={`lg:hidden fixed inset-x-0 bottom-0 top-16 sm:top-20 z-[100] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+          ? 'opacity-100 translate-y-0 pointer-events-auto'
+          : 'opacity-0 translate-y-4 pointer-events-none'
+          }`}
+      >
+        <div className="h-full border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg overflow-y-auto">
+          <nav className="px-4 py-6 space-y-2">
+            {/* Mobile Search with animation */}
+            <div className="relative mb-6 transform transition-all duration-300 animate-slideDown">
+              <input
+                type="text"
+                value={mobileSearchQuery}
+                onChange={(e) => setMobileSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && mobileSearchQuery.trim()) {
+                    setIsMobileMenuOpen(false);
+                    router.push(`/collections?search=${encodeURIComponent(mobileSearchQuery.trim())}`);
+                  }
+                }}
+                placeholder="Search for jewelry..."
+                className="w-full px-4 py-3.5 pl-12 pr-4 border-2 border-copper/30 rounded-xl focus:outline-none focus:border-copper focus:ring-2 focus:ring-copper/20 bg-white text-heritage shadow-sm transition-all duration-200"
+              />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-copper" size={20} />
+            </div>
+
+            {/* Mobile Auth Status */}
+            <div className="mb-4">
+              {user ? (
+                <div className="bg-white/50 rounded-lg p-3 flex items-center justify-between border border-heritage/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-copper/10 flex items-center justify-center text-copper font-bold">
+                      {(user.full_name || user.name)?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
-                    <button
-                      onClick={handleLogout}
-                      className="text-gray-500 hover:text-red-500"
-                    >
-                      <LogOut size={18} />
-                    </button>
+                    <div>
+                      <p className="text-sm font-semibold text-heritage">{user.full_name || user.name}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    </div>
                   </div>
-                ) : (
-                  <Link
-                    href="/login"
-                    prefetch={false}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block w-full text-center py-2.5 bg-heritage text-white rounded-lg font-medium hover:bg-heritage/90 transition-colors shadow-sm"
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-500 hover:text-red-500"
                   >
-                    Sign In / Register
-                  </Link>
+                    <LogOut size={18} />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  prefetch={false}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block w-full text-center py-2.5 bg-heritage text-white rounded-lg font-medium hover:bg-heritage/90 transition-colors shadow-sm"
+                >
+                  Sign In / Register
+                </Link>
+              )}
+            </div>
+
+            {/* Menu Items with staggered animation */}
+            <Link
+              href="/shop"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                  Collections
+                </span>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
+              </div>
+            </Link>
+
+            <Link
+              href="/ciplx"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '50ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <div className="flex flex-col items-center justify-center text-center w-full">
+                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium leading-tight">
+                    Ciplx
+                  </span>
+                  <span className="text-[10px] text-heritage/60 group-hover:text-copper/80 font-normal">by varaha heaths</span>
+                </div>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300 flex-shrink-0 ml-2"></div>
+              </div>
+            </Link>
+
+            <Link
+              href="/heritage"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '100ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                  Heritage
+                </span>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
+              </div>
+            </Link>
+
+            <Link
+              href="/new-arrivals"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '150ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                  New Arrivals
+                </span>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
+              </div>
+            </Link>
+
+            <Link
+              href="/contact"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '200ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                  Contact
+                </span>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
+              </div>
+            </Link>
+
+            {/* Wishlist Link - Mobile Menu */}
+            <Link
+              href="/wishlist"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '250ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 backdrop-blur-sm border border-red-200 hover:border-red-400 hover:bg-red-100 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <Heart size={18} className="text-red-500 group-hover:fill-current transition-all duration-200" />
+                  <span className="text-heritage group-hover:text-red-600 transition-colors duration-200 font-medium">
+                    My Wishlist
+                  </span>
+                </div>
+                {wishlistCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">
+                    {wishlistCount}
+                  </span>
                 )}
               </div>
+            </Link>
 
-              {/* Menu Items with staggered animation */}
-              <Link
-                href="/shop"
-                prefetch={false}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="group block relative overflow-hidden"
-              >
-                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
-                    Collections
-                  </span>
-                  <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
-                </div>
-              </Link>
-
-              <Link
-                href="/ciplx"
-                prefetch={false}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="group block relative overflow-hidden"
-                style={{ animationDelay: '50ms' }}
-              >
-                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                  <div className="flex flex-col items-center justify-center text-center w-full">
-                    <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium leading-tight">
-                      Ciplx
-                    </span>
-                    <span className="text-[10px] text-heritage/60 group-hover:text-copper/80 font-normal">by varaha heaths</span>
-                  </div>
-                  <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300 flex-shrink-0 ml-2"></div>
-                </div>
-              </Link>
-
-              <Link
-                href="/heritage"
-                prefetch={false}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="group block relative overflow-hidden"
-                style={{ animationDelay: '100ms' }}
-              >
-                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
-                    Heritage
-                  </span>
-                  <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
-                </div>
-              </Link>
-
-              <Link
-                href="/new-arrivals"
-                prefetch={false}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="group block relative overflow-hidden"
-                style={{ animationDelay: '150ms' }}
-              >
-                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
-                    New Arrivals
-                  </span>
-                  <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
-                </div>
-              </Link>
-
-              <Link
-                href="/contact"
-                prefetch={false}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="group block relative overflow-hidden"
-                style={{ animationDelay: '200ms' }}
-              >
-                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
-                    Contact
-                  </span>
-                  <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
-                </div>
-              </Link>
-
-              {/* Wishlist Link - Mobile Menu */}
-              <Link
-                href="/wishlist"
-                prefetch={false}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="group block relative overflow-hidden"
-                style={{ animationDelay: '250ms' }}
-              >
-                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 backdrop-blur-sm border border-red-200 hover:border-red-400 hover:bg-red-100 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                  <div className="flex items-center gap-3">
-                    <Heart size={18} className="text-red-500 group-hover:fill-current transition-all duration-200" />
-                    <span className="text-heritage group-hover:text-red-600 transition-colors duration-200 font-medium">
-                      My Wishlist
-                    </span>
-                  </div>
-                  {wishlistCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-[22px] flex items-center justify-center px-1.5">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </div>
-              </Link>
-
-              {/* Decorative element */}
-              <div className="mt-6 pt-4 border-t border-heritage/10">
-                <p className="text-center text-xs text-heritage/60 italic">
-                  Discover timeless elegance
-                </p>
-              </div>
-            </nav>
-          </div>
+            {/* Decorative element */}
+            <div className="mt-6 pt-4 border-t border-heritage/10">
+              <p className="text-center text-xs text-heritage/60 italic">
+                Discover timeless elegance
+              </p>
+            </div>
+          </nav>
         </div>
-      </header>
+      </div>
 
       {/* Spacer for fixed header on mobile */}
       <div className="h-16 sm:h-20 lg:hidden" aria-hidden="true" />

@@ -25,16 +25,18 @@ const SpinWheelPopup = dynamic(() => import('../components/SpinWheelPopup'), { s
 
 export default function Home({ heroSlides, initialSettings }) {
   // Check if user has already skipped countdown (persistent)
-  const [showFullPageCountdown, setShowFullPageCountdown] = useState(() => {
-    if (typeof window === 'undefined') return initialSettings?.show_full_page_countdown ?? true;
+  // Check if user has already skipped countdown (persistent)
+  const [showFullPageCountdown, setShowFullPageCountdown] = useState(initialSettings?.show_full_page_countdown ?? true);
 
-    // Don't show if user already entered access ID or manually skipped before
+  useEffect(() => {
+    // Client-side only check
     const hasSkipped = localStorage.getItem('countdown_skipped') === 'true';
     const isDevMode = localStorage.getItem('dev_mode') === 'true';
 
-    if (hasSkipped || isDevMode) return false;
-    return initialSettings?.show_full_page_countdown ?? true;
-  });
+    if (hasSkipped || isDevMode) {
+      setShowFullPageCountdown(false);
+    }
+  }, []);
 
   const [userSkipped, setUserSkipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
