@@ -286,7 +286,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
         {/* Mobile Menu */}
         <div
-          className={`lg:hidden fixed inset-x-0 bottom-0 top-16 z-[100] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+          className={`lg:hidden fixed inset-x-0 bottom-0 top-16 sm:top-20 z-[100] transition-all duration-300 ease-in-out ${isMobileMenuOpen
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 translate-y-4 pointer-events-none'
             }`}
@@ -456,7 +456,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
       </header>
 
       {/* Spacer for fixed header on mobile */}
-      <div className="h-16 lg:hidden" aria-hidden="true" />
+      <div className="h-16 sm:h-20 lg:hidden" aria-hidden="true" />
 
       <style jsx>{`
         @keyframes slideDown {
