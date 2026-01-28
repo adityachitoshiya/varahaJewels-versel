@@ -82,6 +82,18 @@ export default function Header({ cartCount = 0, onCartClick }) {
     };
   }, [profileRef]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
   // Use prop if provided (override) or context
   const displayCartCount = cartCount > 0 ? cartCount : contextCartCount;
 
@@ -265,8 +277,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
         {/* Dark Blur Backdrop for Mobile Menu */}
         {isMobileMenuOpen && (
           <div
-            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-40 transition-opacity duration-300"
             onClick={() => setIsMobileMenuOpen(false)}
+            onTouchEnd={() => setIsMobileMenuOpen(false)}
             aria-hidden="true"
           />
         )}
