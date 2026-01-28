@@ -56,6 +56,7 @@ export default function EditProduct() {
                 const product = await productRes.json();
                 setFormData({
                     ...product,
+                    stock: product.stock ?? 0, // Ensure stock is set, default to 0
                     stones: product.stones ? JSON.parse(product.stones).join(', ') : '',
                     additional_images: product.additional_images ? JSON.parse(product.additional_images) : []
                 });
