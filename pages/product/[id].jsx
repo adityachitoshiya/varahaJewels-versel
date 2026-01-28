@@ -17,6 +17,7 @@ export default function ProductPage() {
   const { id } = router.query;
 
   const [product, setProduct] = useState(null);
+  const [settings, setSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const { addToCart, updateQuantity, removeFromCart, cartItems } = useCart();
@@ -26,7 +27,20 @@ export default function ProductPage() {
     if (id) {
       fetchProduct(id);
     }
+    fetchSettings();
   }, [id]);
+
+  const fetchSettings = async () => {
+    try {
+      const API_URL = getApiUrl();
+      const res = await fetch(`${API_URL}/api/settings`);
+      if (res.ok) {
+        setSettings(await res.json());
+      }
+    } catch (e) {
+      console.error('Error fetching settings:', e);
+    }
+  };
 
   const fetchProduct = async (productId) => {
     try {
@@ -246,6 +260,7 @@ export default function ProductPage() {
                 <div className="lg:sticky lg:top-24">
                   <ProductInfo
                     product={product}
+                    settings={settings}
                     onAddToCart={handleAddToCart}
                     onBuyNow={handleBuyNow}
                   />

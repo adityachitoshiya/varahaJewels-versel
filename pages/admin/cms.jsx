@@ -258,6 +258,12 @@ export default function ContentManagement() {
                 >
                     Ciplx Images
                 </button>
+                <button
+                    onClick={() => setActiveTab('offers')}
+                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'offers' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Product Offers
+                </button>
             </div>
 
             {/* METAL RATES CONTENT */}
@@ -901,6 +907,131 @@ export default function ContentManagement() {
                             </label>
                         </div>
 
+                    </div>
+                </div>
+            )}
+
+            {/* PRODUCT OFFERS CONTENT */}
+            {activeTab === 'offers' && settings && (
+                <div className="animate-fadeIn max-w-2xl">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-6">Product Page Offers</h2>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+
+                        {/* MEGA DEAL Section */}
+                        <div>
+                            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                                <h3 className="font-bold text-gray-800">MEGA DEAL Banner</h3>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={settings.mega_deal_enabled}
+                                        onChange={(e) => handleSettingsUpdate({ mega_deal_enabled: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-copper/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-copper"></div>
+                                </label>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Label Text</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-2 border rounded-lg"
+                                        value={settings.mega_deal_label || 'MEGA DEAL'}
+                                        onChange={(e) => handleSettingsUpdate({ mega_deal_label: e.target.value })}
+                                        placeholder="MEGA DEAL"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount %</label>
+                                    <input
+                                        type="number"
+                                        className="w-full p-2 border rounded-lg"
+                                        value={settings.mega_deal_discount_percent || 10}
+                                        onChange={(e) => handleSettingsUpdate({ mega_deal_discount_percent: parseInt(e.target.value) })}
+                                        min="1"
+                                        max="50"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">This banner appears on all product pages showing the discounted price.</p>
+                        </div>
+
+                        {/* Bank Offers Section */}
+                        <div>
+                            <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Bank & Payment Offers</h3>
+
+                            {(() => {
+                                let offers = [];
+                                try {
+                                    offers = JSON.parse(settings.bank_offers_json || '[]');
+                                } catch (e) { offers = []; }
+
+                                return (
+                                    <div className="space-y-3">
+                                        {offers.map((offer, index) => (
+                                            <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                                                <div className="flex-1 space-y-2">
+                                                    <input
+                                                        type="text"
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                        value={offer.title}
+                                                        placeholder="Offer title"
+                                                        onChange={(e) => {
+                                                            const newOffers = [...offers];
+                                                            newOffers[index].title = e.target.value;
+                                                            handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
+                                                        }}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                        value={offer.subtitle}
+                                                        placeholder="Subtitle (optional)"
+                                                        onChange={(e) => {
+                                                            const newOffers = [...offers];
+                                                            newOffers[index].subtitle = e.target.value;
+                                                            handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const newOffers = offers.filter((_, i) => i !== index);
+                                                        handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
+                                                    }}
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        <button
+                                            onClick={() => {
+                                                const newOffers = [...offers, { title: '', subtitle: '' }];
+                                                handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
+                                            }}
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-copper hover:text-copper transition-colors"
+                                        >
+                                            <Plus size={18} /> Add New Offer
+                                        </button>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                    </div>
+
+                    <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h3 className="font-semibold text-blue-900 mb-2">📌 How it works:</h3>
+                        <ul className="text-sm text-blue-800 space-y-1 ml-1">
+                            <li>• MEGA DEAL shows discounted price (e.g., 10% off) on product pages</li>
+                            <li>• Bank offers appear in the "Best Offers" section</li>
+                            <li>• Changes apply to all product pages instantly</li>
+                        </ul>
                     </div>
                 </div>
             )}

@@ -5,7 +5,7 @@ import WishlistButton from './WishlistButton';
 
 import { getApiUrl } from '../lib/config';
 
-export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
+export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }) {
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || {});
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState('');
@@ -64,12 +64,25 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
     }
   };
 
-  // Mock offers data
-  const offers = [
-    { title: '10% Instant Discount on Axis Bank Cards', subtitle: 'Min Spend ₹3,500, Max Discount ₹500' },
-    { title: '5% Unlimited Cashback on Credit Cards', subtitle: '' },
-    { title: 'EMI option available', subtitle: 'EMI starting from ₹500/month' },
-  ];
+  // Dynamic offers from settings (with fallback)
+  const offers = (() => {
+    if (settings?.bank_offers_json) {
+      try {
+        return JSON.parse(settings.bank_offers_json);
+      } catch (e) { }
+    }
+    // Default fallback
+    return [
+      { title: '10% Instant Discount on Axis Bank Cards', subtitle: 'Min Spend ₹3,500, Max Discount ₹500' },
+      { title: '5% Unlimited Cashback on Credit Cards', subtitle: '' },
+      { title: 'EMI option available', subtitle: 'EMI starting from ₹500/month' },
+    ];
+  })();
+
+  // Dynamic mega deal settings
+  const megaDealEnabled = settings?.mega_deal_enabled ?? true;
+  const megaDealDiscount = settings?.mega_deal_discount_percent || 10;
+  const megaDealLabel = settings?.mega_deal_label || 'MEGA DEAL';
 
   // Mock size options with stock
   const sizeOptions = product.variants?.length > 1
@@ -147,20 +160,22 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
         )}
       </div>
 
-      {/* Bank Offer Banner - Myntra Style */}
-      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded">MEGA DEAL</span>
-            <span className="text-sm font-semibold text-heritage">Get at {formatCurrency(selectedVariant.price * 0.9)}</span>
-            <span className="bg-royal-orange text-white text-xs px-2 py-0.5 rounded">Extra ₹{Math.round(selectedVariant.price * 0.1)} Off</span>
+      {/* Bank Offer Banner - Myntra Style (Dynamic from Admin) */}
+      {megaDealEnabled && (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded">{megaDealLabel}</span>
+              <span className="text-sm font-semibold text-heritage">Get at {formatCurrency(selectedVariant.price * (1 - megaDealDiscount / 100))}</span>
+              <span className="bg-royal-orange text-white text-xs px-2 py-0.5 rounded">Extra ₹{Math.round(selectedVariant.price * megaDealDiscount / 100)} Off</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-1.5">
+            <p className="text-xs text-matte-brown">With 🏦 Bank Offer</p>
+            <button className="text-xs font-semibold text-copper">Details &gt;</button>
           </div>
         </div>
-        <div className="flex items-center justify-between mt-1.5">
-          <p className="text-xs text-matte-brown">With 🏦 Bank Offer</p>
-          <button className="text-xs font-semibold text-copper">Details &gt;</button>
-        </div>
-      </div>
+      )}
 
       {/* Size Selector with Stock Info */}
       {sizeOptions && sizeOptions.length > 1 && (
