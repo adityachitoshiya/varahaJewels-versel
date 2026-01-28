@@ -54,13 +54,49 @@ export default function EditProduct() {
 
             if (productRes.ok) {
                 const product = await productRes.json();
+                console.log("✅ Product data loaded:", product);
+
+                // Safe JSON parsing with fallbacks
+                let parsedStones = '';
+                let parsedImages = [];
+
+                try {
+                    if (product.stones && product.stones !== '[]') {
+                        parsedStones = JSON.parse(product.stones).join(', ');
+                    }
+                } catch (e) {
+                    console.error("Stones parse error:", e);
+                    parsedStones = '';
+                }
+
+                try {
+                    if (product.additional_images && product.additional_images !== '[]') {
+                        parsedImages = JSON.parse(product.additional_images);
+                    }
+                } catch (e) {
+                    console.error("Images parse error:", e);
+                    parsedImages = [];
+                }
+
                 setFormData({
-                    ...product,
-                    stock: product.stock ?? 0, // Ensure stock is set, default to 0
-                    stones: product.stones ? JSON.parse(product.stones).join(', ') : '',
-                    additional_images: product.additional_images ? JSON.parse(product.additional_images) : []
+                    name: product.name || '',
+                    description: product.description || '',
+                    price: product.price || '',
+                    stock: product.stock ?? 0,
+                    category: product.category || 'Artificial',
+                    metal: product.metal || 'Brass',
+                    carat: product.carat || 'N/A',
+                    stones: parsedStones,
+                    polish: product.polish || 'Gold Plated',
+                    premium: product.premium || false,
+                    tag: product.tag || 'New',
+                    style: product.style || '',
+                    image: product.image || '',
+                    additional_images: parsedImages,
                 });
+                console.log("✅ Form data set successfully");
             } else {
+                console.error("Product fetch failed:", productRes.status);
                 alert('Product not found');
                 router.push('/admin/products');
             }
