@@ -277,7 +277,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
         {/* Dark Blur Backdrop for Mobile Menu */}
         {isMobileMenuOpen && (
           <div
-            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-40 transition-opacity duration-300"
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[90] transition-opacity duration-300"
             onClick={() => setIsMobileMenuOpen(false)}
             onTouchEnd={() => setIsMobileMenuOpen(false)}
             aria-hidden="true"
@@ -286,12 +286,12 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
         {/* Mobile Menu */}
         <div
-          className={`lg:hidden transition-all duration-300 ease-in-out relative z-50 ${isMobileMenuOpen
-              ? 'max-h-screen opacity-100 pointer-events-auto'
-              : 'max-h-0 opacity-0 pointer-events-none overflow-hidden'
+          className={`lg:hidden fixed inset-x-0 bottom-0 top-16 z-[100] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-4 pointer-events-none'
             }`}
         >
-          <div className="border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg max-h-[calc(100vh-80px)] overflow-y-auto">
+          <div className="h-full border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg overflow-y-auto">
             <nav className="px-4 py-6 space-y-2">
               {/* Mobile Search with animation */}
               <div className="relative mb-6 transform transition-all duration-300 animate-slideDown">
