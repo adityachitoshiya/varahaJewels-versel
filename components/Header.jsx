@@ -135,7 +135,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
+      <header className="fixed lg:sticky top-0 z-[110] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
@@ -454,6 +454,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
           </div>
         </div>
       </header>
+
+      {/* Spacer for fixed header on mobile */}
+      <div className="h-16 lg:hidden" aria-hidden="true" />
 
       <style jsx>{`
         @keyframes slideDown {
