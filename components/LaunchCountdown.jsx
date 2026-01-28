@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function LaunchCountdown({ onSkip }) {
+export default function LaunchCountdown({ onSkip, targetDate = '2026-02-12T00:00:00' }) {
   const [showLogin, setShowLogin] = useState(false);
   const [accessId, setAccessId] = useState('');
 
@@ -20,6 +20,7 @@ export default function LaunchCountdown({ onSkip }) {
 
         localStorage.setItem("dev_mode", "true");
         localStorage.setItem("tester_id", accessId);
+        localStorage.setItem("countdown_skipped", "true"); // Save skip state
 
         // Instead of redirecting to '/', we just call onSkip which removes this component
         // assuming onSkip unmounts this component from index.jsx
@@ -31,6 +32,7 @@ export default function LaunchCountdown({ onSkip }) {
 
       } catch (e) {
         localStorage.setItem("dev_mode", "true");
+        localStorage.setItem("countdown_skipped", "true");
         if (onSkip) onSkip(); else window.location.reload();
       }
     } else {
@@ -46,8 +48,8 @@ export default function LaunchCountdown({ onSkip }) {
   });
 
   useEffect(() => {
-    // Set fixed launch date - February 12, 2026 at midnight
-    const launchDate = new Date('2026-02-12T00:00:00');
+    // Use dynamic date from props (admin-controlled)
+    const launchDate = new Date(targetDate);
 
     const updateCountdown = () => {
       const now = new Date();
@@ -75,7 +77,7 @@ export default function LaunchCountdown({ onSkip }) {
     const timer = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [targetDate]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden">

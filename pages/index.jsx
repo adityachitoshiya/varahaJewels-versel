@@ -24,10 +24,17 @@ const LaunchCountdown = dynamic(() => import('../components/LaunchCountdown'), {
 const SpinWheelPopup = dynamic(() => import('../components/SpinWheelPopup'), { ssr: false });
 
 export default function Home({ heroSlides, initialSettings }) {
-  // Initialize from SSG props
-  const [showFullPageCountdown, setShowFullPageCountdown] = useState(
-    initialSettings?.show_full_page_countdown ?? true
-  );
+  // Check if user has already skipped countdown (persistent)
+  const [showFullPageCountdown, setShowFullPageCountdown] = useState(() => {
+    if (typeof window === 'undefined') return initialSettings?.show_full_page_countdown ?? true;
+
+    // Don't show if user already entered access ID or manually skipped before
+    const hasSkipped = localStorage.getItem('countdown_skipped') === 'true';
+    const isDevMode = localStorage.getItem('dev_mode') === 'true';
+
+    if (hasSkipped || isDevMode) return false;
+    return initialSettings?.show_full_page_countdown ?? true;
+  });
 
   const [userSkipped, setUserSkipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +81,8 @@ export default function Home({ heroSlides, initialSettings }) {
   }, [showFullPageCountdown]);
 
   const handleSkip = () => {
+    // Save skip state to localStorage
+    localStorage.setItem('countdown_skipped', 'true');
     setShowFullPageCountdown(false);
     setUserSkipped(true);
   };
@@ -232,7 +241,10 @@ export default function Home({ heroSlides, initialSettings }) {
       {isLoading && <PremiumLoader onComplete={() => setIsLoading(false)} />}
 
       {!isLoading && showFullPageCountdown && (
-        <LaunchCountdown onSkip={handleSkip} />
+        <LaunchCountdown
+          onSkip={handleSkip}
+          targetDate={initialSettings?.announcement_date || '2026-02-12T00:00:00'}
+        />
       )}
 
       {/* Render content even if loading to prep LCP, but hide via loader overlay */}
