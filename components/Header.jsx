@@ -273,10 +273,10 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
         {/* Mobile Menu */}
         <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out relative z-50 ${isMobileMenuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+          className={`lg:hidden transition-all duration-300 ease-in-out relative z-50 ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
             }`}
         >
-          <div className="border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg">
+          <div className="border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg max-h-[calc(100vh-80px)] overflow-y-auto">
             <nav className="px-4 py-6 space-y-2">
               {/* Mobile Search with animation */}
               <div className="relative mb-6 transform transition-all duration-300 animate-slideDown">
