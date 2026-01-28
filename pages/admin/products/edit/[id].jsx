@@ -141,6 +141,7 @@ export default function EditProduct() {
             const dataToSend = {
                 ...formData,
                 price: parseFloat(formData.price),
+                stock: parseInt(formData.stock) || 0, // Convert stock to integer
                 stones: formData.stones ? JSON.stringify(formData.stones.split(',').map(s => s.trim())) : '[]',
                 additional_images: JSON.stringify(formData.additional_images)
             };
