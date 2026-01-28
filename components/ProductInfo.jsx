@@ -296,10 +296,10 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
               </div>
             )}
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-red-50 rounded-full flex items-center justify-center">
-                <X size={16} className="text-red-500" />
+              <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
+                <Check size={16} className="text-green-600" />
               </div>
-              <p className="text-sm text-heritage">Pay on Delivery is not available</p>
+              <p className="text-sm text-heritage">Pay on Delivery available</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-copper/10 rounded-full flex items-center justify-center">
