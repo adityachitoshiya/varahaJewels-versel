@@ -18,6 +18,7 @@ export default function EditProduct() {
         name: '',
         description: '',
         price: '',
+        stock: 0,
         category: 'Artificial',
         metal: 'Brass',
         carat: 'N/A',
@@ -193,6 +194,10 @@ export default function EditProduct() {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
                                     <input type="number" className="w-full p-2 border rounded-lg" name="price" value={formData.price} onChange={handleChange} required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                                    <input type="number" className="w-full p-2 border rounded-lg" name="stock" value={formData.stock} onChange={handleChange} min="0" placeholder="0" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>

@@ -116,6 +116,35 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow }) {
           </span>
         </div>
         <p className="text-xs text-heritage/70 mt-1">inclusive of all taxes</p>
+
+        {/* Stock Availability Display */}
+        {product.stock !== undefined && (
+          <div className="mt-3">
+            {product.stock === 0 ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-md">
+                <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                <span className="text-sm font-semibold text-red-600">Out of Stock</span>
+              </div>
+            ) : product.stock <= 2 ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-md animate-pulse">
+                <span className="text-lg">🔥</span>
+                <span className="text-sm font-bold text-orange-600">
+                  Hurry! Only {product.stock} left in stock - Order Now!
+                </span>
+              </div>
+            ) : product.stock <= 5 ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-md">
+                <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                <span className="text-sm font-medium text-amber-700">Only {product.stock} left in stock</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span className="text-sm font-medium text-green-700">In Stock</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Bank Offer Banner - Myntra Style */}

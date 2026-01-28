@@ -80,9 +80,12 @@ export default function ProductPage() {
               name: "Standard",
               price: data.price,
               sku: `${data.id}-default`,
-              inStock: true
+              inStock: data.stock > 0  // Check real stock
             }
           ],
+
+          // Stock info
+          stock: data.stock || 0,
 
           // Tech specs
           metal: data.metal,
