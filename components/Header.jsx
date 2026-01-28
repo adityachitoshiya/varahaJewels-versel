@@ -286,7 +286,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
         {/* Mobile Menu */}
         <div
-          className={`lg:hidden transition-all duration-300 ease-in-out relative z-50 ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+          className={`lg:hidden transition-all duration-300 ease-in-out relative z-50 ${isMobileMenuOpen
+              ? 'max-h-screen opacity-100 pointer-events-auto'
+              : 'max-h-0 opacity-0 pointer-events-none overflow-hidden'
             }`}
         >
           <div className="border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg max-h-[calc(100vh-80px)] overflow-y-auto">

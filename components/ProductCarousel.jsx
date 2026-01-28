@@ -67,7 +67,7 @@ export default function ProductCarousel({ images = [], rating = 4.8, reviewCount
         {/* Main Image Container */}
         <div
           ref={carouselRef}
-          className="relative aspect-[3/4] bg-warm-sand overflow-hidden"
+          className="relative aspect-square bg-warm-sand overflow-hidden"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -86,7 +86,7 @@ export default function ProductCarousel({ images = [], rating = 4.8, reviewCount
                 <img
                   src={item.url}
                   alt={item.alt || `Product image ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   loading={index < 2 ? 'eager' : 'lazy'}
                   onError={(e) => {
                     e.target.onerror = null;
@@ -117,8 +117,8 @@ export default function ProductCarousel({ images = [], rating = 4.8, reviewCount
                 key={index}
                 onClick={() => setMobileIndex(index)}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${index === mobileIndex
-                    ? 'bg-heritage w-5'
-                    : 'bg-heritage/40'
+                  ? 'bg-heritage w-5'
+                  : 'bg-heritage/40'
                   }`}
               />
             ))}
@@ -131,13 +131,13 @@ export default function ProductCarousel({ images = [], rating = 4.8, reviewCount
         {gridImages.map((item, index) => (
           <div
             key={item.id || index}
-            className="relative aspect-[3/4] bg-warm-sand rounded-lg overflow-hidden cursor-pointer group"
+            className="relative aspect-square bg-warm-sand rounded-lg overflow-hidden cursor-pointer group"
             onClick={() => openLightbox(index)}
           >
             <img
               src={item.url}
               alt={item.alt || `Product image ${index + 1}`}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
               loading={index < 4 ? 'eager' : 'lazy'}
               onError={(e) => {
                 e.target.onerror = null;
