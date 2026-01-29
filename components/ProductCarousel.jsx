@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn, Star, Layers } from 'lucide-react';
 
-export default function ProductCarousel({ images = [], rating = 4.8, reviewCount = 6 }) {
+export default function ProductCarousel({ images = [], rating = 4.8, reviewCount = 6, onViewSimilar }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [mobileIndex, setMobileIndex] = useState(0);
@@ -98,7 +98,13 @@ export default function ProductCarousel({ images = [], rating = 4.8, reviewCount
           </div>
 
           {/* View Similar Button - Top Left */}
-          <button className="absolute top-4 left-4 flex items-center gap-2 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-full shadow-md">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onViewSimilar) onViewSimilar();
+            }}
+            className="absolute top-4 left-4 flex items-center gap-2 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-full shadow-md hover:bg-white transition-all"
+          >
             <Layers size={16} className="text-heritage" />
             <span className="text-xs font-semibold text-heritage">View Similar</span>
           </button>

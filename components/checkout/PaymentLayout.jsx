@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PaymentSidebar from './PaymentSidebar';
 import PriceDetails from './PriceDetails';
 import { ShieldCheck, Truck, Lock, CreditCard } from 'lucide-react';
+import { getApiUrl } from '../../lib/config';
 
 const PaymentLayout = ({
     cartItems,
@@ -21,6 +22,27 @@ const PaymentLayout = ({
     edd
 }) => {
     const [activeTab, setActiveTab] = useState('recommended');
+    const [prepaidSettings, setPrepaidSettings] = useState({ enabled: false, percent: 5 });
+
+    // Fetch prepaid discount settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const API_URL = getApiUrl();
+                const response = await fetch(`${API_URL}/api/settings`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setPrepaidSettings({
+                        enabled: data.prepaid_discount_enabled || false,
+                        percent: data.prepaid_discount_percent || 5
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to fetch prepaid settings:', error);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const totalAmount = cartItems.length > 0
         ? cartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0)
@@ -104,9 +126,13 @@ const PaymentLayout = ({
                                     </div>
                                     <div className="w-4 h-4 rounded-full border border-gray-300"></div>
                                 </div>
-                                <div className="mt-3 pl-14">
-                                    <p className="text-[10px] text-green-600 font-bold bg-green-50 inline-block px-2 py-1 rounded">5% Cashback on Prepaid Orders</p>
-                                </div>
+                                {prepaidSettings.enabled && (
+                                    <div className="mt-3 pl-14">
+                                        <p className="text-[10px] text-green-600 font-bold bg-green-50 inline-block px-2 py-1 rounded">
+                                            {prepaidSettings.percent}% Cashback on Prepaid Orders
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

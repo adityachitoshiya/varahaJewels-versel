@@ -60,12 +60,10 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
     // Listen for updates
     window.addEventListener('wishlistUpdated', updateState);
-    // window.addEventListener('cartUpdated', updateState); // Handled by Context now
-    window.addEventListener('storage', updateState); // Also listen to cross-tab updates
+    window.addEventListener('storage', updateState);
 
     return () => {
       window.removeEventListener('wishlistUpdated', updateState);
-      // window.removeEventListener('cartUpdated', updateState);
       window.removeEventListener('storage', updateState);
     };
   }, []);
@@ -105,18 +103,6 @@ export default function Header({ cartCount = 0, onCartClick }) {
     }
   }, [isSearchOpen]);
 
-  // Lock body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isMobileMenuOpen]);
-
   const handleLogout = () => {
     localStorage.removeItem('customer_token');
     localStorage.removeItem('customer_user');
@@ -136,7 +122,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
   return (
     <>
-      <header className="fixed lg:sticky top-0 left-0 right-0 z-[110] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
+      <header className="fixed lg:sticky top-0 left-0 right-0 z-[1000] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
@@ -242,10 +228,12 @@ export default function Header({ cartCount = 0, onCartClick }) {
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden flex items-center justify-center w-10 h-10 text-heritage hover:text-copper transition-colors duration-200 flex-shrink-0"
+                className="lg:hidden flex items-center justify-center w-10 h-10 text-heritage hover:text-copper transition-all duration-300 flex-shrink-0"
                 aria-label="Menu"
               >
-                {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                <div className={`transition-all duration-300 ${isMobileMenuOpen ? 'rotate-90 scale-110' : 'rotate-0 scale-100'}`}>
+                  {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                </div>
               </button>
             </div>
           </div>
@@ -274,45 +262,24 @@ export default function Header({ cartCount = 0, onCartClick }) {
             </div>
           )}
         </div>
-
-        {/* Search Bar - Desktop */}
-        {isSearchOpen && (
-          <div className="hidden md:block pb-4">
-            <div className="relative">
-              <input
-                ref={searchRef}
-                type="text"
-                placeholder="Search for jewelry..."
-                className="w-full px-4 py-3 pl-12 pr-4 border-2 border-copper/30 rounded-lg focus:outline-none focus:border-copper bg-white text-heritage"
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') setIsSearchOpen(false);
-                }}
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-copper" size={20} />
-              <button
-                onClick={() => setIsSearchOpen(false)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-heritage/60 hover:text-copper"
-              >
-                <X size={20} />
-              </button>
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* Dark Blur Backdrop for Mobile Menu */}
+      {/* Dark Blur Backdrop for Mobile Menu - Starts below header */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[90] transition-opacity duration-300"
+          className="lg:hidden fixed top-16 sm:top-20 inset-x-0 bottom-0 bg-black/40 backdrop-blur-sm z-[1001] transition-opacity duration-300"
           onClick={() => setIsMobileMenuOpen(false)}
-          onTouchEnd={() => setIsMobileMenuOpen(false)}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            setIsMobileMenuOpen(false);
+          }}
           aria-hidden="true"
         />
       )}
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Higher z-index than backdrop */}
       <div
-        className={`lg:hidden fixed inset-x-0 bottom-0 top-16 sm:top-20 z-[100] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+        className={`lg:hidden fixed inset-x-0 bottom-0 top-16 sm:top-20 z-[1002] transition-all duration-300 ease-in-out ${isMobileMenuOpen
           ? 'opacity-100 translate-y-0 pointer-events-auto'
           : 'opacity-0 translate-y-4 pointer-events-none'
           }`}
@@ -392,7 +359,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
               style={{ animationDelay: '50ms' }}
             >
               <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                <div className="flex flex-col items-center justify-center text-center w-full">
+                <div className="flex flex-col items-start justify-center text-left">
                   <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium leading-tight">
                     Ciplx
                   </span>
@@ -470,6 +437,25 @@ export default function Header({ cartCount = 0, onCartClick }) {
               </div>
             </Link>
 
+            {/* My Account Link - Mobile Menu */}
+            <Link
+              href="/account"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '300ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <User size={18} className="text-heritage group-hover:text-copper transition-all duration-200" />
+                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                    My Account
+                  </span>
+                </div>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
+              </div>
+            </Link>
+
             {/* Decorative element */}
             <div className="mt-6 pt-4 border-t border-heritage/10">
               <p className="text-center text-xs text-heritage/60 italic">
@@ -510,7 +496,6 @@ export default function Header({ cartCount = 0, onCartClick }) {
         onContinueShopping={() => setIsCartModalOpen(false)}
         onViewCart={() => {
           setIsCartModalOpen(false);
-          // Optional: Navigate to /cart if you have a page, but modal is enough usually
         }}
         onCheckout={() => {
           setIsCartModalOpen(false);

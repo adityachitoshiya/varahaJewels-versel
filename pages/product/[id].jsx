@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
 import { useCart } from '../../context/CartContext';
@@ -15,10 +15,12 @@ import ProductDetailSkeleton from '../../components/ProductDetailSkeleton';
 export default function ProductPage() {
   const router = useRouter();
   const { id } = router.query;
+  const suggestionsRef = useRef(null);
 
   const [product, setProduct] = useState(null);
   const [settings, setSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
 
   const { addToCart, updateQuantity, removeFromCart, cartItems } = useCart();
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
@@ -39,6 +41,29 @@ export default function ProductPage() {
       }
     } catch (e) {
       console.error('Error fetching settings:', e);
+    }
+  };
+
+  // Fetch similar products by category
+  const fetchSimilarProducts = async (category, currentProductId) => {
+    try {
+      const API_URL = getApiUrl();
+      const res = await fetch(`${API_URL}/api/products?category=${encodeURIComponent(category)}`);
+      if (res.ok) {
+        const products = await res.json();
+        // Filter out current product and limit to 8
+        const filtered = products.filter(p => p.id !== currentProductId).slice(0, 8);
+        setSuggestedProducts(filtered);
+      }
+    } catch (e) {
+      console.error('Error fetching similar products:', e);
+    }
+  };
+
+  // Scroll to suggestions section
+  const scrollToSuggestions = () => {
+    if (suggestionsRef.current) {
+      suggestionsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -129,6 +154,11 @@ export default function ProductPage() {
         };
 
         setProduct(adaptedProduct);
+
+        // Fetch similar products from same category
+        if (data.category) {
+          fetchSimilarProducts(data.category, data.id);
+        }
       } else {
         console.error("Product not found");
       }
@@ -252,6 +282,7 @@ export default function ProductPage() {
                   images={product.images}
                   rating={product.averageRating}
                   reviewCount={product.reviewCount}
+                  onViewSimilar={scrollToSuggestions}
                 />
               </div>
 
@@ -276,6 +307,40 @@ export default function ProductPage() {
                 reviewCount={product.reviewCount}
               />
             </div>
+
+            {/* Suggested For You Section */}
+            {suggestedProducts.length > 0 && (
+              <div ref={suggestionsRef} className="mt-12 border-t border-gray-200 pt-8">
+                <h2 className="text-xl font-bold text-heritage mb-6">Suggested For You</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {suggestedProducts.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => router.push(`/product/${item.id}`)}
+                      className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
+                    >
+                      <div className="aspect-square bg-warm-sand overflow-hidden">
+                        <img
+                          src={item.image || '/varaha-assets/og.jpg'}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/varaha-assets/og.jpg';
+                          }}
+                        />
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-semibold text-sm text-gray-800 line-clamp-2 group-hover:text-heritage transition-colors">
+                          {item.name}
+                        </h3>
+                        <p className="text-heritage font-bold mt-1">₹{item.price?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </main>
 

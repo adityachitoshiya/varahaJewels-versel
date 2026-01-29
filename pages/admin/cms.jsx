@@ -1008,19 +1008,59 @@ export default function ContentManagement() {
                                                 </button>
                                             </div>
                                         ))}
-
-                                        <button
-                                            onClick={() => {
-                                                const newOffers = [...offers, { title: '', subtitle: '' }];
-                                                handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
-                                            }}
-                                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-copper hover:text-copper transition-colors"
-                                        >
-                                            <Plus size={18} /> Add New Offer
-                                        </button>
                                     </div>
                                 );
                             })()}
+
+                            {/* Add New Offer Button - Outside IIFE for fresh state */}
+                            <button
+                                onClick={() => {
+                                    // Parse fresh from settings to avoid stale closure
+                                    let currentOffers = [];
+                                    try {
+                                        currentOffers = JSON.parse(settings.bank_offers_json || '[]');
+                                    } catch (e) { currentOffers = []; }
+                                    const newOffers = [...currentOffers, { title: '', subtitle: '' }];
+                                    handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
+                                }}
+                                className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-copper hover:text-copper transition-colors"
+                            >
+                                <Plus size={18} /> Add New Offer
+                            </button>
+                        </div>
+
+                        {/* Prepaid Payment Discount Section */}
+                        <div>
+                            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                                <h3 className="font-bold text-gray-800">Prepaid Payment Discount</h3>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={settings.prepaid_discount_enabled}
+                                        onChange={(e) => handleSettingsUpdate({ prepaid_discount_enabled: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-copper/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-copper"></div>
+                                </label>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Discount Percentage</label>
+                                <input
+                                    type="number"
+                                    className="w-full p-2 border rounded-lg"
+                                    value={settings.prepaid_discount_percent || 5}
+                                    onChange={(e) => handleSettingsUpdate({ prepaid_discount_percent: parseInt(e.target.value) })}
+                                    min="1"
+                                    max="50"
+                                    disabled={!settings.prepaid_discount_enabled}
+                                />
+                                <p className="text-xs text-gray-500 mt-2">
+                                    {settings.prepaid_discount_enabled
+                                        ? `Customers get ${settings.prepaid_discount_percent}% off when paying online (UPI/Cards/Net Banking)`
+                                        : 'Enable to offer discount on prepaid orders'}
+                                </p>
+                            </div>
                         </div>
 
                     </div>
