@@ -139,13 +139,13 @@ export default function TestimonialsSection() {
               <div className="w-24 h-24 mx-auto mb-4 bg-copper/10 rounded-full flex items-center justify-center border border-copper/30 hover:bg-copper/15 transition-all duration-300">
                 <span className="font-royal text-3xl font-bold text-copper">✓</span>
               </div>
-              <p className="font-sans text-sm text-heritage/70">Lifetime Warranty</p>
+              <p className="font-sans text-sm text-heritage/70">Lifetime Warranty*</p>
             </div>
             <div className="text-center animate-float" style={{ animationDelay: '1.5s' }}>
               <div className="w-24 h-24 mx-auto mb-4 bg-copper/10 rounded-full flex items-center justify-center border border-copper/30 hover:bg-copper/15 transition-all duration-300">
                 <span className="font-royal text-3xl font-bold text-copper">30</span>
               </div>
-              <p className="font-sans text-sm text-heritage/70">Day Returns</p>
+              <p className="font-sans text-sm text-heritage/70">Day Returns*</p>
             </div>
           </div>
         </div>
