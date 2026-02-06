@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Heart } from 'lucide-react';
+
 import { useNotification } from '../context/NotificationContext';
 import { useWishlist } from '../context/WishlistContext';
 

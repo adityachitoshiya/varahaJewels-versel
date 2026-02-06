@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import AdminLayout from '../../components/AdminLayout';
+import AdminLayout from '../../components/admin/AdminLayout';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
 import { Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 
@@ -154,8 +154,8 @@ export default function CategoriesAdmin() {
                                         <td className="px-6 py-4 whitespace-nowrap">{cat.display_name}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 rounded text-xs ${cat.gender === 'Men' ? 'bg-blue-100 text-blue-800' :
-                                                    cat.gender === 'Women' ? 'bg-pink-100 text-pink-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                                cat.gender === 'Women' ? 'bg-pink-100 text-pink-800' :
+                                                    'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {cat.gender || 'Both'}
                                             </span>
