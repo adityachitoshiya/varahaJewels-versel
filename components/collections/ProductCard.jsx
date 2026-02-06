@@ -75,6 +75,11 @@ export default function ProductCard({ product, onQuickLook }) {
     e.preventDefault();
     e.stopPropagation();
 
+    if (product.stock !== undefined && product.stock <= 0) {
+      // Optional: Show toast "Out of stock"
+      return;
+    }
+
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const existingIndex = cart.findIndex(item => item.productId === product.id);
 
@@ -104,6 +109,8 @@ export default function ProductCard({ product, onQuickLook }) {
       maximumFractionDigits: 0
     }).format(price);
   };
+
+  const isOutOfStock = product.stock !== undefined && product.stock <= 0;
 
   return (
     <Link href={`/product/${product.id}`}>
@@ -150,9 +157,8 @@ export default function ProductCard({ product, onQuickLook }) {
             src={product.image}
             alt={product.name}
             fill
-            className={`object-cover transition-all duration-700 ${
-              isHovered ? 'scale-110 opacity-0' : 'scale-100 opacity-100'
-            }`}
+            className={`object-cover transition-all duration-700 ${isHovered ? 'scale-110 opacity-0' : 'scale-100 opacity-100'
+              }`}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={false}
           />
@@ -160,15 +166,14 @@ export default function ProductCard({ product, onQuickLook }) {
           {/* Secondary Image (shows on hover) */}
           {product.additional_images && product.additional_images.length > 0 && (
             <Image
-              src={typeof product.additional_images === 'string' 
-                ? JSON.parse(product.additional_images)[0] 
+              src={typeof product.additional_images === 'string'
+                ? JSON.parse(product.additional_images)[0]
                 : product.additional_images[0]
               }
               alt={`${product.name} - view 2`}
               fill
-              className={`object-cover transition-all duration-700 ${
-                isHovered ? 'scale-100 opacity-100' : 'scale-110 opacity-0'
-              }`}
+              className={`object-cover transition-all duration-700 ${isHovered ? 'scale-100 opacity-100' : 'scale-110 opacity-0'
+                }`}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={false}
             />
@@ -188,10 +193,15 @@ export default function ProductCard({ product, onQuickLook }) {
             `}>
               <button
                 onClick={handleAddToCart}
-                className="flex-1 max-w-[140px] bg-white/95 backdrop-blur-sm text-heritage px-4 py-2.5 rounded-lg font-semibold text-sm hover:bg-copper hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                disabled={isOutOfStock}
+                className={`flex-1 max-w-[140px] px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg flex items-center justify-center gap-2
+                  ${isOutOfStock
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-white/95 backdrop-blur-sm text-heritage hover:bg-copper hover:text-white hover:shadow-xl'
+                  }`}
               >
                 <ShoppingBag size={16} />
-                Add to Cart
+                {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
               </button>
             </div>
           </div>
@@ -248,10 +258,15 @@ export default function ProductCard({ product, onQuickLook }) {
           <div className="md:hidden pt-2 border-t border-heritage/10 flex gap-2">
             <button
               onClick={handleAddToCart}
-              className="flex-1 bg-gradient-to-r from-heritage to-copper text-white px-4 py-2.5 rounded-lg font-semibold text-sm hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+              disabled={isOutOfStock}
+              className={`flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2
+                ${isOutOfStock
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-heritage to-copper text-white'
+                }`}
             >
               <ShoppingBag size={16} />
-              Add to Cart
+              {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
             </button>
             <button
               onClick={handleWishlistToggle}

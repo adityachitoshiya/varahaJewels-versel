@@ -60,7 +60,7 @@ export default function StickyBuyBar({ variant, onAddToCart, onBuyNow }) {
           className="flex-1 flex items-center justify-center gap-2 bg-white border-r border-copper/20 text-copper font-bold text-sm transition active:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <CreditCard size={18} />
-          Buy Now
+          {!variant?.inStock ? 'Sold Out' : 'Buy Now'}
         </button>
 
         {/* Add to Bag Button - Filled Copper */}
@@ -70,7 +70,7 @@ export default function StickyBuyBar({ variant, onAddToCart, onBuyNow }) {
           className="flex-1 flex items-center justify-center gap-2 bg-copper text-white font-bold text-sm transition active:bg-heritage disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ShoppingBag size={18} />
-          Add to Bag
+          {!variant?.inStock ? 'Sold Out' : 'Add to Bag'}
         </button>
       </div>
     </div>
