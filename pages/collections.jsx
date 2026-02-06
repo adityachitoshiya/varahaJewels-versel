@@ -168,7 +168,7 @@ export default function Collections({ initialProducts = [] }) {
   return (
     <>
       <Head>
-        <title>Explore Collection | Varaha Jewels</title>
+        <title>Explore Collection | Varaha Jewels™</title>
         <meta name="description" content="Explore our exquisite collection of handcrafted jewelry" />
       </Head>
 

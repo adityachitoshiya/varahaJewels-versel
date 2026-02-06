@@ -175,7 +175,7 @@ export default function FAQ() {
     return (
         <>
             <Head>
-                <title>FAQ - Frequently Asked Questions | Varaha Jewels</title>
+                <title>FAQ - Frequently Asked Questions | Varaha Jewels™</title>
                 <meta name="description" content="Find answers to common questions about ordering, shipping, returns, and our jewelry products at Varaha Jewels." />
             </Head>
 
@@ -215,8 +215,8 @@ export default function FAQ() {
                                 key={category.id}
                                 onClick={() => setActiveCategory(category.id)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${activeCategory === category.id
-                                        ? 'bg-copper text-warm-sand shadow-lg'
-                                        : 'bg-white text-heritage border border-copper/30 hover:border-copper'
+                                    ? 'bg-copper text-warm-sand shadow-lg'
+                                    : 'bg-white text-heritage border border-copper/30 hover:border-copper'
                                     }`}
                             >
                                 {category.icon}

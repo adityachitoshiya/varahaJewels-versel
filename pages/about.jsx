@@ -9,7 +9,7 @@ export default function About() {
     return (
         <>
             <Head>
-                <title>About Varaha Jewels | Heritage Gold & Diamond Jewellery Experts</title>
+                <title>About Varaha Jewels™ | Heritage Gold & Diamond Jewellery Experts</title>
                 <meta name="description" content="Discover the legacy of Varaha Jewels. Experts in authentic handcrafted Indian gold and diamond jewelry since generations. Learn about our master craftsmanship." />
             </Head>
 

@@ -99,7 +99,7 @@ export default function Account() {
     return (
         <>
             <Head>
-                <title>My Account | Varaha Jewels</title>
+                <title>My Account | Varaha Jewels™</title>
             </Head>
             <Header />
             <div className="min-h-screen bg-[#F8F9FA] pb-24">

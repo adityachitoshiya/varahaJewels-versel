@@ -173,7 +173,7 @@ export default function PaymentSuccess() {
   return (
     <>
       <Head>
-        <title>{orderDetails.isCod ? 'Order Placed' : 'Payment Successful'} - Varaha Jewels</title>
+        <title>{orderDetails.isCod ? 'Order Placed' : 'Payment Successful'} - Varaha Jewels™</title>
         <meta name="description" content="Your order has been confirmed" />
       </Head>
 

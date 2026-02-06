@@ -9,7 +9,7 @@ export default function Story() {
     return (
         <>
             <Head>
-                <title>Our Story - The Heritage of Varaha Jewels</title>
+                <title>Our Story - The Heritage of Varaha Jewels™</title>
                 <meta name="description" content="Discover the story behind Varaha Jewels - our heritage, craftsmanship, and commitment to preserving India's jewelry-making traditions." />
             </Head>
 

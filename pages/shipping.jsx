@@ -23,7 +23,7 @@ export default function Shipping() {
     return (
         <>
             <Head>
-                <title>Shipping & Returns Policy - Varaha Jewels</title>
+                <title>Shipping & Returns Policy - Varaha Jewels™</title>
                 <meta name="description" content="Learn about our shipping policy, delivery times, and easy returns process at Varaha Jewels." />
             </Head>
 

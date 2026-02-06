@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Menu, ShoppingBag, X, Heart, User, LogOut, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
@@ -13,11 +14,13 @@ export default function Header({ cartCount = 0, onCartClick }) {
   const [isSticky, setIsSticky] = useState(false);
   const cartContext = useCart();
   const { cartCount: contextCartCount = 0, cartItems = [], removeFromCart = () => { }, updateQuantity = () => { } } = cartContext || {};
-  const [wishlistCount, setWishlistCount] = useState(0);
+  const { wishlist } = useWishlist();
+  const wishlistCount = wishlist.length;
   const [user, setUser] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [mobileAccordion, setMobileAccordion] = useState(null); // 'women', 'men', or null
 
   const searchRef = useRef(null);
   const profileRef = useRef(null);
@@ -34,15 +37,10 @@ export default function Header({ cartCount = 0, onCartClick }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Update counts (Wishlist only now, Cart is from Context) & Check Auth
+  // Update User Auth State
   useEffect(() => {
     const updateState = () => {
       try {
-        // Wishlist
-        const wishlist = localStorage.getItem('wishlist');
-        const wishlistItems = wishlist ? JSON.parse(wishlist) : [];
-        setWishlistCount(wishlistItems.length);
-
         // User
         const storedUser = localStorage.getItem('customer_user');
         if (storedUser) {
@@ -59,11 +57,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
     updateState();
 
     // Listen for updates
-    window.addEventListener('wishlistUpdated', updateState);
     window.addEventListener('storage', updateState);
 
     return () => {
-      window.removeEventListener('wishlistUpdated', updateState);
       window.removeEventListener('storage', updateState);
     };
   }, []);
@@ -129,7 +125,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
             <Link href="/" prefetch={false} className="flex flex-col items-start sm:items-center justify-center group py-2 flex-shrink min-w-0">
               <Image
                 src="/varaha-assets/logo.png"
-                alt="Varaha Jewels"
+                alt="Varaha Jewels™"
                 width={160}
                 height={50}
                 className="h-8 sm:h-10 w-auto transition-transform duration-300 group-hover:scale-105"
@@ -141,10 +137,72 @@ export default function Header({ cartCount = 0, onCartClick }) {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-10">
-              <Link href="/shop" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
-                Collections
-              </Link>
+            <nav className="hidden lg:flex items-center space-x-8">
+              {/* Collections Mega Menu */}
+              <div className="relative group">
+                <button className="flex items-center gap-1 text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+                  Collections
+                  <ChevronDown size={16} className="group-hover:rotate-180 transition-transform duration-300" />
+                </button>
+
+                {/* Mega Dropdown */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                  <div className="bg-white rounded-lg shadow-2xl border border-heritage/10 p-6 min-w-[500px]">
+                    <div className="grid grid-cols-2 gap-8">
+                      {/* Women Section */}
+                      <div>
+                        <h3 className="font-royal font-bold text-heritage text-lg mb-4 pb-2 border-b border-copper/30">Women</h3>
+
+                        <div className="mb-4">
+                          <p className="text-xs uppercase tracking-wider text-heritage/50 mb-2">Shop by Category</p>
+                          <div className="space-y-2">
+                            <Link href="/women/necklaces" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Necklaces</Link>
+                            <Link href="/women/earrings" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Earrings</Link>
+                            <Link href="/women/rings" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Rings</Link>
+                            <Link href="/women/bangles-bracelets" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Bangles & Bracelets</Link>
+                            <Link href="/women/mangalsutra" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Mangalsutra</Link>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-xs uppercase tracking-wider text-heritage/50 mb-2">Shop by Look</p>
+                          <div className="space-y-2">
+                            <Link href="/women/bridal-jewellery" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Bridal</Link>
+                            <Link href="/women/minimal" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Minimal</Link>
+                          </div>
+                        </div>
+
+                        <Link href="/women" prefetch={false} className="inline-block mt-4 text-sm font-semibold text-copper hover:underline">
+                          View All Women's →
+                        </Link>
+                      </div>
+
+                      {/* Men Section */}
+                      <div>
+                        <h3 className="font-royal font-bold text-heritage text-lg mb-4 pb-2 border-b border-copper/30">Men</h3>
+
+                        <div className="space-y-2">
+                          <Link href="/men/necklaces-chains" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Necklaces & Chains</Link>
+                          <Link href="/men/rings" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Rings</Link>
+                          <Link href="/men/bracelets" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Bracelets</Link>
+                        </div>
+
+                        <Link href="/men" prefetch={false} className="inline-block mt-4 text-sm font-semibold text-copper hover:underline">
+                          View All Men's →
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* All Collections Link */}
+                    <div className="mt-6 pt-4 border-t border-heritage/10 text-center">
+                      <Link href="/shop" prefetch={false} className="text-sm font-semibold text-heritage hover:text-copper transition-colors">
+                        Browse All Collections →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <Link href="/ciplx" prefetch={false} className="group flex flex-col items-center justify-center text-center leading-tight text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 <span>Ciplx</span>
                 <span className="text-[9px] font-normal tracking-wide opacity-80 group-hover:opacity-100">by varaha heaths</span>
@@ -337,6 +395,64 @@ export default function Header({ cartCount = 0, onCartClick }) {
             </div>
 
             {/* Menu Items with staggered animation */}
+
+            {/* Women Accordion */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMobileAccordion(mobileAccordion === 'women' ? null : 'women')}
+                className="w-full group block relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300">
+                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                    Women
+                  </span>
+                  <ChevronDown size={18} className={`text-heritage transition-transform duration-300 ${mobileAccordion === 'women' ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              {/* Women Submenu */}
+              <div className={`overflow-hidden transition-all duration-300 ${mobileAccordion === 'women' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="pl-4 py-2 space-y-1">
+                  <p className="text-xs uppercase tracking-wider text-heritage/50 px-4 mb-1">Shop by Category</p>
+                  <Link href="/women/necklaces" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Necklaces</Link>
+                  <Link href="/women/earrings" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Earrings</Link>
+                  <Link href="/women/rings" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Rings</Link>
+                  <Link href="/women/bangles-bracelets" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Bangles & Bracelets</Link>
+                  <Link href="/women/mangalsutra" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Mangalsutra</Link>
+                  <p className="text-xs uppercase tracking-wider text-heritage/50 px-4 mt-2 mb-1">Shop by Look</p>
+                  <Link href="/women/bridal-jewellery" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Bridal</Link>
+                  <Link href="/women/minimal" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Minimal</Link>
+                  <Link href="/women" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-copper">View All Women's →</Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Men Accordion */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMobileAccordion(mobileAccordion === 'men' ? null : 'men')}
+                className="w-full group block relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300">
+                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                    Men
+                  </span>
+                  <ChevronDown size={18} className={`text-heritage transition-transform duration-300 ${mobileAccordion === 'men' ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              {/* Men Submenu */}
+              <div className={`overflow-hidden transition-all duration-300 ${mobileAccordion === 'men' ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="pl-4 py-2 space-y-1">
+                  <Link href="/men/necklaces-chains" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Necklaces & Chains</Link>
+                  <Link href="/men/rings" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Rings</Link>
+                  <Link href="/men/bracelets" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Bracelets</Link>
+                  <Link href="/men" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-copper">View All Men's →</Link>
+                </div>
+              </div>
+            </div>
+
+            {/* All Collections Link */}
             <Link
               href="/shop"
               prefetch={false}
@@ -345,7 +461,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
             >
               <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
                 <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
-                  Collections
+                  All Collections
                 </span>
                 <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
               </div>

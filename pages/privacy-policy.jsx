@@ -92,7 +92,7 @@ export default function PrivacyPolicy() {
   return (
     <>
       <Head>
-        <title>Privacy Policy - Varaha Jewels</title>
+        <title>Privacy Policy - Varaha Jewels™</title>
         <meta name="description" content="Privacy Policy for Varaha Jewels - Learn how we collect, use, and protect your personal information." />
         <meta name="robots" content="index, follow" />
       </Head>
@@ -106,7 +106,7 @@ export default function PrivacyPolicy() {
             <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
           </div>
-          
+
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-md rounded-full mb-6">
@@ -135,8 +135,8 @@ export default function PrivacyPolicy() {
                   Welcome to Varaha Jewels
                 </h2>
                 <p className="text-gray-600 leading-relaxed mb-4">
-                  At Varaha Jewels, we are committed to protecting your privacy and ensuring the security of your personal information. 
-                  This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website 
+                  At Varaha Jewels, we are committed to protecting your privacy and ensuring the security of your personal information.
+                  This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website
                   or make a purchase.
                 </p>
                 <p className="text-gray-600 leading-relaxed">

@@ -94,7 +94,7 @@ export default function Home({ heroSlides, initialSettings }) {
   return (
     <>
       <Head>
-        <title>Varaha Jewels - Premium Heritage Jewelry Collection | Buy Authentic Indian Jewelry Online</title>
+        <title>Varaha Jewels™ - Premium Heritage Jewelry Collection | Buy Authentic Indian Jewelry Online</title>
         <meta name="description" content="Shop exquisite heritage jewelry at Varaha Jewels. Premium gold, diamond, and traditional Indian ornaments with certified authenticity. Free shipping, 30-day returns, and lifetime warranty." />
         <meta name="keywords" content="Varaha Jewels, jewelry online, gold jewelry India, heritage jewelry, bridal jewelry, diamond jewelry, traditional ornaments, Indian jewelry, premium jewelry store, certified gold jewelry, wedding jewelry collection" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

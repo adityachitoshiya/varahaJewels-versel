@@ -9,10 +9,12 @@ import ImageUpload from '../../../components/admin/ImageUpload';
 export default function NewProduct() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         price: '',
+        stock: 0,
         category: 'Artificial',
         metal: 'Brass',
         carat: 'N/A',
@@ -21,6 +23,9 @@ export default function NewProduct() {
         premium: false,
         tag: 'New',
         style: '',
+        gender: '',
+        collection: '',
+        product_type: '',
         image: '/varaha-assets/logo.png', // Default placeholder
         additional_images: ['', '', ''], // Array for 3 slots
         id: `prod-${Date.now()}`
@@ -44,6 +49,25 @@ export default function NewProduct() {
         setFormData(prev => ({ ...prev, additional_images: newImages }));
     };
 
+    // Fetch categories from API
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const API_URL = getApiUrl();
+                const res = await fetch(`${API_URL}/api/categories?active_only=true`, {
+                    headers: getAuthHeaders()
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setCategories(data);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+        fetchCategories();
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -57,6 +81,7 @@ export default function NewProduct() {
             const dataToSend = {
                 ...formData,
                 price: parseFloat(formData.price),
+                stock: parseInt(formData.stock) || 0,
                 stones: formData.stones ? JSON.stringify(formData.stones.split(',').map(s => s.trim())) : '[]',
                 additional_images: JSON.stringify(validAdditionalImages)
             };
@@ -134,6 +159,19 @@ export default function NewProduct() {
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                                <input
+                                    type="number"
+                                    name="stock"
+                                    value={formData.stock}
+                                    onChange={handleChange}
+                                    min="0"
+                                    placeholder="0"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                                 <select
                                     name="category"
@@ -141,12 +179,67 @@ export default function NewProduct() {
                                     onChange={handleChange}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
                                 >
-                                    <option value="Artificial">Artificial Jewellery</option>
-                                    <option value="Heritage">Heritage Collection</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.name}>{cat.display_name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
+                                <select
+                                    name="collection"
+                                    value={formData.collection}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
+                                >
+                                    <option value="">None</option>
                                     <option value="Bridal">Bridal</option>
-                                    <option value="Gold">Gold Jewellery</option>
-                                    <option value="Diamond">Diamond</option>
-                                    <option value="Polki">Polki</option>
+                                    <option value="Minimal">Minimal</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
+                                <select
+                                    name="product_type"
+                                    value={formData.product_type}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
+                                >
+                                    <option value="">Not Specified</option>
+                                    <option value="Jewelry">Jewelry</option>
+                                    <option value="Accessories">Accessories</option>
+                                    <option value="Ornament">Ornament</option>
+                                    <option value="Fashion">Fashion Jewelry</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                <select
+                                    name="gender"
+                                    value={formData.gender}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
+                                >
+                                    <option value="">Unisex / Not Specified</option>
+                                    <option value="Women">Women</option>
+                                    <option value="Men">Men</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
+                                <select
+                                    name="collection"
+                                    value={formData.collection}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
+                                >
+                                    <option value="">None</option>
+                                    <option value="Bridal">Bridal</option>
+                                    <option value="Minimal">Minimal</option>
                                 </select>
                             </div>
                         </div>

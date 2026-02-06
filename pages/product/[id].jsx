@@ -232,7 +232,7 @@ export default function ProductPage() {
   return (
     <>
       <Head>
-        <title>Buy {product.title} Online | Certified Authentic | Varaha Jewels</title>
+        <title>Buy {product.title} Online | Certified Authentic | Varaha Jewels™</title>
         <meta name="description" content={`Buy ${product.name}. ${product.description ? product.description.substring(0, 120) : ''}... Certified authentic heritage jewelry from Varaha Jewels.`} />
         <script
           type="application/ld+json"

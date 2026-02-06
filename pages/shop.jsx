@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -6,8 +5,9 @@ import Image from 'next/image';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
-import { Search, SlidersHorizontal, Grid, List, Heart, X, ChevronDown, Filter, ShoppingBag } from 'lucide-react';
+import { Search, Heart, ShoppingBag, ChevronRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useRouter } from 'next/router';
 import ProductSkeleton from '../components/ProductSkeleton';
 
@@ -15,57 +15,49 @@ export default function Shop() {
     const router = useRouter();
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [viewMode, setViewMode] = useState('grid');
-    const [showFilters, setShowFilters] = useState(false); // Mobile filter toggle
 
-    // Filter States
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [selectedMetals, setSelectedMetals] = useState([]);
-    const [selectedStyles, setSelectedStyles] = useState([]);
-    const [selectedTags, setSelectedTags] = useState([]);
-    const [priceRange, setPriceRange] = useState([0, 5000000]);
-    const [sortBy, setSortBy] = useState('featured');
+    // Default to Men initially (server-safe)
+    const [selectedGender, setSelectedGender] = useState('Men');
 
-    const { addToCart } = useCart();
-    const [wishlist, setWishlist] = useState([]);
-
+    // Restore selected gender from session storage on mount
     useEffect(() => {
-        fetchProducts();
-        const savedWishlist = localStorage.getItem('wishlist');
-        if (savedWishlist) {
-            setWishlist(JSON.parse(savedWishlist));
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('shop_selected_gender');
+            if (saved) {
+                setSelectedGender(saved);
+            }
         }
     }, []);
 
-    // Apply filters from URL query params
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const { addToCart } = useCart();
+    const { isInWishlist, toggleWishlist } = useWishlist();
+
+    // Save gender to sessionStorage whenever it changes
+    const handleGenderChange = (gender) => {
+        setSelectedGender(gender);
+        sessionStorage.setItem('shop_selected_gender', gender);
+    };
+
     useEffect(() => {
-        if (!router.isReady) return;
-
-        const { category, style, metal, search } = router.query;
-
-        if (category) {
-            const cats = Array.isArray(category) ? category : [category];
-            setSelectedCategories(cats);
+        // Disable browser's default scroll restoration to handle it manually
+        if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
         }
 
-        if (style) {
-            const styles = Array.isArray(style) ? style : [style];
-            setSelectedStyles(styles);
-        }
+        fetchProducts();
+    }, []);
 
-        if (metal) {
-            const mets = Array.isArray(metal) ? metal : [metal];
-            setSelectedMetals(mets);
+    // Handle URL query for gender if needed (optional enhancement)
+    useEffect(() => {
+        if (router.isReady && router.query.gender) {
+            const g = router.query.gender.toLowerCase();
+            if (g === 'women') handleGenderChange('Women');
+            else if (g === 'men') handleGenderChange('Men');
         }
-
-        if (search) {
-            setSearchQuery(search);
-        }
-
     }, [router.isReady, router.query]);
-
-
 
     const fetchProducts = async () => {
         try {
@@ -84,84 +76,25 @@ export default function Shop() {
         }
     };
 
-    // Derived unique values
-    const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
-    const metals = [...new Set(products.map(p => p.metal))].filter(Boolean);
-    const styles = [...new Set(products.map(p => p.style))].filter(Boolean);
-    const tags = [...new Set(products.map(p => p.tag))].filter(Boolean);
+    // Scroll Restoration: Restore position after products load
+    useEffect(() => {
+        if (!isLoading && products.length > 0) {
+            const savedPosition = sessionStorage.getItem('shop_scroll_position');
+            if (savedPosition) {
+                const pos = parseInt(savedPosition);
+                // Attempt restore immediately and after delay to ensure layout is ready
+                const scroll = () => window.scrollTo(0, pos);
 
-    // Filtering Logic
-    const filteredProducts = products.filter(product => {
-        // Search
-        if (searchQuery) {
-            const term = searchQuery.toLowerCase();
-            const matcheSearch =
-                product.name.toLowerCase().includes(term) ||
-                product.description?.toLowerCase().includes(term);
-            if (!matcheSearch) return false;
+                setTimeout(scroll, 100);
+                setTimeout(() => {
+                    scroll();
+                    sessionStorage.removeItem('shop_scroll_position');
+                }, 500);
+            }
         }
+    }, [isLoading, products]);
 
-        // Category
-        if (selectedCategories.length > 0 && !selectedCategories.includes(product.category)) return false;
 
-        // Metal
-        if (selectedMetals.length > 0 && !selectedMetals.includes(product.metal)) return false;
-
-        // Style
-        if (selectedStyles.length > 0 && !selectedStyles.includes(product.style)) return false;
-
-        // Tags
-        if (selectedTags.length > 0 && !selectedTags.includes(product.tag)) return false;
-
-        // Price
-        const price = product.price || 0;
-        if (product.price !== null && (price < priceRange[0] || price > priceRange[1])) return false;
-
-        return true;
-    }).sort((a, b) => {
-        switch (sortBy) {
-            case 'price-low': return (a.price || Infinity) - (b.price || Infinity);
-            case 'price-high': return (b.price || 0) - (a.price || 0);
-            case 'name': return a.name.localeCompare(b.name);
-            case 'featured':
-            default:
-                // Timestamp based ID sort
-                const idA = String(a.id).replace(/\D/g, '');
-                const idB = String(b.id).replace(/\D/g, '');
-                return (Number(idB) || 0) - (Number(idA) || 0);
-
-        }
-    });
-
-    const toggleFilter = (state, setState, value) => {
-        if (state.includes(value)) {
-            setState(state.filter(item => item !== value));
-        } else {
-            setState([...state, value]);
-        }
-    };
-
-    const clearAllFilters = () => {
-        setSelectedCategories([]);
-        setSelectedMetals([]);
-        setSelectedStyles([]);
-        setSelectedTags([]);
-        setPriceRange([0, 5000000]);
-        setSearchQuery('');
-    };
-
-    const toggleWishlist = (productId, productName) => {
-        const savedWishlist = localStorage.getItem('wishlist');
-        let wishlistArray = savedWishlist ? JSON.parse(savedWishlist) : [];
-        const existingIndex = wishlistArray.findIndex(item => item.id === productId);
-        if (existingIndex > -1) {
-            wishlistArray.splice(existingIndex, 1);
-        } else {
-            wishlistArray.push({ id: productId, productName });
-        }
-        localStorage.setItem('wishlist', JSON.stringify(wishlistArray));
-        setWishlist(wishlistArray);
-    };
 
     const handleAddToCart = (product) => {
         const variant = {
@@ -173,312 +106,224 @@ export default function Shop() {
         addToCart(product, variant, 1);
     };
 
-    const isInWishlist = (productId) => wishlist.some(item => item.id === productId);
+    // Save scroll position before navigating to product
+    const saveScrollPosition = () => {
+        sessionStorage.setItem('shop_scroll_position', window.scrollY.toString());
+    };
 
-    const activeFiltersCount = selectedCategories.length + selectedMetals.length + selectedStyles.length + selectedTags.length + (priceRange[0] !== 0 || priceRange[1] !== 5000000 ? 1 : 0);
+
+
+    // 1. Filter by Gender
+    // If product has no gender set/null, allow it in both? Or strict? 
+    // User said "default m men", implying strict separation.
+    // I'll be inclusive: if matches selected OR (if user wants) unisex?
+    // Let's stick to strict match first, assuming migration set data.
+    const genderFiltered = products.filter(p => {
+        if (searchQuery) {
+            const term = searchQuery.toLowerCase();
+            const matcheSearch =
+                p.name.toLowerCase().includes(term) ||
+                p.description?.toLowerCase().includes(term);
+            if (!matcheSearch) return false;
+        }
+
+        // Strict match for Men/Women. 
+        // Note: Backend might use "Men", "Women".
+        // Also allowing "Unisex" to show in both if needed, but for now strict.
+        return p.gender === selectedGender;
+    });
+
+    // 2. Group by Category
+    const groupedProducts = genderFiltered.reduce((acc, product) => {
+        const cat = product.category || 'Other';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(product);
+        return acc;
+    }, {});
+
+    // Get sorted category names (optional: custom order)
+    const categoryKeys = Object.keys(groupedProducts).sort();
 
     return (
         <>
             <Head>
-                <title>Buy Certified Gold & Diamond Jewellery | Varaha Jewels Collection</title>
-                <meta name="description" content="Browse our exquisite collection of heritage jewelry. Shop certified gold, diamond, kundan, and bridal jewelry online with authentic craftsmanship and lifetime warranty." />
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify({
-                            "@context": "https://schema.org",
-                            "@type": "CollectionPage",
-                            "name": "Varaha Jewels Collection",
-                            "description": "Browse our exquisite collection of heritage jewelry. Shop gold, silver, kundan, and bridal jewelry.",
-                            "url": "https://www.varahajewels.in/shop",
-                            "breadcrumb": {
-                                "@type": "BreadcrumbList",
-                                "itemListElement": [
-                                    {
-                                        "@type": "ListItem",
-                                        "position": 1,
-                                        "name": "Home",
-                                        "item": "https://www.varahajewels.in"
-                                    },
-                                    {
-                                        "@type": "ListItem",
-                                        "position": 2,
-                                        "name": "Shop",
-                                        "item": "https://www.varahajewels.in/shop"
-                                    }
-                                ]
-                            }
-                        })
-                    }}
-                />
+                <title>Buy Certified Gold & Diamond Jewellery | Varaha Jewels™ Collection</title>
+                <meta name="description" content="Browse our exquisite collection of heritage jewelry." />
             </Head>
             <Header />
             <main className="min-h-screen bg-warm-sand pt-24 pb-32">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Page Header */}
-                    <div className="mb-8">
-                        <h1 className="text-4xl md:text-5xl font-royal font-bold text-heritage mb-4">The Collection</h1>
-                        <p className="text-heritage/70 max-w-2xl">
-                            Explore our entire range of handcrafted heritage jewelry.
-                        </p>
-                        <div className="w-20 h-px bg-copper mt-4"></div>
-                    </div>
 
-                    {/* Controls Bar */}
-                    <div className="bg-white p-4 rounded-sm border border-copper/20 mb-8 lg:sticky lg:top-20 z-10 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
-                        <div className="flex items-center gap-4 w-full md:w-auto">
+                    {/* Header with Search & Gender Tabs */}
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 sticky top-20 z-40 bg-warm-sand/95 backdrop-blur-sm py-2">
+                        <div className="flex bg-white rounded-full p-1 shadow-sm border border-copper/20">
                             <button
-                                onClick={() => setShowFilters(!showFilters)}
-                                className="lg:hidden flex items-center gap-2 px-4 py-2 bg-heritage text-warm-sand rounded-sm"
+                                onClick={() => handleGenderChange('Men')}
+                                className={`px-8 py-2 rounded-full text-sm font-bold transition-all duration-300 ${selectedGender === 'Men'
+                                    ? 'bg-heritage text-white shadow-md'
+                                    : 'text-heritage hover:bg-gray-50'
+                                    }`}
                             >
-                                <Filter size={18} /> Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+                                Men
                             </button>
-                            <div className="relative flex-1 md:w-64">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-copper"
-                                />
-                            </div>
+                            <button
+                                onClick={() => handleGenderChange('Women')}
+                                className={`px-8 py-2 rounded-full text-sm font-bold transition-all duration-300 ${selectedGender === 'Women'
+                                    ? 'bg-heritage text-white shadow-md'
+                                    : 'text-heritage hover:bg-gray-50'
+                                    }`}
+                            >
+                                Women
+                            </button>
                         </div>
 
-                        <div className="flex items-center gap-4 w-full md:w-auto justify-between">
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="px-4 py-2 border border-gray-200 rounded-sm focus:outline-none focus:border-copper cursor-pointer"
-                            >
-                                <option value="featured">Featured</option>
-                                <option value="price-low">Price: Low to High</option>
-                                <option value="price-high">Price: High to Low</option>
-                                <option value="name">Name: A-Z</option>
-                            </select>
-
-                            <div className="flex border border-gray-200 rounded-sm overflow-hidden h-10">
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={`w-10 flex items-center justify-center ${viewMode === 'grid' ? 'bg-copper text-white' : 'hover:bg-gray-50'}`}
-                                >
-                                    <Grid size={20} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={`w-10 flex items-center justify-center ${viewMode === 'list' ? 'bg-copper text-white' : 'hover:bg-gray-50'}`}
-                                >
-                                    <List size={20} />
-                                </button>
-                            </div>
+                        <div className="relative w-full md:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search products..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:border-copper bg-white"
+                            />
                         </div>
                     </div>
 
-                    <div className="flex gap-8 relative">
-                        {/* Filters Sidebar */}
-                        <aside className={`lg:w-64 lg:block fixed lg:static inset-0 z-[60] bg-white lg:bg-transparent transition-transform duration-300 transform ${showFilters ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-                            {/* Mobile Close */}
-                            <div className="lg:hidden flex justify-between items-center p-4 border-b">
-                                <h2 className="font-bold text-lg">Filters</h2>
-                                <button onClick={() => setShowFilters(false)}><X size={24} /></button>
-                            </div>
-
-                            <div className="p-4 lg:p-0 pb-32 lg:pb-0 space-y-8 overflow-y-auto h-full lg:h-auto max-h-[calc(100vh-100px)] lg:sticky lg:top-40">
-                                {/* Categories */}
-                                <div>
-                                    <h3 className="font-royal font-bold text-heritage mb-4">Category</h3>
-                                    <div className="space-y-2">
-                                        {categories.map(cat => (
-                                            <label key={cat} className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedCategories.includes(cat)}
-                                                    onChange={() => toggleFilter(selectedCategories, setSelectedCategories, cat)}
-                                                    className="rounded border-gray-300 text-copper focus:ring-copper"
-                                                />
-                                                <span className="text-sm text-gray-600">{cat}</span>
-                                            </label>
+                    {/* Content Area */}
+                    {isLoading ? (
+                        <div className="space-y-8">
+                            {[1, 2].map(i => (
+                                <div key={i}>
+                                    <div className="h-8 w-48 bg-gray-200 rounded mb-4 animate-pulse"></div>
+                                    <div className="flex gap-4 overflow-hidden">
+                                        {[1, 2, 3, 4].map(j => (
+                                            <div key={j} className="w-64 h-80 bg-gray-200 rounded animate-pulse flex-shrink-0"></div>
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* Styles */}
-                                {styles.length > 0 && (
-                                    <div>
-                                        <h3 className="font-royal font-bold text-heritage mb-4">Style</h3>
-                                        <div className="space-y-2">
-                                            {styles.map(style => (
-                                                <label key={style} className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedStyles.includes(style)}
-                                                        onChange={() => toggleFilter(selectedStyles, setSelectedStyles, style)}
-                                                        className="rounded border-gray-300 text-copper focus:ring-copper"
-                                                    />
-                                                    <span className="text-sm text-gray-600">{style}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Metals */}
-                                {metals.length > 0 && (
-                                    <div>
-                                        <h3 className="font-royal font-bold text-heritage mb-4">Metal</h3>
-                                        <div className="space-y-2">
-                                            {metals.map(metal => (
-                                                <label key={metal} className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedMetals.includes(metal)}
-                                                        onChange={() => toggleFilter(selectedMetals, setSelectedMetals, metal)}
-                                                        className="rounded border-gray-300 text-copper focus:ring-copper"
-                                                    />
-                                                    <span className="text-sm text-gray-600">{metal}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Price Range */}
-                                <div>
-                                    <h3 className="font-royal font-bold text-heritage mb-4">Price</h3>
-                                    <div className="px-2">
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="5000000"
-                                            step="10000"
-                                            value={priceRange[1]}
-                                            onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                                            className="w-full accent-copper"
-                                        />
-                                        <div className="flex justify-between text-sm text-heritage/70">
-                                            <span>₹{priceRange[0].toLocaleString('en-IN')}</span>
-                                            <span>₹{priceRange[1].toLocaleString('en-IN')}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </aside>
-
-                        {/* Products Grid/List */}
-                        <div className="flex-1">
-                            {/* Results Count */}
-                            <div className="mb-6 flex justify-between items-center">
-                                <p className="text-heritage/70">
-                                    Showing <span className="font-semibold text-heritage">{isLoading ? '...' : filteredProducts.length}</span> of{' '}
-                                    <span className="font-semibold text-heritage">{isLoading ? '...' : products.length}</span> products
-                                </p>
-                            </div>
-
-                            {isLoading ? (
-                                <ProductSkeleton viewMode={viewMode} />
-                            ) : filteredProducts.length === 0 ? (
-                                <div className="bg-white border border-copper/30 rounded-sm p-12 text-center">
-                                    <Search className="mx-auto mb-4 text-heritage/30" size={64} />
-                                    <h3 className="text-2xl font-royal font-bold text-heritage mb-2">No products found</h3>
-                                    <p className="text-heritage/70 mb-6">Try adjusting your filters or search query</p>
-                                    <button
-                                        onClick={clearAllFilters}
-                                        className="px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm hover:bg-heritage transition-all"
-                                    >
-                                        Clear All Filters
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className={viewMode === 'grid'
-                                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
-                                    : 'space-y-6'
-                                }>
-                                    {filteredProducts.map((product) => (
-                                        <div
-                                            key={product.id}
-                                            className={`group bg-white border border-copper/30 rounded-sm overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col ${viewMode === 'list' ? 'sm:flex-row' : 'h-full'}`}
+                            ))}
+                        </div>
+                    ) : categoryKeys.length === 0 ? (
+                        <div className="text-center py-20">
+                            <h3 className="text-2xl font-royal font-bold text-heritage mb-2">No products found</h3>
+                            <p className="text-heritage/70">Try changing the gender tab or search query.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-12">
+                            {categoryKeys.map((category) => (
+                                <section key={category} className="animate-fadeUp">
+                                    <div className="flex justify-between items-end mb-4 px-1">
+                                        <h2 className="text-2xl md:text-3xl font-royal font-bold text-heritage">{category}</h2>
+                                        <Link
+                                            href={`/shop/${selectedGender.toLowerCase()}/${category.toLowerCase().replace(/ /g, '-')}`}
+                                            className="text-copper hover:text-heritage font-medium text-sm flex items-center gap-1 transition-colors"
                                         >
-                                            {/* Product Image */}
-                                            <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 h-48 sm:h-auto flex-shrink-0' : 'aspect-square'}`}>
-                                                <Link href={`/product/${product.id}`} className="block h-full cursor-pointer">
-                                                    <Image
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        width={400}
-                                                        height={400}
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                        onError={(e) => { e.target.srcset = ''; e.target.src = '/varaha-assets/logo.png'; }}
-                                                    />
-                                                </Link>
-                                                {product.tag && (
-                                                    <span className="absolute top-3 left-3 px-3 py-1 bg-copper text-warm-sand text-xs font-bold rounded-full">
-                                                        {product.tag}
-                                                    </span>
-                                                )}
-                                                <button
-                                                    onClick={() => toggleWishlist(product.id, product.name)}
-                                                    className="absolute top-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white transition-colors z-10 flex items-center justify-center"
-                                                >
-                                                    <Heart
-                                                        size={20}
-                                                        className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'}
-                                                    />
-                                                </button>
-                                            </div>
+                                            View all <ChevronRight size={16} />
+                                        </Link>
+                                    </div>
 
-                                            {/* Product Details */}
-                                            <div className="p-6 flex flex-col flex-1">
-                                                <div className="flex-grow">
-                                                    <div className="mb-3">
-                                                        <Link href={`/product/${product.id}`} className="group-hover:text-copper transition-colors">
-                                                            <h3 className="text-lg font-royal font-bold text-heritage mb-1 line-clamp-2">
+                                    {/* Horizontal Scroll Container */}
+                                    <div
+                                        className="flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 scrollbar-hide snap-x"
+                                        style={{
+                                            scrollPaddingLeft: '1rem',
+                                            scrollPaddingRight: '1rem',
+                                            WebkitOverflowScrolling: 'touch'
+                                        }}
+                                    >
+                                        {groupedProducts[category].map((product) => (
+                                            <div
+                                                key={product.id}
+                                                className="flex-shrink-0 w-[45%] md:w-[280px] snap-start group"
+                                            >
+                                                <div className="bg-white border border-copper/20 rounded-sm overflow-hidden hover:shadow-lg transition-all duration-300">
+                                                    {/* Image */}
+                                                    <div className="relative aspect-square overflow-hidden">
+                                                        <Link href={`/product/${product.id}`} onClick={saveScrollPosition}>
+                                                            <Image
+                                                                src={product.image}
+                                                                alt={product.name}
+                                                                width={300}
+                                                                height={300}
+                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                                onError={(e) => { e.target.srcset = ''; e.target.src = '/varaha-assets/logo.png'; }}
+                                                            />
+                                                        </Link>
+                                                        {product.tag && (
+                                                            <span className="absolute top-2 left-2 px-2 py-1 bg-copper text-warm-sand text-[10px] font-bold rounded-full uppercase tracking-wider">
+                                                                {product.tag}
+                                                            </span>
+                                                        )}
+                                                        <button
+                                                            onClick={() => toggleWishlist(product.id, product.name)}
+                                                            className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors z-10"
+                                                        >
+                                                            <Heart
+                                                                size={16}
+                                                                className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'}
+                                                            />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Details */}
+                                                    <div className="p-3 md:p-4">
+                                                        <Link href={`/product/${product.id}`} onClick={saveScrollPosition}>
+                                                            <h3 className="text-sm md:text-base font-royal font-bold text-heritage mb-1 line-clamp-1 truncate group-hover:text-copper transition-colors">
                                                                 {product.name}
                                                             </h3>
                                                         </Link>
-                                                        <p className="text-sm text-heritage/60">{product.category} • {product.metal}</p>
-                                                    </div>
 
-                                                    <p className="text-sm text-heritage/70 mb-4 line-clamp-2">{product.description}</p>
-
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div>
+                                                        <div className="flex items-center justify-between mt-2">
                                                             {product.price ? (
-                                                                <p className="text-2xl font-bold text-heritage">
+                                                                <p className="text-sm md:text-lg font-bold text-heritage">
                                                                     ₹{product.price.toLocaleString('en-IN')}
                                                                 </p>
                                                             ) : (
-                                                                <p className="text-lg font-semibold text-copper">Price on Request</p>
+                                                                <p className="text-xs font-semibold text-copper">Price on Request</p>
                                                             )}
                                                         </div>
+
+                                                        {/* Mobile: Compact Add/View Button */}
+                                                        {product.price ? (
+                                                            <button
+                                                                onClick={() => handleAddToCart(product)}
+                                                                className="mt-3 w-full py-2 bg-heritage text-warm-sand text-xs md:text-sm font-semibold rounded-sm hover:bg-copper transition-colors flex items-center justify-center gap-2"
+                                                            >
+                                                                Add <ShoppingBag size={14} />
+                                                            </button>
+                                                        ) : (
+                                                            <Link
+                                                                href={`/product/${product.id}`}
+                                                                className="mt-3 block w-full py-2 bg-copper text-warm-sand text-xs md:text-sm font-semibold rounded-sm hover:bg-heritage transition-colors text-center"
+                                                            >
+                                                                View
+                                                            </Link>
+                                                        )}
                                                     </div>
                                                 </div>
-
-                                                {product.price ? (
-                                                    <button
-                                                        onClick={() => handleAddToCart(product)}
-                                                        className="mt-auto w-full px-6 py-3 bg-heritage text-warm-sand font-semibold rounded-sm hover:bg-copper transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-md"
-                                                    >
-                                                        Add to Cart <ShoppingBag size={18} />
-                                                    </button>
-                                                ) : (
-                                                    <Link
-                                                        href={`/product/${product.id}`}
-                                                        className="mt-auto w-full px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm hover:bg-heritage transition-all duration-300 flex items-center justify-center gap-2 group-hover:shadow-md"
-                                                    >
-                                                        View Details <ShoppingBag size={18} />
-                                                    </Link>
-                                                )}
                                             </div>
+                                        ))}
+
+                                        {/* "View More" Card at the end of the row */}
+                                        <div className="flex-shrink-0 w-[40%] md:w-[200px] snap-start flex items-center justify-center">
+                                            <Link
+                                                href={`/shop/${selectedGender.toLowerCase()}/${category.toLowerCase().replace(/ /g, '-')}`}
+                                                className="flex flex-col items-center justify-center gap-2 text-copper hover:text-heritage group p-4 border border-copper/10 rounded-full aspect-square bg-white shadow-sm hover:shadow-md transition-all"
+                                            >
+                                                <div className="p-3 rounded-full bg-warm-sand group-hover:bg-copper group-hover:text-white transition-colors">
+                                                    <ChevronRight size={24} />
+                                                </div>
+                                                <span className="font-medium text-sm">View All</span>
+                                            </Link>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
+                                    </div>
+                                </section>
+                            ))}
                         </div>
-                    </div>
+                    )}
                 </div>
             </main>
             <Footer />
         </>
     );
 }
-

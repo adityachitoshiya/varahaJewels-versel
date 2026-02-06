@@ -12,7 +12,7 @@ export default function Contact() {
     subject: '',
     message: ''
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -49,9 +49,9 @@ export default function Contact() {
       // Here you can add API call to send email or store in database
       // For now, we'll simulate success
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       console.log('Contact form submitted:', formData);
-      
+
       setSubmitted(true);
       setFormData({
         name: '',
@@ -60,7 +60,7 @@ export default function Contact() {
         subject: '',
         message: ''
       });
-      
+
       // Reset success message after 5 seconds
       setTimeout(() => {
         setSubmitted(false);
@@ -75,7 +75,7 @@ export default function Contact() {
   return (
     <>
       <Head>
-        <title>Contact Us - Varaha Jewels</title>
+        <title>Contact Us - Varaha Jewels™</title>
         <meta name="description" content="Get in touch with Varaha Jewels. We're here to help with your queries about our exquisite jewelry collection." />
       </Head>
 
@@ -98,7 +98,7 @@ export default function Contact() {
             <div className="lg:col-span-1 space-y-6">
               <div className="bg-white rounded-lg shadow-lg p-6 border border-copper/20">
                 <h2 className="text-2xl font-bold text-heritage mb-6">Get In Touch</h2>
-                
+
                 <div className="space-y-6">
                   {/* Email */}
                   <div className="flex items-start gap-4">
@@ -295,7 +295,7 @@ export default function Contact() {
           {/* FAQ Section */}
           <div className="mt-16 bg-white rounded-lg shadow-lg p-8 border border-copper/20">
             <h2 className="text-2xl font-bold text-heritage mb-6 text-center">Frequently Asked Questions</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="border-l-4 border-copper pl-4">
                 <h3 className="font-semibold text-heritage mb-2">What are your shipping options?</h3>

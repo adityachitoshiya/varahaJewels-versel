@@ -325,7 +325,7 @@ export default function Login() {
     return (
         <div className="min-h-screen bg-white sm:bg-[#F8F9FA] flex flex-col justify-center py-8 sm:py-12 sm:px-6 lg:px-8 relative overflow-hidden">
             <Head>
-                <title>Sign In | Varaha Jewels</title>
+                <title>Sign In | Varaha Jewels™</title>
             </Head>
 
             <TelegramLoginModal

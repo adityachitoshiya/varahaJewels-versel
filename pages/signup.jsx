@@ -141,7 +141,7 @@ export default function Signup() {
     return (
         <div className="min-h-screen bg-[#F8F9FA] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <Head>
-                <title>Create Account | Varaha Jewels</title>
+                <title>Create Account | Varaha Jewels™</title>
             </Head>
 
             <div className="sm:mx-auto sm:w-full sm:max-w-md">

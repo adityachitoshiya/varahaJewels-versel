@@ -226,7 +226,7 @@ export default function Heritage() {
   return (
     <>
       <Head>
-        <title>Heritage Collection - Varaha Jewels | Timeless & Royal</title>
+        <title>Heritage Collection - Varaha Jewels™ | Timeless & Royal</title>
         <meta name="description" content="Explore the Heritage Collection by Varaha Jewels. Royal antique designs, polki work, and traditional craftsmanship." />
       </Head>
 

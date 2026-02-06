@@ -115,7 +115,7 @@ export default function Cart() {
   return (
     <>
       <Head>
-        <title>Shopping Cart - Varaha Jewels</title>
+        <title>Shopping Cart - Varaha Jewels™</title>
         <meta name="description" content="Review your shopping cart and proceed to checkout" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>

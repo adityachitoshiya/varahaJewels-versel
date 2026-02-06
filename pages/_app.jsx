@@ -12,6 +12,7 @@ import { NotificationProvider } from '../context/NotificationContext';
 import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { WishlistProvider } from '../context/WishlistContext';
 
 const CookieConsent = dynamic(() => import('../components/CookieConsent'), { ssr: false });
 
@@ -93,20 +94,21 @@ function MyApp({ Component, pageProps }) {
       <NotificationProvider>
         <NotificationPopup />
         <CartProvider>
-          {isHomePage && <DeliveryBar variant="desktop" />}
-          {!isHomePage && !isCiplx && !isHeritage && <AnnouncementBar />}
+          <WishlistProvider>
+            {isHomePage && <DeliveryBar variant="desktop" />}
+            {!isHomePage && !isCiplx && !isHeritage && <AnnouncementBar />}
 
-          {/* Main Content with Transition */}
-          <Component {...pageProps} />
-          <SpeedInsights />
+            {/* Main Content with Transition */}
+            <Component {...pageProps} />
+            <SpeedInsights />
 
-          <CookieConsent />
+            <CookieConsent />
 
-          {/* Mobile Bottom Nav - Hidden on Product, Checkout, Ciplx & Heritage Pages */}
-          {!router.pathname.startsWith('/product/') && router.pathname !== '/checkout' && !isCiplx && !isHeritage && (
-            <MobileBottomNav />
-          )}
-
+            {/* Mobile Bottom Nav - Hidden on Product, Checkout, Ciplx & Heritage Pages */}
+            {!router.pathname.startsWith('/product/') && router.pathname !== '/checkout' && !isCiplx && !isHeritage && (
+              <MobileBottomNav />
+            )}
+          </WishlistProvider>
         </CartProvider>
       </NotificationProvider>
     </>

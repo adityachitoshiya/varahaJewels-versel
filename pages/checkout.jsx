@@ -64,12 +64,30 @@ export default function Checkout() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check if user is logged in
+  // Check if user is logged in - STRICTLY check customer_token
   useEffect(() => {
-    const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
-    if (token) {
+    // Only accept customer_token. 'token' is often used for Admin, which shouldn't grant checkout access.
+    const token = localStorage.getItem('customer_token');
+    const user = localStorage.getItem('customer_user');
+
+    if (token && user) {
       setIsLoggedIn(true);
 
-      // setIsPhoneVerified(true); // Not needed anymore
+      // Pre-fill form if user data exists
+      try {
+        const userData = JSON.parse(user);
+        if (userData.email) {
+          setFormData(prev => ({
+            ...prev,
+            email: userData.email,
+            name: userData.full_name || userData.name || prev.name
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to parse user data", e);
+      }
+    } else {
+      setIsLoggedIn(false);
     }
   }, []);
 
@@ -610,7 +628,7 @@ export default function Checkout() {
   return (
     <>
       <Head>
-        <title>Checkout - Varaha Jewels</title>
+        <title>Checkout - Varaha Jewels™</title>
       </Head>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 

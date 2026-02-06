@@ -188,7 +188,7 @@ export default function Footer() {
               <div className="relative inline-block">
                 <Image
                   src="/varaha-assets/logo.png"
-                  alt="Varaha Jewels"
+                  alt="Varaha Jewels™"
                   width={200}
                   height={70}
                   className="h-16 w-auto brightness-[2] group-hover:brightness-[2.5] transition-all duration-300"
@@ -388,7 +388,7 @@ export default function Footer() {
           {/* Copyright - Centered with Love */}
           <div className="text-center pt-6 border-t border-copper/20">
             <p className="text-sm text-warm-sand/70 flex items-center justify-center gap-2 flex-wrap">
-              <span>© {new Date().getFullYear()} Varaha Jewels. All rights reserved.</span>
+              <span>© {new Date().getFullYear()} Varaha Jewels™. All rights reserved.</span>
               <span className="hidden sm:inline">•</span>
               <span className="flex items-center gap-1">
                 Made with <Heart size={14} className="text-red-500 animate-pulse" fill="currentColor" /> in India

@@ -10,7 +10,7 @@ export default function Terms() {
     return (
         <>
             <Head>
-                <title>Terms & Conditions - Varaha Jewels</title>
+                <title>Terms & Conditions - Varaha Jewels™</title>
                 <meta name="description" content="Read our terms and conditions for using Varaha Jewels website and purchasing our products." />
             </Head>
 

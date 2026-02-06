@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
 import { useNotification } from '../context/NotificationContext';
+import { useWishlist } from '../context/WishlistContext';
 
 /**
  * Wishlist Button Component
@@ -14,70 +17,31 @@ export default function WishlistButton({
   showText = false,
   className = ''
 }) {
-  const [isInWishlist, setIsInWishlist] = useState(false);
+  const { isInWishlist: checkIsInWishlist, toggleWishlist: contextToggle } = useWishlist();
+  const isInWishlist = checkIsInWishlist(productId);
   const [isAnimating, setIsAnimating] = useState(false);
   const { showNotification } = useNotification();
 
-  // Check if product is in wishlist on mount
-  useEffect(() => {
-    const wishlist = getWishlist();
-    setIsInWishlist(wishlist.some(item => item.id === productId));
-  }, [productId]);
 
-  // Get wishlist from localStorage
-  const getWishlist = () => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const wishlist = localStorage.getItem('wishlist');
-      return wishlist ? JSON.parse(wishlist) : [];
-    } catch (error) {
-      console.error('Error reading wishlist:', error);
-      return [];
-    }
-  };
-
-  // Save wishlist to localStorage
-  const saveWishlist = (wishlist) => {
-    try {
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      // Dispatch custom event for wishlist count update
-      window.dispatchEvent(new Event('wishlistUpdated'));
-    } catch (error) {
-      console.error('Error saving wishlist:', error);
-    }
-  };
 
   // Toggle wishlist
   const toggleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const wishlist = getWishlist();
-    let newWishlist;
+    // Optimistic toggle for UI feedback immediately
+    contextToggle(productId);
+
     let message;
     let type = 'wishlist';
 
     if (isInWishlist) {
-      // Remove from wishlist
-      newWishlist = wishlist.filter(item => item.id !== productId);
+      // Removing
       message = 'Removed from Wishlist';
-      setIsInWishlist(false);
     } else {
-      // Add to wishlist
-      const wishlistItem = productData ? {
-        id: productId,
-        ...productData,
-        addedAt: new Date().toISOString()
-      } : {
-        id: productId,
-        addedAt: new Date().toISOString()
-      };
-      newWishlist = [...wishlist, wishlistItem];
+      // Adding
       message = 'Added to Wishlist';
-      setIsInWishlist(true);
     }
-
-    saveWishlist(newWishlist);
 
     // Animate
     setIsAnimating(true);

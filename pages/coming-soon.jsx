@@ -46,7 +46,7 @@ export default function ComingSoon() {
   return (
     <>
       <Head>
-        <title>Coming Soon - Varaha Jewels</title>
+        <title>Coming Soon - Varaha Jewels™</title>
         <meta name="description" content="This page is under construction. Check back soon!" />
       </Head>
 

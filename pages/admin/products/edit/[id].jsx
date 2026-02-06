@@ -27,6 +27,8 @@ export default function EditProduct() {
         premium: false,
         tag: 'New',
         style: '',
+        gender: '',
+        collection: '',
         image: '',
         additional_images: [],
     });
@@ -91,6 +93,8 @@ export default function EditProduct() {
                     premium: product.premium || false,
                     tag: product.tag || 'New',
                     style: product.style || '',
+                    gender: product.gender || '',
+                    collection: product.collection || '',
                     image: product.image || '',
                     additional_images: parsedImages,
                 });
@@ -246,6 +250,38 @@ export default function EditProduct() {
                                         <option value="Gold">Gold Jewellery</option>
                                         <option value="Diamond">Diamond</option>
                                         <option value="Polki">Polki</option>
+                                        <option value="Necklace">Necklace</option>
+                                        <option value="Earrings">Earrings</option>
+                                        <option value="Ring">Ring</option>
+                                        <option value="Bangles">Bangles / Bracelets</option>
+                                        <option value="Mangalsutra">Mangalsutra</option>
+                                        <option value="Chain">Chain</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                    <select className="w-full p-2 border rounded-lg" name="gender" value={formData.gender} onChange={handleChange}>
+                                        <option value="">Unisex / Not Specified</option>
+                                        <option value="Women">Women</option>
+                                        <option value="Men">Men</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
+                                    <select className="w-full p-2 border rounded-lg" name="collection" value={formData.collection} onChange={handleChange}>
+                                        <option value="">None</option>
+                                        <option value="Bridal">Bridal</option>
+                                        <option value="Minimal">Minimal</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
+                                    <select className="w-full p-2 border rounded-lg" name="product_type" value={formData.product_type || ''} onChange={handleChange}>
+                                        <option value="">Not Specified</option>
+                                        <option value="Jewelry">Jewelry</option>
+                                        <option value="Accessories">Accessories</option>
+                                        <option value="Ornament">Ornament</option>
+                                        <option value="Fashion">Fashion Jewelry</option>
                                     </select>
                                 </div>
                             </div>

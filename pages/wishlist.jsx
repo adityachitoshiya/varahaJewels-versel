@@ -7,42 +7,33 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getApiUrl } from '../lib/config';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 export default function Wishlist() {
-  const [wishlistItems, setWishlistItems] = useState([]);
+  const { wishlist, removeFromWishlist: contextRemoveItem } = useWishlist();
   const [products, setProducts] = useState([]);
   const [enrichedWishlist, setEnrichedWishlist] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
 
-  // Load wishlist on mount
+  // Load products on mount
   useEffect(() => {
-    loadWishlist();
     fetchProducts();
-
-    // Listen for wishlist updates
-    const handleWishlistUpdate = () => {
-      loadWishlist();
-    };
-
-    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
-    return () => window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
   }, []);
 
   // Enrich wishlist items with product data
   useEffect(() => {
-    if (products.length > 0 && wishlistItems.length > 0) {
-      const enriched = wishlistItems.map(item => {
-        const product = products.find(p => p.id === item.id) || products.find(p => p.id === item.productId);
-        return product ? { ...item, ...product } : item;
-      });
+    if (products.length > 0 && wishlist.length > 0) {
+      const enriched = wishlist.map(id => {
+        const product = products.find(p => p.id === id);
+        return product ? product : null;
+      }).filter(item => item !== null);
+
       setEnrichedWishlist(enriched);
-    } else if (wishlistItems.length > 0) {
-      setEnrichedWishlist(wishlistItems);
     } else {
       setEnrichedWishlist([]);
     }
-  }, [wishlistItems, products]);
+  }, [wishlist, products]);
 
   const fetchProducts = async () => {
     try {
@@ -57,37 +48,18 @@ export default function Wishlist() {
     }
   };
 
-  // Load wishlist from localStorage
-  const loadWishlist = () => {
-    try {
-      const wishlist = localStorage.getItem('wishlist');
-      const items = wishlist ? JSON.parse(wishlist) : [];
-      setWishlistItems(items);
-    } catch (error) {
-      console.error('Error loading wishlist:', error);
-      setWishlistItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   // Remove item from wishlist
   const removeFromWishlist = (productId) => {
-    const updatedWishlist = wishlistItems.filter(item => item.id !== productId);
-    localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-    setWishlistItems(updatedWishlist);
-    window.dispatchEvent(new Event('wishlistUpdated'));
-
-    // Show toast
+    contextRemoveItem(productId);
     showToast('💔 Removed from Wishlist');
   };
 
   // Clear entire wishlist
   const clearWishlist = () => {
     if (confirm('Are you sure you want to clear your entire wishlist?')) {
-      localStorage.setItem('wishlist', JSON.stringify([]));
-      setWishlistItems([]);
-      window.dispatchEvent(new Event('wishlistUpdated'));
+      wishlist.forEach(id => contextRemoveItem(id));
       showToast('🗑️ Wishlist Cleared');
     }
   };
@@ -138,7 +110,7 @@ export default function Wishlist() {
   return (
     <>
       <Head>
-        <title>My Wishlist - Varaha Jewels</title>
+        <title>My Wishlist - Varaha Jewels™</title>
         <meta name="description" content="Your saved favorite jewelry items" />
       </Head>
 
@@ -155,11 +127,11 @@ export default function Wishlist() {
                   My Wishlist
                 </h1>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved
+                  {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'} saved
                 </p>
               </div>
 
-              {wishlistItems.length > 0 && (
+              {wishlist.length > 0 && (
                 <div className="flex gap-2 sm:gap-3">
                   <button
                     onClick={moveAllToCart}
@@ -181,7 +153,7 @@ export default function Wishlist() {
           </div>
 
           {/* Empty State */}
-          {wishlistItems.length === 0 ? (
+          {wishlist.length === 0 ? (
             <div className="max-w-md mx-auto text-center py-12 md:py-20">
               <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-copper/20 to-heritage/20 rounded-full flex items-center justify-center">
                 <Heart className="w-16 h-16 text-heritage" />
@@ -221,7 +193,7 @@ export default function Wishlist() {
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-copper to-heritage text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300"
                 >
                   <ShoppingCart size={20} />
-                  Add All to Cart ({wishlistItems.length})
+                  Add All to Cart ({wishlist.length})
                 </button>
               </div>
             </>

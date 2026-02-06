@@ -160,7 +160,7 @@ export default function NewArrivals({ initialProducts = [] }) {
     return (
         <>
             <Head>
-                <title>New Arrivals - Varaha Jewels | Latest Collections</title>
+                <title>New Arrivals - Varaha Jewels™ | Latest Collections</title>
                 <meta name="description" content="Discover the latest additions to the Varaha Jewels collection. Fresh designs, contemporary styles, and timeless classics." />
             </Head>
 
