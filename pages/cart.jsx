@@ -179,91 +179,118 @@ export default function Cart() {
                   </button>
                 </div>
 
-                {cartItems.map((item) => (
-                  <div
-                    key={item.variant?.sku || item.id}
-                    className="bg-white border border-copper/30 rounded-sm p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300"
-                  >
-                    <div className="flex gap-4 sm:gap-6">
-                      {/* Product Image */}
-                      <div className="flex-shrink-0">
-                        <Image
-                          src={item.variant?.image || item.image || '/varaha-assets/dp1.avif'}
-                          alt={item.productName || item.name}
-                          width={120}
-                          height={120}
-                          className="w-20 h-20 sm:w-32 sm:h-32 object-cover rounded-sm"
-                        />
-                      </div>
+                {cartItems.map((item) => {
+                  const isOutOfStock = item.stock !== undefined && item.stock <= 0;
 
-                      {/* Product Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="text-base sm:text-lg font-royal font-bold text-heritage mb-1">
-                              {item.productName || item.name}
-                            </h3>
-                            <p className="text-sm text-heritage/60">{item.variant?.name}</p>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveItem(item)}
-                            className="text-heritage/40 hover:text-red-600 transition-colors p-2"
-                            aria-label="Remove item"
-                          >
-                            <X size={20} />
-                          </button>
+                  return (
+                    <div
+                      key={item.variant?.sku || item.id}
+                      className={`bg-white border rounded-sm p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 ${isOutOfStock ? 'border-red-300 bg-red-50/30' : 'border-copper/30'}`}
+                    >
+                      <div className="flex gap-4 sm:gap-6">
+                        {/* Product Image */}
+                        <div className="flex-shrink-0 relative">
+                          <Image
+                            src={item.variant?.image || item.image || '/varaha-assets/dp1.avif'}
+                            alt={item.productName || item.name}
+                            width={120}
+                            height={120}
+                            className={`w-20 h-20 sm:w-32 sm:h-32 object-cover rounded-sm ${isOutOfStock ? 'opacity-50' : ''}`}
+                          />
+                          {isOutOfStock && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                SOLD OUT
+                              </span>
+                            </div>
+                          )}
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
-                          {/* Quantity Controls */}
-                          <div className="flex items-center gap-4">
-                            <span className="hidden sm:inline text-sm text-heritage/70">Quantity:</span>
-                            <div className="flex items-center border-2 border-copper/30 rounded-sm overflow-hidden">
-                              <button
-                                onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
-                                className="p-2 hover:bg-copper/10 transition-colors"
-                                aria-label="Decrease quantity"
-                              >
-                                <Minus size={16} className="text-copper" />
-                              </button>
-                              <span className="px-4 sm:px-6 py-2 font-semibold text-heritage min-w-[50px] sm:min-w-[60px] text-center text-sm sm:text-base">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
-                                className="p-2 hover:bg-copper/10 transition-colors"
-                                aria-label="Increase quantity"
-                              >
-                                <Plus size={16} className="text-copper" />
-                              </button>
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="text-base sm:text-lg font-royal font-bold text-heritage mb-1">
+                                {item.productName || item.name}
+                              </h3>
+                              <p className="text-sm text-heritage/60">{item.variant?.name}</p>
+                              {isOutOfStock && (
+                                <p className="text-sm text-red-600 font-semibold mt-1">
+                                  ⚠️ This item is no longer available
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleRemoveItem(item)}
+                              className="text-heritage/40 hover:text-red-600 transition-colors p-2"
+                              aria-label="Remove item"
+                            >
+                              <X size={20} />
+                            </button>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-4">
+                              <span className="hidden sm:inline text-sm text-heritage/70">Quantity:</span>
+                              <div className={`flex items-center border-2 rounded-sm overflow-hidden ${isOutOfStock ? 'border-gray-300 bg-gray-100' : 'border-copper/30'}`}>
+                                <button
+                                  onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
+                                  disabled={isOutOfStock}
+                                  className={`p-2 transition-colors ${isOutOfStock ? 'cursor-not-allowed opacity-50' : 'hover:bg-copper/10'}`}
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus size={16} className={isOutOfStock ? 'text-gray-400' : 'text-copper'} />
+                                </button>
+                                <span className={`px-4 sm:px-6 py-2 font-semibold min-w-[50px] sm:min-w-[60px] text-center text-sm sm:text-base ${isOutOfStock ? 'text-gray-400' : 'text-heritage'}`}>
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
+                                  disabled={isOutOfStock}
+                                  className={`p-2 transition-colors ${isOutOfStock ? 'cursor-not-allowed opacity-50' : 'hover:bg-copper/10'}`}
+                                  aria-label="Increase quantity"
+                                >
+                                  <Plus size={16} className={isOutOfStock ? 'text-gray-400' : 'text-copper'} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Price */}
+                            <div className="text-left sm:text-right">
+                              <p className={`text-lg sm:text-2xl font-bold ${isOutOfStock ? 'text-gray-400 line-through' : 'text-heritage'}`}>
+                                ₹{((item.variant?.price || 0) * item.quantity).toLocaleString('en-IN')}
+                              </p>
+                              <p className="text-xs text-heritage/60">
+                                ₹{(item.variant?.price || 0).toLocaleString('en-IN')} each
+                              </p>
                             </div>
                           </div>
 
-                          {/* Price */}
-                          <div className="text-left sm:text-right">
-                            <p className="text-lg sm:text-2xl font-bold text-heritage">
-                              ₹{((item.variant?.price || 0) * item.quantity).toLocaleString('en-IN')}
-                            </p>
-                            <p className="text-xs text-heritage/60">
-                              ₹{(item.variant?.price || 0).toLocaleString('en-IN')} each
-                            </p>
+                          {/* Actions */}
+                          <div className="flex gap-4 mt-4 pt-4 border-t border-copper/20">
+                            <button
+                              onClick={() => handleMoveToWishlist(item)}
+                              className="text-sm text-copper hover:text-heritage font-medium flex items-center gap-2 transition-colors"
+                            >
+                              <Heart size={16} />
+                              Move to Wishlist
+                            </button>
+                            {isOutOfStock && (
+                              <button
+                                onClick={() => handleRemoveItem(item)}
+                                className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-2 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                                Remove
+                              </button>
+                            )}
                           </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-4 mt-4 pt-4 border-t border-copper/20">
-                          <button
-                            onClick={() => handleMoveToWishlist(item)}
-                            className="text-sm text-copper hover:text-heritage font-medium flex items-center gap-2 transition-colors"
-                          >
-                            <Heart size={16} />
-                            Move to Wishlist
-                          </button>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Order Summary */}
