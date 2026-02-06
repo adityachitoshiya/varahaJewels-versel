@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { getApiUrl } from '../lib/config';
 import { useNotification } from './NotificationContext';
