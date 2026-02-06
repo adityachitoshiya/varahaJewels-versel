@@ -14,6 +14,16 @@ export function CartProvider({ children }) {
 
     // Initialize: Load token & Local Cart & Listen for Auth Changes
     useEffect(() => {
+        // Cart Version Check - Clear old/stale cart data on version bump
+        const CART_VERSION = 'v2'; // Increment this to clear all user carts
+        const storedVersion = localStorage.getItem('cart_version');
+
+        if (storedVersion !== CART_VERSION) {
+            console.log('🧹 Cart version mismatch, clearing stale cart data');
+            localStorage.removeItem('cart');
+            localStorage.setItem('cart_version', CART_VERSION);
+        }
+
         // 1. Load Local Cart immediately with VALIDATION
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
