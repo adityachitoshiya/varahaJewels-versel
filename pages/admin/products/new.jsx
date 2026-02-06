@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { getApiUrl } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
