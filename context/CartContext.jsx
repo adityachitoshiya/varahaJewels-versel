@@ -10,6 +10,7 @@ export function CartProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [token, setToken] = useState(null);
     const { showNotification } = useNotification();
+    const initialCartRef = useRef([]); // Store initial local cart for sync
 
     // Initialize: Load token & Local Cart & Listen for Auth Changes
     useEffect(() => {
@@ -40,6 +41,7 @@ export function CartProvider({ children }) {
                 // Only set if valid items exist
                 if (validCart.length > 0) {
                     setCartItems(validCart);
+                    initialCartRef.current = validCart; // Save for reliable sync
                 } else {
                     // Clear corrupted/empty cart
                     localStorage.removeItem('cart');
@@ -58,6 +60,7 @@ export function CartProvider({ children }) {
             if (session) {
                 // User Logged In
                 setToken(session.access_token);
+                setLoading(false); // Fix: Ensure loading is set to false
                 // Optional: Set user data in local storage if not already there
                 localStorage.setItem('customer_token', session.access_token);
             } else {
@@ -71,6 +74,8 @@ export function CartProvider({ children }) {
         const storedToken = localStorage.getItem('customer_token');
         if (storedToken) {
             setToken(storedToken);
+            // If token exists, we are potentially logged in, but wait for AuthStateChange to confirm session validity
+            // OR set loading false here if we trust the token? Better to wait for Supabase.
         }
 
         return () => {
@@ -96,10 +101,15 @@ export function CartProvider({ children }) {
 
     const syncCartWithBackend = async () => {
         try {
+            console.log("🔄 Syncing Cart...");
             const API_URL = getApiUrl();
+
+            // Use current state, or fallback to Ref if state is empty (Race condition fix)
+            const itemsToSync = cartItems.length > 0 ? cartItems : initialCartRef.current;
+
             // Prepare local items for sync
             const syncPayload = {
-                local_items: cartItems.map(item => ({
+                local_items: itemsToSync.map(item => ({
                     product_id: item.productId || item.product_id || item.variant.sku.split('-')[0], // Fallback logic
                     quantity: item.quantity,
                     variant_sku: item.variant?.sku
@@ -117,10 +127,14 @@ export function CartProvider({ children }) {
 
             if (res.ok) {
                 const serverCart = await res.json();
+                console.log("✅ Cart Synced! Items:", serverCart.length);
                 // Server cart structure is different? Let's check main.py
                 // It returns list of items with "variant" object.
                 // We should replace local cart with server cart as truth
                 setCartItems(serverCart);
+
+                // Clear ref to prevent re-syncing issues
+                initialCartRef.current = [];
             }
         } catch (err) {
             console.error("Cart Sync Failed:", err);
