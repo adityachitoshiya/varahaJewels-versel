@@ -147,7 +147,8 @@ export default function EditProduct() {
                 price: parseFloat(formData.price),
                 stock: parseInt(formData.stock) || 0, // Convert stock to integer
                 stones: formData.stones ? JSON.stringify(formData.stones.split(',').map(s => s.trim())) : '[]',
-                additional_images: JSON.stringify(formData.additional_images)
+                additional_images: JSON.stringify(formData.additional_images),
+                product_type: formData.product_type || null
             };
 
             const API_URL = getApiUrl();

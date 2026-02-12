@@ -250,17 +250,17 @@ export default function Shop() {
                                                             />
                                                         </Link>
                                                         {product.tag && (
-                                                            <span className="absolute top-2 left-2 px-2 py-1 bg-copper text-warm-sand text-[10px] font-bold rounded-full uppercase tracking-wider">
+                                                            <span className="absolute top-2 left-2 px-2.5 py-1 bg-copper text-warm-sand text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm">
                                                                 {product.tag}
                                                             </span>
                                                         )}
                                                         <button
                                                             onClick={() => toggleWishlist(product.id, product.name)}
-                                                            className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors z-10"
+                                                            className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-300 z-10 flex items-center justify-center shadow-sm hover:shadow-md hover:scale-110"
                                                         >
                                                             <Heart
                                                                 size={16}
-                                                                className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'}
+                                                                className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage/70'}
                                                             />
                                                         </button>
                                                     </div>
@@ -268,14 +268,14 @@ export default function Shop() {
                                                     {/* Details */}
                                                     <div className="p-3 md:p-4">
                                                         <Link href={`/product/${product.id}`} onClick={saveScrollPosition}>
-                                                            <h3 className="text-sm md:text-base font-royal font-bold text-heritage mb-1 line-clamp-1 truncate group-hover:text-copper transition-colors">
+                                                            <h3 className="text-sm md:text-base font-royal font-bold text-heritage mb-1 line-clamp-1 group-hover:text-copper transition-colors">
                                                                 {product.name}
                                                             </h3>
                                                         </Link>
 
-                                                        <div className="flex items-center justify-between mt-2">
+                                                        <div className="flex items-center justify-between mt-1.5">
                                                             {product.price ? (
-                                                                <p className="text-sm md:text-lg font-bold text-heritage">
+                                                                <p className="text-base md:text-lg font-bold text-heritage">
                                                                     ₹{product.price.toLocaleString('en-IN')}
                                                                 </p>
                                                             ) : (

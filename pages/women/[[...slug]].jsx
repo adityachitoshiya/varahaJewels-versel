@@ -8,6 +8,7 @@ import Footer from '../../components/Footer';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
 import { ChevronRight, Heart, ShoppingBag, Grid, List, SlidersHorizontal, Search, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 import ProductSkeleton from '../../components/ProductSkeleton';
 
 // Category and Collection mappings
@@ -28,8 +29,8 @@ export default function WomenCategory() {
     const [isLoading, setIsLoading] = useState(true);
     const [viewMode, setViewMode] = useState('grid');
     const [sortBy, setSortBy] = useState('featured');
-    const [wishlist, setWishlist] = useState([]);
     const { addToCart } = useCart();
+    const { isInWishlist, toggleWishlist } = useWishlist();
 
     // Determine current filter from slug
     const currentSlug = slug?.[0] || '';
@@ -53,10 +54,6 @@ export default function WomenCategory() {
     useEffect(() => {
         if (!router.isReady) return;
         fetchProducts();
-        const savedWishlist = localStorage.getItem('wishlist');
-        if (savedWishlist) {
-            setWishlist(JSON.parse(savedWishlist));
-        }
     }, [router.isReady, currentSlug]);
 
     const fetchProducts = async () => {
@@ -102,20 +99,6 @@ export default function WomenCategory() {
         }
     });
 
-    const toggleWishlist = (productId, productName) => {
-        const savedWishlist = localStorage.getItem('wishlist');
-        let wishlistArray = savedWishlist ? JSON.parse(savedWishlist) : [];
-        const existingIndex = wishlistArray.findIndex(item => item.id === productId);
-        if (existingIndex > -1) {
-            wishlistArray.splice(existingIndex, 1);
-        } else {
-            wishlistArray.push({ id: productId, productName });
-        }
-        localStorage.setItem('wishlist', JSON.stringify(wishlistArray));
-        setWishlist(wishlistArray);
-        window.dispatchEvent(new Event('wishlistUpdated'));
-    };
-
     const handleAddToCart = (product) => {
         const variant = {
             sku: product.id,
@@ -125,8 +108,6 @@ export default function WomenCategory() {
         };
         addToCart(product, variant, 1);
     };
-
-    const isInWishlist = (productId) => wishlist.some(item => item.id === productId);
 
     // Breadcrumb data
     const breadcrumbs = [
@@ -282,12 +263,12 @@ export default function WomenCategory() {
                                             </span>
                                         )}
                                         <button
-                                            onClick={() => toggleWishlist(product.id, product.name)}
-                                            className="absolute top-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white transition-colors z-10"
+                                            onClick={() => toggleWishlist(product.id)}
+                                            className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-300 z-10 flex items-center justify-center shadow-sm"
                                         >
                                             <Heart
-                                                size={20}
-                                                className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'}
+                                                size={18}
+                                                className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage/70'}
                                             />
                                         </button>
                                     </div>

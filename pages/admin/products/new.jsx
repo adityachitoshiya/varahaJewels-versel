@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { getApiUrl } from '../../../lib/config';
+import { getApiUrl, getAuthHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import { Save, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ export default function NewProduct() {
         name: '',
         description: '',
         price: '',
-        stock: 0,
+        stock: '',
         category: 'Artificial',
         metal: 'Brass',
         carat: 'N/A',
@@ -226,20 +226,6 @@ export default function NewProduct() {
                                     <option value="">Unisex / Not Specified</option>
                                     <option value="Women">Women</option>
                                     <option value="Men">Men</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
-                                <select
-                                    name="collection"
-                                    value={formData.collection}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
-                                >
-                                    <option value="">None</option>
-                                    <option value="Bridal">Bridal</option>
-                                    <option value="Minimal">Minimal</option>
                                 </select>
                             </div>
                         </div>

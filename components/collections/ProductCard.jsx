@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Eye, Sparkles, ShoppingBag } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 
 // Icon components for product features
 const MetalIcon = ({ metal }) => {
@@ -51,24 +53,16 @@ const PolishIcon = ({ polish }) => (
 );
 
 export default function ProductCard({ product, onQuickLook }) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+
+  const isWishlisted = isInWishlist(product.id);
 
   const handleWishlistToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-
-    // Add to wishlist logic
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    let updated;
-    if (isWishlisted) {
-      updated = wishlist.filter(id => id !== product.id);
-    } else {
-      updated = [...wishlist, product.id];
-    }
-    localStorage.setItem('wishlist', JSON.stringify(updated));
-    window.dispatchEvent(new Event('wishlistUpdated'));
+    toggleWishlist(product.id);
   };
 
   const handleAddToCart = (e) => {
@@ -76,30 +70,16 @@ export default function ProductCard({ product, onQuickLook }) {
     e.stopPropagation();
 
     if (product.stock !== undefined && product.stock <= 0) {
-      // Optional: Show toast "Out of stock"
       return;
     }
 
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingIndex = cart.findIndex(item => item.productId === product.id);
-
-    if (existingIndex > -1) {
-      cart[existingIndex].quantity += 1;
-    } else {
-      cart.push({
-        productId: product.id,
-        productName: product.name,
-        quantity: 1,
-        price: product.price,
-        image: product.image,
-        variant: { sku: product.id, name: 'Default' }
-      });
-    }
-
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
-
-    // Optional: Visual feedback could be added here
+    const variant = {
+      sku: product.id,
+      price: product.price,
+      name: product.name || 'Default',
+      image: product.image
+    };
+    addToCart(product, variant, 1);
   };
 
   const formatPrice = (price) => {
