@@ -796,44 +796,100 @@ export default function ContentManagement() {
                             </div>
                         </div>
 
-                        {/* Announcement Bar Settings */}
+                        {/* Announcement Bar Settings (Dynamic) */}
                         <div>
                             <div className="flex justify-between items-center mb-4 border-b pb-2">
                                 <h3 className="font-bold text-gray-800">Announcement Bar</h3>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only peer"
-                                        checked={settings.show_announcement}
-                                        onChange={(e) => handleSettingsUpdate({ show_announcement: e.target.checked })}
-                                    />
-                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-copper/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-copper"></div>
-                                </label>
+                                <span className="text-xs text-gray-500">Items rotate automatically on the website</span>
                             </div>
 
-                            {settings.show_announcement && (
-                                <div className="space-y-4 animate-fadeIn">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Announcement Text</label>
-                                        <input
-                                            type="text"
-                                            className="w-full p-2 border rounded-lg"
-                                            value={settings.announcement_text || ''}
-                                            onChange={(e) => handleSettingsUpdate({ announcement_text: e.target.value })}
-                                            placeholder="Grand Launch In:"
-                                        />
+                            {(() => {
+                                let barItems = [];
+                                try {
+                                    barItems = JSON.parse(settings.announcement_bar_json || '[]');
+                                } catch (e) { barItems = []; }
+
+                                return (
+                                    <div className="space-y-3">
+                                        {barItems.map((item, index) => (
+                                            <div key={index} className={`flex gap-2 items-start p-3 rounded-lg border ${item.active ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                                                <div className="flex-1 space-y-2">
+                                                    <div className="flex gap-2">
+                                                        <select
+                                                            className="p-2 border rounded-lg text-sm bg-white font-medium"
+                                                            value={item.type}
+                                                            onChange={(e) => {
+                                                                const newItems = [...barItems];
+                                                                newItems[index].type = e.target.value;
+                                                                handleSettingsUpdate({ announcement_bar_json: JSON.stringify(newItems) });
+                                                            }}
+                                                        >
+                                                            <option value="offer">🎁 Offer</option>
+                                                            <option value="announcement">📢 Announcement</option>
+                                                            <option value="coupon">🏷️ Coupon</option>
+                                                        </select>
+                                                        <input
+                                                            type="text"
+                                                            className="flex-1 p-2 border rounded-lg text-sm"
+                                                            value={item.text}
+                                                            placeholder="Enter announcement text..."
+                                                            onChange={(e) => {
+                                                                const newItems = [...barItems];
+                                                                newItems[index].text = e.target.value;
+                                                                handleSettingsUpdate({ announcement_bar_json: JSON.stringify(newItems) });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer mt-1" title={item.active ? 'Active' : 'Inactive'}>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={item.active}
+                                                        onChange={(e) => {
+                                                            const newItems = [...barItems];
+                                                            newItems[index].active = e.target.checked;
+                                                            handleSettingsUpdate({ announcement_bar_json: JSON.stringify(newItems) });
+                                                        }}
+                                                    />
+                                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                                </label>
+                                                <button
+                                                    onClick={() => {
+                                                        const newItems = barItems.filter((_, i) => i !== index);
+                                                        handleSettingsUpdate({ announcement_bar_json: JSON.stringify(newItems) });
+                                                    }}
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {barItems.length === 0 && (
+                                            <div className="text-center py-6 text-gray-400 text-sm">
+                                                No announcement items yet. Add one below.
+                                            </div>
+                                        )}
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Announcement Date (Target for timer)</label>
-                                        <input
-                                            type="datetime-local"
-                                            className="w-full p-2 border rounded-lg"
-                                            value={settings.announcement_date ? settings.announcement_date.slice(0, 16) : ''}
-                                            onChange={(e) => handleSettingsUpdate({ announcement_date: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                            )}
+                                );
+                            })()}
+
+                            <button
+                                onClick={() => {
+                                    let currentItems = [];
+                                    try { currentItems = JSON.parse(settings.announcement_bar_json || '[]'); } catch (e) { currentItems = []; }
+                                    const newItems = [...currentItems, { type: 'offer', text: '', active: true }];
+                                    handleSettingsUpdate({ announcement_bar_json: JSON.stringify(newItems) });
+                                }}
+                                className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-copper hover:text-copper transition-colors"
+                            >
+                                <Plus size={18} /> Add Announcement Item
+                            </button>
+
+                            <p className="text-xs text-gray-500 mt-2">
+                                Active items auto-rotate in the bar. Types: 🎁 Offer, 📢 Announcement, 🏷️ Coupon
+                            </p>
                         </div>
 
                         {/* Visibility Toggles Header */}

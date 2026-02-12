@@ -131,6 +131,7 @@ export default function ProductPage() {
           carat: data.carat,
           polish: data.polish,
           stones: data.stones,
+          colour: data.colour,
 
           // Mock Reviews
           reviews: [

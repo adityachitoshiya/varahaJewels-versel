@@ -26,6 +26,7 @@ export default function NewProduct() {
         gender: '',
         collection: '',
         product_type: '',
+        colour: '',
         image: '/varaha-assets/logo.png', // Default placeholder
         additional_images: ['', '', ''], // Array for 3 slots
         id: `prod-${Date.now()}`
@@ -227,6 +228,18 @@ export default function NewProduct() {
                                     <option value="Women">Women</option>
                                     <option value="Men">Men</option>
                                 </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Colour</label>
+                                <input
+                                    type="text"
+                                    name="colour"
+                                    value={formData.colour}
+                                    onChange={handleChange}
+                                    placeholder="e.g. Gold, Silver, Rose Gold"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
+                                />
                             </div>
                         </div>
                     </div>

@@ -1,103 +1,162 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getApiUrl } from '../lib/config';
 
-export default function AnnouncementBar({ showCountdown = true }) {
+export default function AnnouncementBar() {
+  const [items, setItems] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState({
-    days: 39,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [slideDirection, setSlideDirection] = useState('left');
 
+  // Fetch announcement items from settings API
   useEffect(() => {
-    // Only check localStorage if NOT showing countdown
-    // When showing countdown, always show the bar
-    if (!showCountdown) {
-      const dismissed = localStorage.getItem('announcementDismissed');
-      if (dismissed === 'true') {
-        setIsDismissed(true);
-      }
+    const dismissed = localStorage.getItem('announcementBarDismissed');
+    if (dismissed === 'true') {
+      setIsDismissed(true);
+      return;
     }
-  }, [showCountdown]);
 
-  useEffect(() => {
-    if (!showCountdown) return;
+    const fetchItems = async () => {
+      try {
+        const API_URL = getApiUrl();
+        const res = await fetch(`${API_URL}/api/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          let barItems = [];
+          try {
+            barItems = JSON.parse(data.announcement_bar_json || '[]');
+          } catch (e) { barItems = []; }
 
-    // Set launch date to February 12, 2026
-    const launchDate = new Date('2026-02-12T00:00:00');
-
-    const updateCountdown = () => {
-      const now = new Date();
-      const difference = launchDate - now;
-
-      if (difference > 0) {
-        setTimeRemaining({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        });
-      } else {
-        setTimeRemaining({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0
-        });
+          // Only show active items
+          const activeItems = barItems.filter(item => item.active);
+          setItems(activeItems);
+        }
+      } catch (err) {
+        console.error('Failed to fetch announcement bar:', err);
       }
     };
 
-    updateCountdown();
-    const timer = setInterval(updateCountdown, 1000);
+    fetchItems();
+  }, []);
 
-    return () => clearInterval(timer);
-  }, [showCountdown]);
+  // Auto-rotate every 4 seconds
+  useEffect(() => {
+    if (items.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setSlideDirection('left');
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentIndex(prev => (prev + 1) % items.length);
+        setIsAnimating(false);
+      }, 300);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [items.length]);
+
+  const goToNext = useCallback(() => {
+    if (items.length <= 1 || isAnimating) return;
+    setSlideDirection('left');
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentIndex(prev => (prev + 1) % items.length);
+      setIsAnimating(false);
+    }, 300);
+  }, [items.length, isAnimating]);
+
+  const goToPrev = useCallback(() => {
+    if (items.length <= 1 || isAnimating) return;
+    setSlideDirection('right');
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentIndex(prev => (prev - 1 + items.length) % items.length);
+      setIsAnimating(false);
+    }, 300);
+  }, [items.length, isAnimating]);
 
   const handleDismiss = () => {
     setIsDismissed(true);
-    // Only save to localStorage if not showing countdown
-    if (!showCountdown) {
-      localStorage.setItem('announcementDismissed', 'true');
-    }
+    localStorage.setItem('announcementBarDismissed', 'true');
   };
 
-  if (isDismissed) return null;
+  if (isDismissed || items.length === 0) return null;
+
+  const currentItem = items[currentIndex];
+
+  // Emoji per type
+  const typeEmoji = {
+    offer: '🎁',
+    announcement: '📢',
+    coupon: '🏷️'
+  };
+
+  const emoji = typeEmoji[currentItem?.type] || '✨';
 
   return (
     <div className="relative z-50 bg-gradient-to-r from-heritage via-copper to-heritage text-warm-sand py-1.5 px-2 border-b border-warm-sand/20 shadow-sm">
-      <div className="max-w-7xl mx-auto flex items-center justify-center">
-        {showCountdown ? (
-          <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs">
-            <span className="font-semibold flex items-center gap-1">
-              <span className="text-xs">🎉</span>
-              <span className="hidden sm:inline">Grand Launch In:</span>
-              <span className="sm:hidden">Launch:</span>
-            </span>
-            <div className="flex items-center gap-0.5 sm:gap-1">
-              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
-                {String(timeRemaining.days).padStart(2, '0')}
-              </span>
-              <span className="font-bold text-warm-sand/60 text-xs">:</span>
-              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
-                {String(timeRemaining.hours).padStart(2, '0')}
-              </span>
-              <span className="font-bold text-warm-sand/60 text-xs">:</span>
-              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
-                {String(timeRemaining.minutes).padStart(2, '0')}
-              </span>
-              <span className="font-bold text-warm-sand/60 text-xs">:</span>
-              <span className="font-mono font-bold text-[11px] sm:text-xs text-warm-sand bg-warm-sand/20 px-1 sm:px-1.5 py-0.5 rounded border border-warm-sand/30 min-w-[1.5rem] sm:min-w-[1.75rem] text-center">
-                {String(timeRemaining.seconds).padStart(2, '0')}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <p className="text-[10px] sm:text-xs text-center font-medium">
-            ✨ Get <span className="font-semibold px-1.5 py-0.5 bg-warm-sand/20 rounded border border-warm-sand/30">15% OFF</span>
-          </p>
+      <div className="max-w-7xl mx-auto flex items-center justify-center relative">
+
+        {/* Left Arrow */}
+        {items.length > 1 && (
+          <button
+            onClick={goToPrev}
+            className="absolute left-0 p-0.5 hover:bg-warm-sand/10 rounded-full transition-colors"
+            aria-label="Previous"
+          >
+            <ChevronLeft size={14} className="text-warm-sand/70" />
+          </button>
         )}
+
+        {/* Content */}
+        <div className="overflow-hidden max-w-[85%] sm:max-w-none">
+          <p
+            className={`text-[10px] sm:text-xs text-center font-medium whitespace-nowrap transition-all duration-300 ease-in-out ${isAnimating
+                ? slideDirection === 'left'
+                  ? 'opacity-0 -translate-x-4'
+                  : 'opacity-0 translate-x-4'
+                : 'opacity-100 translate-x-0'
+              }`}
+          >
+            <span className="mr-1">{emoji}</span>
+            <span>{currentItem?.text}</span>
+          </p>
+        </div>
+
+        {/* Right Arrow */}
+        {items.length > 1 && (
+          <button
+            onClick={goToNext}
+            className="absolute right-6 p-0.5 hover:bg-warm-sand/10 rounded-full transition-colors"
+            aria-label="Next"
+          >
+            <ChevronRight size={14} className="text-warm-sand/70" />
+          </button>
+        )}
+
+        {/* Dismiss */}
+        <button
+          onClick={handleDismiss}
+          className="absolute right-0 p-0.5 hover:bg-warm-sand/10 rounded-full transition-colors"
+          aria-label="Dismiss"
+        >
+          <X size={14} className="text-warm-sand/70" />
+        </button>
       </div>
+
+      {/* Dots indicator */}
+      {items.length > 1 && (
+        <div className="flex justify-center gap-1 mt-0.5">
+          {items.map((_, idx) => (
+            <span
+              key={idx}
+              className={`inline-block w-1 h-1 rounded-full transition-all ${idx === currentIndex ? 'bg-warm-sand w-2.5' : 'bg-warm-sand/40'
+                }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

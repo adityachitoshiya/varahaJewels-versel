@@ -16,6 +16,7 @@ export default function Settings() {
         announcement_text: "Grand Launch In:",
         announcement_date: "2026-02-12T00:00:00",
         show_announcement: true,
+        announcement_bar_json: '[]',
         delivery_free_threshold: 1000.0,
         logo_url: "/varaha-assets/logo.png"
     });
@@ -343,20 +344,77 @@ export default function Settings() {
 
                     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
                         <h2 className="text-lg font-bold text-gray-800 mb-4">Announcement Bar</h2>
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                                <input type="checkbox" checked={settings.show_announcement} onChange={(e) => setSettings({ ...settings, show_announcement: e.target.checked })} id="showAnnounce" />
-                                <label htmlFor="showAnnounce" className="text-sm font-medium text-gray-700">Show Announcement Bar</label>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Announcement Text</label>
-                                <input value={settings.announcement_text} onChange={(e) => setSettings({ ...settings, announcement_text: e.target.value })} className="w-full p-2 border rounded-lg" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Launch/Countdown Date</label>
-                                <input type="datetime-local" value={settings.announcement_date.substring(0, 16)} onChange={(e) => setSettings({ ...settings, announcement_date: e.target.value })} className="w-full p-2 border rounded-lg" />
-                            </div>
-                        </div>
+                        <p className="text-sm text-gray-500 mb-4">Manage rotating announcements. Active items auto-rotate on the website.</p>
+
+                        {(() => {
+                            let barItems = [];
+                            try { barItems = JSON.parse(settings.announcement_bar_json || '[]'); } catch (e) { barItems = []; }
+
+                            return (
+                                <div className="space-y-3">
+                                    {barItems.map((item, index) => (
+                                        <div key={index} className={`flex gap-2 items-center p-3 rounded-lg border ${item.active ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                                            <select
+                                                className="p-2 border rounded-lg text-sm bg-white"
+                                                value={item.type}
+                                                onChange={(e) => {
+                                                    const newItems = [...barItems];
+                                                    newItems[index].type = e.target.value;
+                                                    setSettings({ ...settings, announcement_bar_json: JSON.stringify(newItems) });
+                                                }}
+                                            >
+                                                <option value="offer">🎁 Offer</option>
+                                                <option value="announcement">📢 Announcement</option>
+                                                <option value="coupon">🏷️ Coupon</option>
+                                            </select>
+                                            <input
+                                                type="text"
+                                                className="flex-1 p-2 border rounded-lg text-sm"
+                                                value={item.text}
+                                                placeholder="Enter text..."
+                                                onChange={(e) => {
+                                                    const newItems = [...barItems];
+                                                    newItems[index].text = e.target.value;
+                                                    setSettings({ ...settings, announcement_bar_json: JSON.stringify(newItems) });
+                                                }}
+                                            />
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" className="sr-only peer" checked={item.active}
+                                                    onChange={(e) => {
+                                                        const newItems = [...barItems];
+                                                        newItems[index].active = e.target.checked;
+                                                        setSettings({ ...settings, announcement_bar_json: JSON.stringify(newItems) });
+                                                    }}
+                                                />
+                                                <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                            </label>
+                                            <button
+                                                onClick={() => {
+                                                    const newItems = barItems.filter((_, i) => i !== index);
+                                                    setSettings({ ...settings, announcement_bar_json: JSON.stringify(newItems) });
+                                                }}
+                                                className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {barItems.length === 0 && <p className="text-center py-4 text-gray-400 text-sm">No items yet.</p>}
+                                </div>
+                            );
+                        })()}
+
+                        <button
+                            onClick={() => {
+                                let items = [];
+                                try { items = JSON.parse(settings.announcement_bar_json || '[]'); } catch (e) { }
+                                setSettings({ ...settings, announcement_bar_json: JSON.stringify([...items, { type: 'offer', text: '', active: true }]) });
+                            }}
+                            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-copper hover:text-copper transition-colors text-sm"
+                        >
+                            <Plus size={16} /> Add Item
+                        </button>
                     </div>
 
                     <div className="flex justify-end">

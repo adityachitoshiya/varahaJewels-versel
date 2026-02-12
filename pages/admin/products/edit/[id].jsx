@@ -29,6 +29,8 @@ export default function EditProduct() {
         style: '',
         gender: '',
         collection: '',
+        product_type: '',
+        colour: '',
         image: '',
         additional_images: [],
     });
@@ -40,11 +42,22 @@ export default function EditProduct() {
         media_urls: []
     });
 
+    const [categories, setCategories] = useState([]);
+
     useEffect(() => {
         if (id) {
             fetchProductData();
         }
+        fetchCategories();
     }, [id]);
+
+    const fetchCategories = async () => {
+        try {
+            const API_URL = getApiUrl();
+            const res = await fetch(`${API_URL}/api/categories?active_only=true`);
+            if (res.ok) setCategories(await res.json());
+        } catch (e) { console.error('Error fetching categories:', e); }
+    };
 
     const fetchProductData = async () => {
         try {
@@ -95,6 +108,8 @@ export default function EditProduct() {
                     style: product.style || '',
                     gender: product.gender || '',
                     collection: product.collection || '',
+                    product_type: product.product_type || '',
+                    colour: product.colour || '',
                     image: product.image || '',
                     additional_images: parsedImages,
                 });
@@ -245,18 +260,21 @@ export default function EditProduct() {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                                     <select className="w-full p-2 border rounded-lg" name="category" value={formData.category} onChange={handleChange}>
-                                        <option value="Artificial">Artificial Jewellery</option>
-                                        <option value="Heritage">Heritage Collection</option>
-                                        <option value="Bridal">Bridal</option>
-                                        <option value="Gold">Gold Jewellery</option>
-                                        <option value="Diamond">Diamond</option>
-                                        <option value="Polki">Polki</option>
-                                        <option value="Necklace">Necklace</option>
-                                        <option value="Earrings">Earrings</option>
-                                        <option value="Ring">Ring</option>
-                                        <option value="Bangles">Bangles / Bracelets</option>
-                                        <option value="Mangalsutra">Mangalsutra</option>
-                                        <option value="Chain">Chain</option>
+                                        {categories.length > 0 ? categories.map(cat => (
+                                            <option key={cat.id} value={cat.name}>{cat.display_name}</option>
+                                        )) : (
+                                            <>
+                                                <option value="Artificial">Artificial Jewellery</option>
+                                                <option value="Heritage">Heritage Collection</option>
+                                                <option value="Bridal">Bridal</option>
+                                                <option value="Gold">Gold Jewellery</option>
+                                                <option value="Diamond">Diamond</option>
+                                                <option value="Necklace">Necklace</option>
+                                                <option value="Earrings">Earrings</option>
+                                                <option value="Ring">Ring</option>
+                                                <option value="Bangles">Bangles / Bracelets</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
                                 <div>
@@ -284,6 +302,10 @@ export default function EditProduct() {
                                         <option value="Ornament">Ornament</option>
                                         <option value="Fashion">Fashion Jewelry</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Colour</label>
+                                    <input className="w-full p-2 border rounded-lg" name="colour" value={formData.colour} onChange={handleChange} placeholder="e.g. Gold, Silver, Rose Gold" />
                                 </div>
                             </div>
 

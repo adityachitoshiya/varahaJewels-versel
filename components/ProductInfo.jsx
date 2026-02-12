@@ -360,7 +360,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
 
         {showProductDetails && (
           <div className="mt-3 space-y-4">
-            <p className="text-sm text-matte-brown leading-relaxed">{product.description}</p>
+            <p className="text-sm text-matte-brown leading-relaxed whitespace-pre-line">{product.description}</p>
 
             {/* Specifications Table */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
@@ -386,6 +386,12 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
                 <>
                   <div className="text-matte-brown">Category</div>
                   <div className="text-heritage">{product.category}</div>
+                </>
+              )}
+              {product.colour && (
+                <>
+                  <div className="text-matte-brown">Colour</div>
+                  <div className="text-heritage">{product.colour}</div>
                 </>
               )}
             </div>
