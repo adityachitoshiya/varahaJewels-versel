@@ -67,6 +67,9 @@ export default function WomenCategory() {
                 // Filter by gender = Women
                 data = data.filter(p => p.gender === 'Women');
 
+                // Hide out-of-stock products
+                data = data.filter(p => p.stock !== 0);
+
                 // Apply additional filter based on category/collection
                 if (filterConfig) {
                     if (filterConfig.type === 'category') {

@@ -119,6 +119,9 @@ export default function Shop() {
     // I'll be inclusive: if matches selected OR (if user wants) unisex?
     // Let's stick to strict match first, assuming migration set data.
     const genderFiltered = products.filter(p => {
+        // Hide out-of-stock products
+        if (p.stock === 0) return false;
+
         if (searchQuery) {
             const term = searchQuery.toLowerCase();
             const matcheSearch =

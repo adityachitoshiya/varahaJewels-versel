@@ -66,6 +66,9 @@ export default function MenCategory() {
                 // Filter by gender = Men
                 data = data.filter(p => p.gender === 'Men');
 
+                // Hide out-of-stock products
+                data = data.filter(p => p.stock !== 0);
+
                 // Apply additional filter based on category
                 if (filterConfig) {
                     data = data.filter(p =>

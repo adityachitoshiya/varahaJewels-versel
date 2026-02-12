@@ -13,10 +13,10 @@ export default function ProductDetailSkeleton() {
 
                         {/* Left Column - Images Skeleton */}
                         <div className="lg:col-span-7 xl:col-span-7 space-y-4">
-                            <div className="aspect-[4/5] sm:aspect-square w-full bg-gray-200 rounded-sm shimmer-line"></div>
+                            <div className="aspect-[4/5] sm:aspect-square w-full bg-[#EDD9C7] rounded-sm shimmer-line"></div>
                             <div className="grid grid-cols-4 gap-4 hidden lg:grid">
                                 {[...Array(4)].map((_, i) => (
-                                    <div key={i} className="aspect-square bg-gray-200 rounded-sm shimmer-line"></div>
+                                    <div key={i} className="aspect-square bg-[#EDD9C7] rounded-sm shimmer-line"></div>
                                 ))}
                             </div>
                         </div>
@@ -26,28 +26,28 @@ export default function ProductDetailSkeleton() {
                             <div className="lg:sticky lg:top-24 space-y-6">
                                 {/* Brand/Title */}
                                 <div className="space-y-2">
-                                    <div className="h-4 bg-gray-200 rounded shimmer-line w-1/4"></div>
-                                    <div className="h-8 bg-gray-200 rounded shimmer-line w-3/4"></div>
+                                    <div className="h-4 bg-[#EDD9C7] rounded shimmer-line w-1/4"></div>
+                                    <div className="h-8 bg-[#EDD9C7] rounded shimmer-line w-3/4"></div>
                                 </div>
 
                                 {/* Rating */}
-                                <div className="h-4 bg-gray-100 rounded shimmer-line w-1/3"></div>
+                                <div className="h-4 bg-[#F4E6D8] rounded shimmer-line w-1/3"></div>
 
                                 {/* Price */}
-                                <div className="h-10 bg-gray-200 rounded shimmer-line w-1/2 my-4"></div>
+                                <div className="h-10 bg-[#EDD9C7] rounded shimmer-line w-1/2 my-4"></div>
 
                                 {/* Description */}
                                 <div className="space-y-2">
-                                    <div className="h-3 bg-gray-100 rounded shimmer-line w-full"></div>
-                                    <div className="h-3 bg-gray-100 rounded shimmer-line w-full"></div>
-                                    <div className="h-3 bg-gray-100 rounded shimmer-line w-full"></div>
-                                    <div className="h-3 bg-gray-100 rounded shimmer-line w-2/3"></div>
+                                    <div className="h-3 bg-[#F4E6D8] rounded shimmer-line w-full"></div>
+                                    <div className="h-3 bg-[#F4E6D8] rounded shimmer-line w-full"></div>
+                                    <div className="h-3 bg-[#F4E6D8] rounded shimmer-line w-full"></div>
+                                    <div className="h-3 bg-[#F4E6D8] rounded shimmer-line w-2/3"></div>
                                 </div>
 
                                 {/* Config/Buttons */}
                                 <div className="pt-6 space-y-4">
-                                    <div className="h-12 bg-gray-200 rounded-sm shimmer-line w-full"></div>
-                                    <div className="h-12 bg-gray-200 rounded-sm shimmer-line w-full"></div>
+                                    <div className="h-12 bg-[#EDD9C7] rounded-sm shimmer-line w-full"></div>
+                                    <div className="h-12 bg-[#EDD9C7] rounded-sm shimmer-line w-full"></div>
                                 </div>
                             </div>
                         </div>
