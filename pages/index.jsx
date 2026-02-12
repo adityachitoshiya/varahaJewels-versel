@@ -26,7 +26,8 @@ const SpinWheelPopup = dynamic(() => import('../components/SpinWheelPopup'), { s
 export default function Home({ heroSlides, initialSettings }) {
   // Check if user has already skipped countdown (persistent)
   // Check if user has already skipped countdown (persistent)
-  const [showFullPageCountdown, setShowFullPageCountdown] = useState(initialSettings?.show_full_page_countdown ?? true);
+  // Default to false (fail-safe) in case settings fail to load
+  const [showFullPageCountdown, setShowFullPageCountdown] = useState(initialSettings?.show_full_page_countdown ?? false);
 
   useEffect(() => {
     // Client-side only check
