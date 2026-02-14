@@ -143,8 +143,9 @@ export function CartProvider({ children }) {
                 // We should replace local cart with server cart as truth
                 setCartItems(serverCart);
 
-                // Clear ref to prevent re-syncing issues
+                // Clear ref and local storage to prevent re-syncing issues
                 initialCartRef.current = [];
+                localStorage.removeItem('cart');
             }
         } catch (err) {
             console.error("Cart Sync Failed:", err);
