@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, Menu, ShoppingBag, X, Heart, User, LogOut, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import AddToCartModal from './AddToCartModal';
+import AnnouncementBar from './AnnouncementBar';
 
 export default function Header({ cartCount = 0, onCartClick }) {
   const router = useRouter();
@@ -21,9 +22,21 @@ export default function Header({ cartCount = 0, onCartClick }) {
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState(null); // 'women', 'men', or null
+  const [headerHeight, setHeaderHeight] = useState(64);
 
   const searchRef = useRef(null);
   const profileRef = useRef(null);
+  const headerRef = useRef(null);
+
+  // Track header height dynamically (announcement bar is conditional)
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setHeaderHeight(entry.target.offsetHeight);
+    });
+    ro.observe(headerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // Desktop sticky header only
   useEffect(() => {
@@ -118,7 +131,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
   return (
     <>
-      <header className="fixed lg:sticky top-0 left-0 right-0 z-[1000] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
+      <header ref={headerRef} className="fixed lg:sticky top-0 left-0 right-0 z-[1000] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
+        {/* Announcement Bar - Edge to edge, above nav */}
+        <AnnouncementBar />
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
@@ -325,7 +340,8 @@ export default function Header({ cartCount = 0, onCartClick }) {
       {/* Dark Blur Backdrop for Mobile Menu - Starts below header */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed top-16 sm:top-20 inset-x-0 bottom-0 bg-black/40 backdrop-blur-sm z-[1001] transition-opacity duration-300"
+          className="lg:hidden fixed inset-x-0 bottom-0 bg-black/40 backdrop-blur-sm z-[1001] transition-opacity duration-300"
+          style={{ top: `${headerHeight}px` }}
           onClick={() => setIsMobileMenuOpen(false)}
           onTouchEnd={(e) => {
             e.preventDefault();
@@ -337,10 +353,11 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
       {/* Mobile Menu - Higher z-index than backdrop */}
       <div
-        className={`lg:hidden fixed inset-x-0 bottom-0 top-16 sm:top-20 z-[1002] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+        className={`lg:hidden fixed inset-x-0 bottom-0 z-[1002] transition-all duration-300 ease-in-out ${isMobileMenuOpen
           ? 'opacity-100 translate-y-0 pointer-events-auto'
           : 'opacity-0 translate-y-4 pointer-events-none'
           }`}
+        style={{ top: `${headerHeight}px` }}
       >
         <div className="h-full border-t border-heritage/15 bg-gradient-to-b from-warm-sand to-ivory-smoke backdrop-blur-lg overflow-y-auto">
           <nav className="px-4 py-6 space-y-2">
@@ -583,7 +600,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
       </div>
 
       {/* Spacer for fixed header on mobile */}
-      <div className="h-16 sm:h-20 lg:hidden" aria-hidden="true" />
+      <div className="lg:hidden" style={{ height: `${headerHeight}px` }} aria-hidden="true" />
 
       <style jsx>{`
         @keyframes slideDown {

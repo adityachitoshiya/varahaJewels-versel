@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import '../lib/firebase'; // Initialize Firebase
 import '../styles/globals.css';
 import DeliveryBar from '../components/DeliveryBar';
-import AnnouncementBar from '../components/AnnouncementBar';
 import { useRouter } from 'next/router';
 import { CartProvider } from '../context/CartContext';
 import { NotificationProvider } from '../context/NotificationContext';
@@ -100,7 +99,6 @@ function MyApp({ Component, pageProps }) {
         <CartProvider>
           <WishlistProvider>
             {isHomePage && <DeliveryBar variant="desktop" />}
-            <AnnouncementBar />
 
             {/* Main Content with Transition */}
             <Component {...pageProps} />
