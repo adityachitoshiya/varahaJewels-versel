@@ -217,11 +217,11 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
       <div className="hidden lg:flex gap-3 pb-4 border-b border-copper/20">
         <button
           onClick={handleAddToCart}
-          disabled={!selectedVariant.inStock}
+          disabled={product.stock !== undefined && product.stock <= 0}
           className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-copper hover:bg-heritage text-white font-bold text-base rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
         >
           <ShoppingBag size={20} />
-          ADD TO BAG
+          {product.stock !== undefined && product.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO BAG'}
         </button>
         <WishlistButton
           productId={product.id}

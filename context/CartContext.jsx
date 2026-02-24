@@ -146,9 +146,17 @@ export function CartProvider({ children }) {
                 });
 
                 if (res.ok) {
-                    const serverCart = await res.json();
+                    const data = await res.json();
+                    const serverCart = data.items || data;
                     console.log("✅ Guest cart synced! Items:", serverCart.length);
                     setCartItems(serverCart);
+
+                    // Notify user if any quantities were reduced due to stock
+                    if (data.warnings && data.warnings.length > 0) {
+                        data.warnings.forEach(w => {
+                            showNotification('error', null, w);
+                        });
+                    }
 
                     // CLEAR localStorage — DB is now the truth
                     initialCartRef.current = [];
@@ -228,12 +236,19 @@ export function CartProvider({ children }) {
 
                     // Attach Server ID to the local item
                     setCartItems(prev => prev.map(item => {
-                        // Match based on SKU (Variant)
                         if (item.variant.sku === variant.sku) {
                             return { ...item, id: serverItem.id };
                         }
                         return item;
                     }));
+                } else {
+                    // Stock error — rollback optimistic update & show error
+                    const errData = await res.json().catch(() => ({}));
+                    const errMsg = errData.detail || 'Could not add to cart';
+                    showNotification('error', null, errMsg);
+
+                    // Rollback: remove the optimistically added item
+                    setCartItems(prev => prev.filter(item => item.variant.sku !== variant.sku));
                 }
 
             } catch (e) {
