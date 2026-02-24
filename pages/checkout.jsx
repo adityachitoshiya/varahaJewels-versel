@@ -120,27 +120,29 @@ export default function Checkout() {
     }
   }, [contextCartItems]);
 
-  // New Effect: Redirect if no items found after a short check
+  // New Effect: Redirect if no items found after a reasonable check
   useEffect(() => {
     if (!router.isReady) return;
 
-    // Small delay to allow hydration/context load
+    // Longer delay to allow context + server cart to fully load
     const timeout = setTimeout(() => {
-      const { productId } = router.query;
+      const { productId, fromCart } = router.query;
 
       // Check multiple sources for items
       const hasItems = cartItems.length > 0 ||
         (contextCartItems && contextCartItems.length > 0) ||
-        productId; // Direct buy presence
+        productId || // Direct buy presence
+        fromCart; // Coming from cart page (data may still be loading)
 
       if (!hasItems) {
         console.log('Redirecting from checkout: No items found');
         router.replace('/');
       }
-    }, 1000); // 1s buffer for context
+    }, 3000); // 3s buffer for server cart fetch
 
     return () => clearTimeout(timeout);
-  }, [router.isReady, router.query, contextCartItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]); // Only run once when router is ready, not on every cart change
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
