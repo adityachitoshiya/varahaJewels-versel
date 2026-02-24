@@ -47,11 +47,36 @@ export default function Home({ heroSlides, initialSettings }) {
 
   // Handle Maintenance Mode redirection & Loader
   useEffect(() => {
-    if (initialSettings?.is_maintenance_mode) {
-      router.push('/coming-soon');
+    // Skip maintenance redirect if dev_mode is enabled (tester access)
+    const isDevMode = localStorage.getItem('dev_mode') === 'true';
+
+    // Re-fetch settings client-side to avoid stale SSG cache
+    const checkMaintenance = async () => {
+      try {
+        const API_URL = getApiUrl();
+        const res = await fetch(`${API_URL}/api/settings`);
+        if (res.ok) {
+          const freshSettings = await res.json();
+          if (freshSettings.is_maintenance_mode && !isDevMode) {
+            router.push('/coming-soon');
+            return;
+          }
+        }
+      } catch (e) {
+        // If API fails, fallback to SSG settings
+        if (initialSettings?.is_maintenance_mode && !isDevMode) {
+          router.push('/coming-soon');
+          return;
+        }
+      }
+    };
+
+    if (initialSettings?.is_maintenance_mode && !isDevMode) {
+      checkMaintenance();
       return;
     }
 
+    // Check if preloader has already been shown in this session
     // Check if preloader has already been shown in this session
     const hasSeenPreloader = sessionStorage.getItem('preloaderShown');
 
@@ -65,12 +90,15 @@ export default function Home({ heroSlides, initialSettings }) {
       const elapsed = Date.now() - startTime;
       const remainingTime = Math.max(0, MIN_LOADER_TIME - elapsed);
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setIsLoading(false);
         sessionStorage.setItem('preloaderShown', 'true');
       }, remainingTime);
+
+      // Cleanup
+      return () => clearTimeout(timer);
     }
-  }, [router, initialSettings]);
+  }, [router, initialSettings?.is_maintenance_mode]);
 
 
 

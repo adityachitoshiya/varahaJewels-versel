@@ -120,7 +120,48 @@ export default function Login() {
             }
 
             if (authError) {
-                // Step 2: Try Admin Login as fallback
+                // Step 2: Try LOCAL Customer Login first (for users registered via /api/auth/signup)
+                if (formData.email.includes('@')) {
+                    try {
+                        console.log("Attempting Local Customer Login...");
+                        const customerRes = await fetch(`${API_URL}/api/auth/login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                email: formData.email,
+                                password: formData.password
+                            })
+                        });
+
+                        if (customerRes.ok) {
+                            const customerData = await customerRes.json();
+                            console.log("Customer Login Success", customerData);
+
+                            const userData = {
+                                id: customerData.user?.id,
+                                full_name: customerData.user?.name,
+                                name: customerData.user?.name,
+                                email: customerData.user?.email,
+                                role: 'customer'
+                            };
+
+                            localStorage.setItem('customer_token', customerData.access_token);
+                            localStorage.setItem('customer_user', JSON.stringify(userData));
+
+                            if (redirect) {
+                                router.push(redirect);
+                            } else {
+                                router.push('/');
+                            }
+                            return;
+                        }
+                        // If customer login also fails, continue to admin login below
+                    } catch (customerErr) {
+                        console.log("Local customer login failed, trying admin...", customerErr);
+                    }
+                }
+
+                // Step 3: Try Admin Login as final fallback
                 console.log("Attempting Admin Login...");
                 const formDataBody = new URLSearchParams();
                 formDataBody.append('username', formData.email);
@@ -157,11 +198,11 @@ export default function Login() {
                     } else {
                         const errorText = await adminRes.text();
                         console.error("Admin Login Failed:", errorText);
-                        throw new Error("Invalid admin credentials");
+                        throw new Error("Invalid email or password");
                     }
                 } catch (adminErr) {
                     console.error("Admin Fetch Error:", adminErr);
-                    throw new Error("Admin login failed: " + adminErr.message);
+                    throw new Error(adminErr.message || "Invalid email or password");
                 }
             }
 

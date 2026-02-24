@@ -96,27 +96,10 @@ export default function Checkout() {
   // Guest checkout is disabled. Users ONLY proceed if logged in.
 
   useEffect(() => {
-    // Check if coming from cart or direct product checkout
     const { productId, variantId, quantity, amount, productName, fromCart } = router.query;
 
-    if (fromCart === 'true') {
-      // Use items from Context if available
-      if (contextCartItems && contextCartItems.length > 0) {
-        setCartItems(contextCartItems);
-      } else {
-        // Fallback: Try loading from localStorage if context is empty (e.g., hard refresh)
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-          try {
-            const items = JSON.parse(savedCart);
-            setCartItems(items);
-          } catch (e) {
-            console.error('Failed to parse cart:', e);
-          }
-        }
-      }
-    } else if (productId && variantId && quantity && amount) {
-      // Direct checkout from product page
+    if (productId && variantId && quantity && amount) {
+      // Direct checkout from product page — use URL params
       const { image, description } = router.query;
       setOrderDetails({
         productId,
@@ -128,7 +111,14 @@ export default function Checkout() {
         description: description || ''
       });
     }
-  }, [router.query, contextCartItems]); // Re-run when context updates
+  }, [router.query]);
+
+  // Always sync cart items from context (works across all steps)
+  useEffect(() => {
+    if (contextCartItems && contextCartItems.length > 0) {
+      setCartItems(contextCartItems);
+    }
+  }, [contextCartItems]);
 
   // New Effect: Redirect if no items found after a short check
   useEffect(() => {
@@ -138,9 +128,9 @@ export default function Checkout() {
     const timeout = setTimeout(() => {
       const { productId } = router.query;
 
-      // If no direct buy params AND context cart is empty AND localstorage cart is empty/missing
-      const hasItems = (contextCartItems && contextCartItems.length > 0) ||
-        (typeof window !== 'undefined' && localStorage.getItem('cart') && JSON.parse(localStorage.getItem('cart') || '[]').length > 0) ||
+      // Check multiple sources for items
+      const hasItems = cartItems.length > 0 ||
+        (contextCartItems && contextCartItems.length > 0) ||
         productId; // Direct buy presence
 
       if (!hasItems) {

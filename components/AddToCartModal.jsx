@@ -1,6 +1,9 @@
 import { X, ShoppingCart, ArrowRight, Plus, Minus, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../lib/productData';
-import { useEffect } from 'react';
+
+
+import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
 
 export default function AddToCartModal({
   isOpen,
@@ -14,6 +17,12 @@ export default function AddToCartModal({
   product
 }) {
   const total = cartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -40,19 +49,19 @@ export default function AddToCartModal({
 
   if (!isOpen) return null;
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 z-50 transition-opacity"
+        className="fixed inset-0 bg-black/60 z-[1049] transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Panel */}
-      <div className="fixed inset-0 lg:top-0 lg:right-0 lg:left-auto lg:h-full lg:w-full lg:max-w-md bg-white z-[70] shadow-2xl flex flex-col animate-slide-in-right font-sans">
+      <div className="fixed inset-0 lg:top-0 lg:right-0 lg:left-auto lg:h-full lg:w-full lg:max-w-md bg-white z-[1050] shadow-2xl flex flex-col animate-slide-in-right font-sans">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white flex-shrink-0">
           <div>
@@ -102,7 +111,7 @@ export default function AddToCartModal({
                       <div className="flex justify-between items-start gap-2">
                         <h3 className="font-royal font-semibold text-heritage text-base leading-tight line-clamp-2">{item.productName}</h3>
                         <button
-                          onClick={() => onRemoveItem(item.variant.sku)}
+                          onClick={() => onRemoveItem(item.id, item.variant.sku)}
                           className="text-gray-400 hover:text-red-500 transition -mt-1 -mr-1 p-2"
                           aria-label="Remove item"
                         >
@@ -171,6 +180,7 @@ export default function AddToCartModal({
           </>
         )}
       </div>
-    </>
+    </>,
+    document.body
   );
 }

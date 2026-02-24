@@ -11,6 +11,7 @@ export function CartProvider({ children }) {
     const [token, setToken] = useState(null);
     const { showNotification } = useNotification();
     const initialCartRef = useRef([]); // Store initial local cart for sync
+    const isSyncingRef = useRef(false); // Race condition guard for sync
 
     // Initialize: Load token & Local Cart & Listen for Auth Changes
     useEffect(() => {
@@ -96,59 +97,83 @@ export function CartProvider({ children }) {
     // Sync with Backend when Token Changes
     useEffect(() => {
         if (token && !loading) {
-            syncCartWithBackend();
+            handleLoggedInCart();
         }
     }, [token, loading]);
 
-    // Persist to Local Storage (Always, for offline/optimistic UI)
+    // Persist to Local Storage — ONLY for GUEST users (no token)
+    // Logged-in users use DB as source of truth, never write to localStorage
     useEffect(() => {
-        if (!loading) {
+        if (!loading && !token) {
             localStorage.setItem('cart', JSON.stringify(cartItems));
-            // Dispatch event for legacy components (Header.jsx)
+        }
+        // Always dispatch event for Header cart count (works for both guest & logged in)
+        if (!loading) {
             window.dispatchEvent(new Event('cartUpdated'));
         }
-    }, [cartItems, loading]);
+    }, [cartItems, loading, token]);
 
-    const syncCartWithBackend = async () => {
+    const handleLoggedInCart = async () => {
+        // Race condition guard
+        if (isSyncingRef.current) return;
+        isSyncingRef.current = true;
+
         try {
-            console.log("🔄 Syncing Cart...");
             const API_URL = getApiUrl();
 
-            // Use current state, or fallback to Ref if state is empty (Race condition fix)
-            const itemsToSync = cartItems.length > 0 ? cartItems : initialCartRef.current;
+            // Check: Are there GUEST items in localStorage that need syncing?
+            const guestCart = initialCartRef.current;
+            const hasGuestItems = guestCart.length > 0;
 
-            // Prepare local items for sync
-            const syncPayload = {
-                local_items: itemsToSync.map(item => ({
-                    product_id: item.productId || item.product_id || item.variant.sku.split('-')[0], // Fallback logic
-                    quantity: item.quantity,
-                    variant_sku: item.variant?.sku
-                }))
-            };
+            if (hasGuestItems) {
+                // ONE-TIME sync: Push guest items to server, then clear localStorage forever
+                console.log("🔄 One-time sync: Pushing guest cart to server...");
+                const syncPayload = {
+                    local_items: guestCart.map(item => ({
+                        product_id: item.productId || item.product_id || item.variant.sku.split('-')[0],
+                        quantity: item.quantity,
+                        variant_sku: item.variant?.sku
+                    }))
+                };
 
-            const res = await fetch(`${API_URL}/api/cart/sync`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(syncPayload)
-            });
+                const res = await fetch(`${API_URL}/api/cart/sync`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(syncPayload)
+                });
 
-            if (res.ok) {
-                const serverCart = await res.json();
-                console.log("✅ Cart Synced! Items:", serverCart.length);
-                // Server cart structure is different? Let's check main.py
-                // It returns list of items with "variant" object.
-                // We should replace local cart with server cart as truth
-                setCartItems(serverCart);
+                if (res.ok) {
+                    const serverCart = await res.json();
+                    console.log("✅ Guest cart synced! Items:", serverCart.length);
+                    setCartItems(serverCart);
 
-                // Clear ref and local storage to prevent re-syncing issues
-                initialCartRef.current = [];
-                localStorage.removeItem('cart');
+                    // CLEAR localStorage — DB is now the truth
+                    initialCartRef.current = [];
+                    localStorage.removeItem('cart');
+                }
+            } else {
+                // No guest items — just fetch from DB (source of truth)
+                console.log("📥 Loading cart from server (DB = truth)...");
+                const res = await fetch(`${API_URL}/api/cart`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const serverCart = await res.json();
+                    console.log("✅ Cart loaded from DB. Items:", serverCart.length);
+                    setCartItems(serverCart);
+
+                    // Ensure localStorage is clean
+                    localStorage.removeItem('cart');
+                }
             }
         } catch (err) {
-            console.error("Cart Sync Failed:", err);
+            console.error("Cart load/sync failed:", err);
+        } finally {
+            isSyncingRef.current = false;
         }
     };
 
@@ -271,11 +296,22 @@ export function CartProvider({ children }) {
         }
     };
 
-    const clearCart = () => {
+    const clearCart = async () => {
         setCartItems([]);
         if (localStorage) localStorage.removeItem('cart');
-        // We don't necessarily clear server cart on "Clear Cart" uless requested, but usually yes.
-        // For now, let's keep it simple.
+
+        // Also clear server-side cart if logged in
+        if (token) {
+            try {
+                const API_URL = getApiUrl();
+                await fetch(`${API_URL}/api/cart/clear`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (e) {
+                console.error('Failed to clear server cart:', e);
+            }
+        }
     };
 
     return (
