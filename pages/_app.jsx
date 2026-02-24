@@ -96,7 +96,7 @@ function MyApp({ Component, pageProps }) {
         <CartProvider>
           <WishlistProvider>
             {isHomePage && <DeliveryBar variant="desktop" />}
-            {!isHomePage && !isCiplx && !isHeritage && <AnnouncementBar />}
+            <AnnouncementBar />
 
             {/* Main Content with Transition */}
             <Component {...pageProps} />
