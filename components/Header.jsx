@@ -608,7 +608,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
         onClose={() => setIsCartModalOpen(false)}
         cartItems={cartItems || []}
         onUpdateQuantity={updateQuantity}
-        onRemoveItem={(sku) => removeFromCart(null, sku)}
+        onRemoveItem={(itemId, sku) => removeFromCart(itemId, sku)}
         onContinueShopping={() => setIsCartModalOpen(false)}
         onViewCart={() => {
           setIsCartModalOpen(false);

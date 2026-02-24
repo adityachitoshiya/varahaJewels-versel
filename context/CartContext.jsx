@@ -258,21 +258,28 @@ export function CartProvider({ children }) {
     };
 
     const removeFromCart = async (itemId, variantSku) => {
+        // Look up the actual backend item ID if not provided
+        let resolvedItemId = itemId;
+        if (!resolvedItemId && variantSku) {
+            const found = cartItems.find(item => item.variant?.sku === variantSku);
+            if (found) resolvedItemId = found.id;
+        }
+
         // 1. Optimistic Update (Handle both ID and SKU matches)
         setCartItems(prev => prev.filter(item => {
             // If SKU matches, remove it
             if (variantSku && item.variant?.sku === variantSku) return false;
             // If ID matches, remove it
-            if (itemId && item.id === itemId) return false;
+            if (resolvedItemId && item.id === resolvedItemId) return false;
             // Keep otherwise
             return true;
         }));
 
         // 2. Server Update
-        if (token && itemId) {
+        if (token && resolvedItemId) {
             try {
                 const API_URL = getApiUrl();
-                await fetch(`${API_URL}/api/cart/items/${itemId}`, {
+                await fetch(`${API_URL}/api/cart/items/${resolvedItemId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
