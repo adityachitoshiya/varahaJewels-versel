@@ -27,8 +27,8 @@ export default function AnnouncementBar() {
             barItems = JSON.parse(data.announcement_bar_json || '[]');
           } catch (e) { barItems = []; }
 
-          // Only show active items
-          const activeItems = barItems.filter(item => item.active);
+          // Only show active items with non-empty text
+          const activeItems = barItems.filter(item => item.active && item.text && item.text.trim());
           setItems(activeItems);
         }
       } catch (err) {
