@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 export default function PremiumLoader() {
   return (
-    <div className="fixed inset-0 z-[100] bg-heritage flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] bg-heritage flex items-center justify-center">
       <div className="relative">
         {/* Rotating Orange Ring */}
         <div className="w-32 h-32 relative">
@@ -33,7 +33,7 @@ export default function PremiumLoader() {
 
       {/* Loading Text */}
       <p className="absolute bottom-32 font-playfair text-royal-orange/80 text-lg tracking-widest animate-pulse">
-        Loading Excellence...
+        Loading...
       </p>
     </div>
   );
