@@ -25,6 +25,10 @@ function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     const trackVisit = async () => {
+      // Skip tracking on localhost / development
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        return;
+      }
       try {
         const API_URL = getApiUrl();
         await fetch(`${API_URL}/api/track-visit`, {
