@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getApiUrl } from '../../../lib/config';
 import Link from 'next/link';
 import AdminLayout from '../../../components/admin/AdminLayout';
-import { Plus, Search, Edit, Trash2, Filter, Star } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Filter, Star, Upload } from 'lucide-react';
 import Head from 'next/head';
 
 export default function Products() {
@@ -100,13 +100,22 @@ export default function Products() {
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <h1 className="text-xl font-bold text-gray-800">Products Inventory</h1>
-                <Link
-                    href="/admin/products/new"
-                    className="px-4 py-2 bg-gradient-to-r from-copper to-heritage text-white font-medium rounded-lg flex items-center gap-2 hover:shadow-lg transition-all"
-                >
-                    <Plus size={20} />
-                    Add New Product
-                </Link>
+                <div className="flex gap-3">
+                    <Link
+                        href="/admin/products/bulk-upload"
+                        className="px-4 py-2 border border-copper text-copper font-medium rounded-lg flex items-center gap-2 hover:bg-copper/5 transition-all"
+                    >
+                        <Upload size={18} />
+                        Bulk Upload
+                    </Link>
+                    <Link
+                        href="/admin/products/new"
+                        className="px-4 py-2 bg-gradient-to-r from-copper to-heritage text-white font-medium rounded-lg flex items-center gap-2 hover:shadow-lg transition-all"
+                    >
+                        <Plus size={20} />
+                        Add New Product
+                    </Link>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
