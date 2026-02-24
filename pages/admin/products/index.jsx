@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getApiUrl } from '../../../lib/config';
 import Link from 'next/link';
 import AdminLayout from '../../../components/admin/AdminLayout';
-import { Plus, Search, Edit, Trash2, Filter } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Filter, Star } from 'lucide-react';
 import Head from 'next/head';
 
 export default function Products() {
@@ -52,6 +52,28 @@ export default function Products() {
         } catch (error) {
             console.error(error);
             alert('Error deleting product');
+        }
+    };
+
+    const handleToggleSpotlight = async (productId) => {
+        try {
+            const API_URL = getApiUrl();
+            const token = localStorage.getItem('admin_token');
+            const res = await fetch(`${API_URL}/api/products/${productId}/spotlight`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setProducts(prev => prev.map(p =>
+                    p.id === productId ? { ...p, is_spotlight: data.is_spotlight } : p
+                ));
+            } else {
+                alert('Failed to toggle spotlight');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error toggling spotlight');
         }
     };
 
@@ -124,17 +146,18 @@ export default function Products() {
                                 <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Details</th>
                                 <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
                                 <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tag</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Spotlight</th>
                                 <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">Loading inventory...</td>
+                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">Loading inventory...</td>
                                 </tr>
                             ) : filteredProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">No products found</td>
+                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">No products found</td>
                                 </tr>
                             ) : (
                                 filteredProducts.map((product) => (
@@ -183,6 +206,15 @@ export default function Products() {
                                                     {product.tag}
                                                 </span>
                                             )}
+                                        </td>
+                                        <td className="px-6 py-3 text-center">
+                                            <button
+                                                onClick={() => handleToggleSpotlight(product.id)}
+                                                className={`p-1.5 rounded-full transition-all duration-200 ${product.is_spotlight ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-gray-300 hover:text-amber-400 hover:bg-gray-50'}`}
+                                                title={product.is_spotlight ? 'Remove from Spotlight' : 'Add to Spotlight'}
+                                            >
+                                                <Star size={20} fill={product.is_spotlight ? 'currentColor' : 'none'} />
+                                            </button>
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm font-medium">
                                             <div className="flex items-center justify-end gap-2">

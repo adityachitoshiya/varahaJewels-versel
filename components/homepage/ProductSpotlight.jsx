@@ -45,10 +45,15 @@ export default function ProductSpotlight() {
       if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
 
-      // Filter for featured products (example logic)
-      const featured = data.filter(p => p.tag === 'Featured' || p.tag === 'Bestseller' || p.premium);
-      // Fallback to first few if no featured
-      setProducts(featured.length > 0 ? featured : data.slice(0, 5));
+      // Filter for spotlight products (admin-set via toggle)
+      const spotlight = data.filter(p => p.is_spotlight);
+      // Fallback: if no spotlight set, use featured/bestseller/premium, then first 5
+      if (spotlight.length > 0) {
+        setProducts(spotlight);
+      } else {
+        const featured = data.filter(p => p.tag === 'Featured' || p.tag === 'Bestseller' || p.premium);
+        setProducts(featured.length > 0 ? featured : data.slice(0, 5));
+      }
     } catch (err) {
       console.error("Error fetching products:", err);
       setError(err.message);
