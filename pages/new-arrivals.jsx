@@ -139,6 +139,7 @@ export default function NewArrivals({ initialProducts = [] }) {
     };
 
     const handleAddToCart = (product) => {
+        if (product.stock !== undefined && product.stock <= 0) return;
         const variant = {
             sku: product.id,
             price: product.price,
@@ -301,6 +302,11 @@ export default function NewArrivals({ initialProducts = [] }) {
                                                 <button onClick={() => toggleWishlist(product.id, product.name)} className="absolute top-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white transition-colors z-10">
                                                     <Heart size={20} className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'} />
                                                 </button>
+                                                {product.stock !== undefined && product.stock <= 0 && (
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-[5]">
+                                                        <span className="bg-red-600 text-white px-4 py-2 text-sm font-bold rounded-full">Out of Stock</span>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="p-6 flex flex-col flex-1">
                                                 <div className="flex-grow">
@@ -315,9 +321,13 @@ export default function NewArrivals({ initialProducts = [] }) {
                                                 {product.price ? (
                                                     <button
                                                         onClick={() => handleAddToCart(product)}
-                                                        className="mt-auto w-full px-6 py-3 bg-heritage text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-copper transition-all group-hover:shadow-md"
+                                                        disabled={product.stock !== undefined && product.stock <= 0}
+                                                        className={`mt-auto w-full px-6 py-3 font-semibold rounded-sm flex items-center justify-center gap-2 transition-all group-hover:shadow-md ${product.stock !== undefined && product.stock <= 0
+                                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                                : 'bg-heritage text-warm-sand hover:bg-copper'
+                                                            }`}
                                                     >
-                                                        Add to Cart <ShoppingBag size={18} />
+                                                        {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'} <ShoppingBag size={18} />
                                                     </button>
                                                 ) : (
                                                     <Link href={`/product/${product.id}`} className="mt-auto w-full px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-heritage transition-all group-hover:shadow-md">

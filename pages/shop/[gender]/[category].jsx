@@ -62,6 +62,7 @@ export default function CategoryPage() {
     };
 
     const handleAddToCart = (product) => {
+        if (product.stock !== undefined && product.stock <= 0) return;
         const variant = {
             sku: product.id,
             price: product.price,
@@ -155,6 +156,11 @@ export default function CategoryPage() {
                                                     className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'}
                                                 />
                                             </button>
+                                            {product.stock !== undefined && product.stock <= 0 && (
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-[5]">
+                                                    <span className="bg-red-600 text-white px-3 py-1.5 text-xs font-bold rounded-full">Out of Stock</span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Details */}
@@ -178,9 +184,13 @@ export default function CategoryPage() {
                                             {product.price ? (
                                                 <button
                                                     onClick={() => handleAddToCart(product)}
-                                                    className="mt-3 w-full py-2 bg-heritage text-warm-sand text-xs md:text-sm font-semibold rounded-sm hover:bg-copper transition-colors flex items-center justify-center gap-2"
+                                                    disabled={product.stock !== undefined && product.stock <= 0}
+                                                    className={`mt-3 w-full py-2 text-xs md:text-sm font-semibold rounded-sm flex items-center justify-center gap-2 transition-colors ${product.stock !== undefined && product.stock <= 0
+                                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                            : 'bg-heritage text-warm-sand hover:bg-copper'
+                                                        }`}
                                                 >
-                                                    Add <ShoppingBag size={14} />
+                                                    {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add'} <ShoppingBag size={14} />
                                                 </button>
                                             ) : (
                                                 <Link
