@@ -106,6 +106,7 @@ export default function ProductPage() {
           name: data.name,
           description: data.description,
           price: data.price,
+          mrp: data.mrp,
           images: allImages,
           category: data.category,
           rating: 4.8,
