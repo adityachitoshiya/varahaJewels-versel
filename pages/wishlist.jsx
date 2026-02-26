@@ -78,9 +78,9 @@ export default function Wishlist() {
 
   const handleAddToCart = (item) => {
     const variant = {
-      sku: item.id,
+      sku: `${item.id}-default`,
       price: item.price,
-      name: item.name,
+      name: "Standard",
       image: item.image
     };
     addToCart(item, variant, 1);

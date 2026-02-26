@@ -75,9 +75,9 @@ export default function ProductCard({ product, onQuickLook }) {
 
     setAddingToCart(true);
     const variant = {
-      sku: product.id,
+      sku: `${product.id}-default`,
       price: product.price,
-      name: product.name || 'Default',
+      name: 'Standard',
       image: product.image
     };
     await addToCart(product, variant, 1);

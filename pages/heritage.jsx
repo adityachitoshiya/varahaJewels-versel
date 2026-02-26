@@ -150,9 +150,9 @@ export default function Heritage() {
 
   const handleAddToCart = (product) => {
     const variant = {
-      sku: product.id,
+      sku: `${product.id}-default`,
       price: product.price,
-      name: product.name,
+      name: "Standard",
       image: product.image
     };
     addToCart(product, variant, 1);

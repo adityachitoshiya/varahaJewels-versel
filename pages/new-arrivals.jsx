@@ -147,9 +147,9 @@ export default function NewArrivals({ initialProducts = [] }) {
 
         setAddingToCart(prev => ({ ...prev, [product.id]: true }));
         const variant = {
-            sku: product.id,
+            sku: `${product.id}-default`,
             price: product.price,
-            name: product.name,
+            name: "Standard",
             image: product.image
         };
         await addToCart(product, variant, 1);
