@@ -18,6 +18,7 @@ export default function EditProduct() {
         name: '',
         description: '',
         price: '',
+        mrp: '',
         stock: 0,
         category: 'Artificial',
         metal: 'Brass',
@@ -97,6 +98,7 @@ export default function EditProduct() {
                     name: product.name || '',
                     description: product.description || '',
                     price: product.price || '',
+                    mrp: product.mrp || '',
                     stock: product.stock ?? 0,
                     category: product.category || 'Artificial',
                     metal: product.metal || 'Brass',
@@ -160,6 +162,7 @@ export default function EditProduct() {
             const dataToSend = {
                 ...formData,
                 price: parseFloat(formData.price),
+                mrp: formData.mrp ? parseFloat(formData.mrp) : null,
                 stock: parseInt(formData.stock) || 0, // Convert stock to integer
                 stones: formData.stones ? JSON.stringify(formData.stones.split(',').map(s => s.trim())) : '[]',
                 additional_images: JSON.stringify(formData.additional_images),
@@ -250,8 +253,12 @@ export default function EditProduct() {
                                     <textarea className="w-full p-2 border rounded-lg" name="description" value={formData.description} onChange={handleChange} rows={3} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price (₹)</label>
                                     <input type="number" className="w-full p-2 border rounded-lg" name="price" value={formData.price} onChange={handleChange} required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">MRP (₹)</label>
+                                    <input type="number" className="w-full p-2 border rounded-lg" name="mrp" value={formData.mrp} onChange={handleChange} placeholder="Optional, for discounts" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>

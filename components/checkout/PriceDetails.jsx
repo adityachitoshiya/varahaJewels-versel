@@ -17,9 +17,18 @@ const PriceDetails = ({
 }) => {
 
     // Calculate total MRP (before discount)
-    const totalMRP = cartItems.length > 0
+    const sellingPriceTotal = cartItems.length > 0
         ? cartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0)
         : (orderDetails ? orderDetails.amount : 0);
+
+    const totalMRP = cartItems.length > 0
+        ? cartItems.reduce((sum, item) => {
+            const mrp = item.product?.mrp || item.variant?.compareAt || item.variant?.price * 1.15 || 0;
+            return sum + (mrp * item.quantity);
+        }, 0)
+        : sellingPriceTotal;
+
+    const productDiscount = totalMRP - sellingPriceTotal;
 
     const itemCount = cartItems.length > 0 ? cartItems.length : (orderDetails ? 1 : 0);
 
@@ -32,13 +41,20 @@ const PriceDetails = ({
             <div className="space-y-3 text-sm mb-6 pb-6 border-b border-gray-100">
                 <div className="flex justify-between items-center text-gray-700">
                     <span>Total MRP</span>
-                    <span>₹{totalMRP.toLocaleString()}</span>
+                    <span>₹{Math.round(totalMRP).toLocaleString()}</span>
                 </div>
 
-                {discountAmount > 0 && (
-                    <div className="flex justify-between items-center">
+                {productDiscount > 0 && (
+                    <div className="flex justify-between items-center text-gray-700">
                         <span>Discount on MRP</span>
-                        <span className="text-green-500">-₹{discountAmount.toLocaleString()}</span>
+                        <span className="text-green-500">-₹{Math.round(productDiscount).toLocaleString()}</span>
+                    </div>
+                )}
+
+                {discountAmount > 0 && (
+                    <div className="flex justify-between items-center text-gray-700">
+                        <span>Coupon Discount</span>
+                        <span className="text-green-500">-₹{Math.round(discountAmount).toLocaleString()}</span>
                     </div>
                 )}
 

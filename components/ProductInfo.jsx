@@ -14,7 +14,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
   const [showOffers, setShowOffers] = useState(true);
 
   // Calculate discount percentage
-  const originalPrice = selectedVariant.compareAt || selectedVariant.price * 1.15;
+  const originalPrice = product.mrp || selectedVariant.compareAt || selectedVariant.price * 1.15;
   const discountPercent = Math.round(((originalPrice - selectedVariant.price) / originalPrice) * 100);
 
   const handleAddToCart = () => {
