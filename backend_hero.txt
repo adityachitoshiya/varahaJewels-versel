@@ -1,25 +1,0 @@
-* Host localhost:8000 was resolved.
-* IPv6: ::1
-* IPv4: 127.0.0.1
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8000...
-* connect to ::1 port 8000 from ::1 port 50239 failed: Connection refused
-*   Trying 127.0.0.1:8000...
-* Connected to localhost (127.0.0.1) port 8000
-> GET /api/content/hero HTTP/1.1
-> Host: localhost:8000
-> User-Agent: curl/8.7.1
-> Accept: */*
-> 
-* Request completely sent off
-  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0< HTTP/1.1 200 OK
-< date: Thu, 12 Feb 2026 18:03:15 GMT
-< server: uvicorn
-< content-length: 931
-< content-type: application/json
-< 
-{ [931 bytes data]
-100   931  100   931    0     0    663      0  0:00:01  0:00:01 --:--:--   664
-* Connection #0 to host localhost left intact
-[{"mobile_image":null,"subtitle":"Heritage-inspired masterpieces crafted with tradition and artistry","image":"https://fqnzerfbrwwranmiznkw.supabase.co/storage/v1/object/public/IMAGE/1765971437_h1.jpg","link_url":"/collections/all","id":1,"title":"Timeless Elegance","link_text":"Explore Collections","order":0},{"mobile_image":null,"subtitle":"Exquisite pieces that celebrate India's rich cultural legacy","image":"https://fqnzerfbrwwranmiznkw.supabase.co/storage/v1/object/public/IMAGE/1765971752_h2.jpg","link_url":"/collections/all","id":2,"title":"Royal Heritage","link_text":"Explore Collections","order":0},{"mobile_image":null,"subtitle":"Every piece handcrafted by master artisans with devotion and precision","image":"https://fqnzerfbrwwranmiznkw.supabase.co/storage/v1/object/public/IMAGE/1767010061_h3.webp","link_url":"/collections/all","id":6,"title":"Artisan Excellence","link_text":"Explore Collections","order":0}]

@@ -138,14 +138,14 @@ export default function Home({ heroSlides, initialSettings }) {
         <meta property="og:url" content="https://www.varahajewels.in" />
         <meta property="og:title" content="Varaha Jewels - Premium Heritage Jewelry Collection" />
         <meta property="og:description" content="Discover timeless elegance with Varaha Jewels - Premium heritage-inspired jewelry crafted with tradition and artistry. Shop authentic Indian jewelry online." />
-        <meta property="og:image" content="/varaha-assets/og.jpg" />
+        <meta property="og:image" content="https://www.varahajewels.in/varaha-assets/og.jpg" />
         <meta property="og:site_name" content="Varaha Jewels" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Varaha Jewels - Premium Heritage Jewelry Collection" />
         <meta name="twitter:description" content="Discover timeless elegance with Varaha Jewels - Premium heritage-inspired jewelry." />
-        <meta name="twitter:image" content="/varaha-assets/og.jpg" />
+        <meta name="twitter:image" content="https://www.varahajewels.in/varaha-assets/og.jpg" />
 
         {/* Structured Data for SEO */}
         <script
