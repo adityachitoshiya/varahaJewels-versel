@@ -156,6 +156,34 @@ export default function ProductPage() {
 
         setProduct(adaptedProduct);
 
+        // Fetch actual reviews
+        try {
+          const revRes = await fetch(`${API_URL}/api/reviews/${productId}`);
+          if (revRes.ok) {
+            const revData = await revRes.json();
+            if (revData && revData.length > 0) {
+              const mappedReviews = revData.map(r => ({
+                id: r.id,
+                name: r.customer_name || 'Anonymous',
+                rating: r.rating || 5,
+                title: r.verified_purchase ? 'Verified Purchase' : '',
+                text: r.comment || '',
+                date: new Date(r.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+              }));
+
+              setProduct(prev => ({
+                ...prev,
+                reviews: mappedReviews,
+                // Update aggregate values based on fetched data or use what came from product API if accurate
+                reviewCount: data.total_reviews > 0 ? data.total_reviews : mappedReviews.length,
+                averageRating: data.average_rating || (mappedReviews.reduce((sum, r) => sum + r.rating, 0) / mappedReviews.length)
+              }));
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching actual reviews:", e);
+        }
+
         // Fetch similar products from same category
         if (data.category) {
           fetchSimilarProducts(data.category, data.id);
