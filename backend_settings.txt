@@ -1,0 +1,25 @@
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8000...
+* connect to ::1 port 8000 from ::1 port 50228 failed: Connection refused
+*   Trying 127.0.0.1:8000...
+* Connected to localhost (127.0.0.1) port 8000
+> GET /api/settings HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0< HTTP/1.1 200 OK
+< date: Thu, 12 Feb 2026 18:03:14 GMT
+< server: uvicorn
+< content-length: 1911
+< content-type: application/json
+< 
+{ [1911 bytes data]
+100  1911  100  1911    0     0   1296      0  0:00:01  0:00:01 --:--:--  1296100  1911  100  1911    0     0   1296      0  0:00:01  0:00:01 --:--:--  1295
+* Connection #0 to host localhost left intact
+{"store_name":"Varaha Jewels","delivery_free_threshold":1000.0,"ciplx_video_desktop":"https://fqnzerfbrwwranmiznkw.supabase.co/storage/v1/object/public/IMAGE/1768928479_ChatGPT_Image_Jan_20,_2026,_10_29_04_PM.webp","mega_deal_discount_percent":10,"logo_url":"/varaha-assets/logo.png","ciplx_video_mobile":"https://res.cloudinary.com/du0s3mpmh/video/upload/v1768928468/heritage_videos/y79fynuutb1is3k2in4h.mp4","mega_deal_label":"MEGA DEAL","support_email":"support@varahajewels.com","show_full_page_countdown":false,"ciplx_images_json":"[\"https://res.cloudinary.com/du0s3mpmh/image/upload/v1769159160/ciplx_images/hsxv7w2racxfg5fl2bgf.jpg\",\"https://res.cloudinary.com/du0s3mpmh/image/upload/v1769159241/ciplx_images/ondsvpq1lrvt4xm8qsmt.jpg\",\"https://res.cloudinary.com/du0s3mpmh/image/upload/v1769159246/ciplx_images/copdq9q4maogrbw6zmqn.webp\",\"https://res.cloudinary.com/du0s3mpmh/image/upload/v1769159256/ciplx_images/sutkevv1uzbdon7ia8rn.webp\",\"https://res.cloudinary.com/du0s3mpmh/image/upload/v1769159294/ciplx_images/q7ydqqwk2xylxrxq4unz.jpg\"]","currency_symbol":"₹","is_maintenance_mode":false,"ciplx_music_url":"https://res.cloudinary.com/du0s3mpmh/video/upload/v1769161935/ciplx_music/mdmqg4v9gdi6h0vo61th.mp3","bank_offers_json":"[]","announcement_text":"Grand Launch In","spotlight_source":"new_arrivals","ciplx_music_volume":0.32,"prepaid_discount_enabled":true,"announcement_date":"2026-02-12T12:00","rapidshyp_enabled":"false","gstin":"08CBRPC0024J1ZT","prepaid_discount_percent":5,"id":1,"show_announcement":true,"heritage_video_desktop":"https://res.cloudinary.com/du0s3mpmh/video/upload/v1768207206/heritage_videos/mjd65sed7wfsxwkrneth.mp4","mega_deal_enabled":true,"announcement_bar_json":"[{\"type\":\"announcement\",\"text\":\"\",\"active\":true}]","heritage_video_mobile":"https://res.cloudinary.com/du0s3mpmh/video/upload/v1769158927/heritage_videos/l6548qe7sukcfalty1ni.mp4"}

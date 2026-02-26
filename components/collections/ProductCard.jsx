@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Eye, Sparkles, ShoppingBag } from 'lucide-react';
+import { Heart, Eye, Sparkles, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 
@@ -54,8 +54,9 @@ const PolishIcon = ({ polish }) => (
 
 export default function ProductCard({ product, onQuickLook }) {
   const [isHovered, setIsHovered] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const isWishlisted = isInWishlist(product.id);
 
@@ -65,22 +66,25 @@ export default function ProductCard({ product, onQuickLook }) {
     toggleWishlist(product.id);
   };
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (product.stock !== undefined && product.stock <= 0) {
-      return;
-    }
+    if (product.stock !== undefined && product.stock <= 0) return;
+    if (addingToCart) return; // Block multiple clicks
 
+    setAddingToCart(true);
     const variant = {
       sku: product.id,
       price: product.price,
       name: product.name || 'Default',
       image: product.image
     };
-    addToCart(product, variant, 1);
+    await addToCart(product, variant, 1);
+    setTimeout(() => setAddingToCart(false), 600);
   };
+
+  const cartItem = cartItems.find(item => item.variant?.sku === product.id || item.productId === product.id || item.product_id === product.id);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {
@@ -171,18 +175,63 @@ export default function ProductCard({ product, onQuickLook }) {
               transition-all duration-500
               ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}
             `}>
-              <button
-                onClick={handleAddToCart}
-                disabled={isOutOfStock}
-                className={`flex-1 max-w-[140px] px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg flex items-center justify-center gap-2
-                  ${isOutOfStock
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-white/95 backdrop-blur-sm text-heritage hover:bg-copper hover:text-white hover:shadow-xl'
-                  }`}
-              >
-                <ShoppingBag size={16} />
-                {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
-              </button>
+              {(() => {
+                if (isOutOfStock) {
+                  return (
+                    <button disabled className="flex-1 max-w-[140px] px-4 py-2.5 rounded-lg font-semibold text-sm bg-gray-200 text-gray-500 cursor-not-allowed flex items-center justify-center gap-2">
+                      <ShoppingBag size={16} /> Sold Out
+                    </button>
+                  );
+                }
+                if (cartItem && cartItem.quantity > 0) {
+                  return (
+                    <div className="flex-1 max-w-[160px] flex items-center rounded-lg overflow-hidden bg-white/95 backdrop-blur-sm shadow-lg">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (cartItem.quantity <= 1) {
+                            removeFromCart(cartItem.id, cartItem.variant?.sku);
+                          } else {
+                            updateQuantity(cartItem.variant?.sku, cartItem.quantity - 1, cartItem.id);
+                          }
+                        }}
+                        className="px-3 py-2.5 bg-heritage text-white hover:bg-copper transition-colors"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="flex-1 text-center font-bold text-heritage text-sm">{cartItem.quantity}</span>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          updateQuantity(cartItem.variant?.sku, cartItem.quantity + 1, cartItem.id);
+                        }}
+                        className="px-3 py-2.5 bg-heritage text-white hover:bg-copper transition-colors"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  );
+                }
+                return (
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={addingToCart}
+                    className={`flex-1 max-w-[140px] px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 shadow-lg flex items-center justify-center gap-2
+                      ${addingToCart
+                        ? 'bg-copper/70 text-white cursor-wait'
+                        : 'bg-white/95 backdrop-blur-sm text-heritage hover:bg-copper hover:text-white hover:shadow-xl'
+                      }`}
+                  >
+                    {addingToCart ? (
+                      <><span className="animate-spin rounded-full h-3 w-3 border-2 border-heritage border-t-transparent"></span> Adding...</>
+                    ) : (
+                      <><ShoppingBag size={16} /> Add to Cart</>
+                    )}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -236,18 +285,63 @@ export default function ProductCard({ product, onQuickLook }) {
 
           {/* Mobile-only Actions */}
           <div className="md:hidden pt-2 border-t border-heritage/10 flex gap-2">
-            <button
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className={`flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2
-                ${isOutOfStock
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-heritage to-copper text-white'
-                }`}
-            >
-              <ShoppingBag size={16} />
-              {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
-            </button>
+            {(() => {
+              if (isOutOfStock) {
+                return (
+                  <button disabled className="flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm bg-gray-200 text-gray-500 cursor-not-allowed flex items-center justify-center gap-2">
+                    <ShoppingBag size={16} /> Sold Out
+                  </button>
+                );
+              }
+              if (cartItem && cartItem.quantity > 0) {
+                return (
+                  <div className="flex-1 flex items-center rounded-lg overflow-hidden border-2 border-heritage">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (cartItem.quantity <= 1) {
+                          removeFromCart(cartItem.id, cartItem.variant?.sku);
+                        } else {
+                          updateQuantity(cartItem.variant?.sku, cartItem.quantity - 1, cartItem.id);
+                        }
+                      }}
+                      className="px-4 py-2.5 bg-heritage text-white hover:bg-copper transition-colors"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="flex-1 text-center font-bold text-heritage text-sm">{cartItem.quantity}</span>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        updateQuantity(cartItem.variant?.sku, cartItem.quantity + 1, cartItem.id);
+                      }}
+                      className="px-4 py-2.5 bg-heritage text-white hover:bg-copper transition-colors"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                );
+              }
+              return (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={addingToCart}
+                  className={`flex-1 px-4 py-2.5 rounded-lg font-semibold text-sm hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2
+                    ${addingToCart
+                      ? 'bg-copper/70 text-white cursor-wait'
+                      : 'bg-gradient-to-r from-heritage to-copper text-white'
+                    }`}
+                >
+                  {addingToCart ? (
+                    <><span className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></span> Adding...</>
+                  ) : (
+                    <><ShoppingBag size={16} /> Add to Cart</>
+                  )}
+                </button>
+              );
+            })()}
             <button
               onClick={handleWishlistToggle}
               className={`px-3 py-2.5 rounded-lg border transition-all duration-300 ${isWishlisted ? 'bg-rose-50 border-rose-200 text-rose-500' : 'border-heritage/20 text-heritage'}`}

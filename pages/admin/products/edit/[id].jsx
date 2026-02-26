@@ -392,6 +392,62 @@ export default function EditProduct() {
                             <textarea className="w-full p-2 text-sm border rounded" placeholder="Review Comment" rows={2} value={newReview.comment} onChange={e => setNewReview({ ...newReview, comment: e.target.value })} required />
                             <button type="submit" className="w-full py-2 bg-gray-800 text-white text-sm rounded hover:bg-black transition-colors">Add Review</button>
                         </form>
+
+                        <div className="mt-8 border-t pt-4">
+                            <h4 className="font-medium text-sm text-gray-700 mb-2">Bulk Upload via CSV</h4>
+                            <p className="text-xs text-gray-500 mb-3">Required columns: <code className="bg-gray-100 px-1 rounded">customer_name</code>, <code className="bg-gray-100 px-1 rounded">rating</code>, <code className="bg-gray-100 px-1 rounded">comment</code></p>
+
+                            <div className="space-y-3">
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    id="reviewBulkUpload"
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                                />
+                                <button
+                                    onClick={async () => {
+                                        const fileInput = document.getElementById('reviewBulkUpload');
+                                        const file = fileInput.files[0];
+                                        if (!file) {
+                                            alert("Please select a CSV file first.");
+                                            return;
+                                        }
+
+                                        const reader = new FileReader();
+                                        reader.onload = async (e) => {
+                                            const csvData = e.target.result;
+                                            try {
+                                                const API_URL = getApiUrl();
+                                                const token = localStorage.getItem('admin_token');
+                                                const res = await fetch(`${API_URL}/api/reviews/${id}/bulk`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'Authorization': `Bearer ${token}`
+                                                    },
+                                                    body: JSON.stringify({ csv_data: csvData })
+                                                });
+
+                                                const data = await res.json();
+                                                if (res.ok) {
+                                                    alert(data.message + (data.errors?.length ? `\n\nErrors encountered:\n${data.errors.join('\\n')}` : ''));
+                                                    fileInput.value = ''; // Reset input
+                                                    fetchProductData(); // Refresh reviews
+                                                } else {
+                                                    alert(`Upload failed: ${data.detail || 'Unknown error'}`);
+                                                }
+                                            } catch (err) {
+                                                alert(`Error: ${err.message}`);
+                                            }
+                                        };
+                                        reader.readAsText(file);
+                                    }}
+                                    className="w-full py-2 bg-gray-100 text-gray-800 border border-gray-300 text-sm rounded hover:bg-gray-200 transition-colors"
+                                >
+                                    Upload CSV
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

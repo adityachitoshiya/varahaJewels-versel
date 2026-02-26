@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom'; // Import portal
 import { getApiUrl, getAuthHeaders } from '../lib/config';
 import { useRouter } from 'next/router';
@@ -10,7 +10,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
 
-import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User, MapPin } from 'lucide-react';
 import { useMsg91OTP } from '../hooks/useMsg91OTP';
 
 import { useCart } from '../context/CartContext';
@@ -57,6 +57,11 @@ export default function Checkout() {
   const [edd, setEdd] = useState(null); // Estimated Delivery Date state
   const [isFlashDelivery, setIsFlashDelivery] = useState(false);
   const [serviceabilityMsg, setServiceabilityMsg] = useState("");
+
+  // Pincode locality suggestions (Shopify-style autocomplete)
+  const [pincodeSuggestions, setPincodeSuggestions] = useState([]);
+  const [showPincodeSuggestions, setShowPincodeSuggestions] = useState(false);
+  const pincodeDropdownRef = useRef(null);
 
   // OTP Verification States (for guest checkout)
   // const [isPhoneVerified, setIsPhoneVerified] = useState(true); // Removed - No Guest Checkout
@@ -182,20 +187,51 @@ export default function Checkout() {
       const data = await response.json();
 
       if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
-        const postOffice = data[0].PostOffice[0];
+        const postOffices = data[0].PostOffice;
+        const firstPO = postOffices[0];
         setFormData(prev => ({
           ...prev,
-          city: postOffice.District,
-          state: postOffice.State
+          city: firstPO.District,
+          state: firstPO.State
         }));
+
+        // Store all post offices for locality suggestions dropdown
+        setPincodeSuggestions(postOffices);
+        setShowPincodeSuggestions(true);
+      } else {
+        setPincodeSuggestions([]);
+        setShowPincodeSuggestions(false);
       }
     } catch (error) {
       console.error('Error fetching pincode details:', error);
+      setPincodeSuggestions([]);
     }
 
     // 2. Fetch Serviceability (EDD) from Our Backend
     checkServiceability(pincode);
   };
+
+  // Handle selecting a locality from suggestions
+  const handleSelectLocality = (postOffice) => {
+    setFormData(prev => ({
+      ...prev,
+      address: postOffice.Name,
+      city: postOffice.District,
+      state: postOffice.State
+    }));
+    setShowPincodeSuggestions(false);
+  };
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pincodeDropdownRef.current && !pincodeDropdownRef.current.contains(e.target)) {
+        setShowPincodeSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const checkServiceability = async (pincode) => {
     if (!pincode || pincode.length !== 6) return;
@@ -704,12 +740,35 @@ export default function Checkout() {
                       <input name="address" placeholder="Address (House No, Building, Street)" value={formData.address} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
                     </div>
 
-                    <div>
+                    <div className="relative" ref={pincodeDropdownRef}>
                       <input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
                       {isFlashDelivery && (
                         <p className="text-xs font-bold text-green-600 mt-1 flex items-center gap-1 animate-pulse">
                           {serviceabilityMsg}
                         </p>
+                      )}
+
+                      {/* Shopify-style locality suggestions dropdown */}
+                      {showPincodeSuggestions && pincodeSuggestions.length > 0 && (
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 rounded-t-xl">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Select your locality</p>
+                          </div>
+                          {pincodeSuggestions.map((po, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleSelectLocality(po)}
+                              className="w-full px-3 py-2.5 text-left hover:bg-copper/5 transition-colors flex items-start gap-2 border-b border-gray-50 last:border-0"
+                            >
+                              <MapPin size={14} className="text-copper mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-heritage">{po.Name}</p>
+                                <p className="text-[11px] text-gray-400">{po.District}, {po.State}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <div>

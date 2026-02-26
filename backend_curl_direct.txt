@@ -1,0 +1,136 @@
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8000...
+* connect to ::1 port 8000 from ::1 port 49433 failed: Connection refused
+*   Trying 127.0.0.1:8000...
+* Connected to localhost (127.0.0.1) port 8000
+> GET / HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 200 OK
+< date: Thu, 12 Feb 2026 18:00:05 GMT
+< server: uvicorn
+< content-length: 3961
+< content-type: text/html; charset=utf-8
+< 
+{ [3961 bytes data]
+100  3961  100  3961    0     0   642k      0 --:--:-- --:--:-- --:--:--  773k
+* Connection #0 to host localhost left intact
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Varaha Jewels Backend</title>
+        <link rel="icon" type="image/png" href="https://newvaraha-nwbd.vercel.app/varaha-assets/og.jpg">
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500&display=swap');
+            
+            :root {
+                --heritage-brown: #7A3B23;
+                --warm-sand: #F4E6D8;
+                --copper-brown: #A3562A;
+                --royal-orange: #E07A24;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: var(--warm-sand);
+                color: var(--heritage-brown);
+                font-family: 'Inter', sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                text-align: center;
+            }
+
+            .container {
+                max-width: 600px;
+                padding: 3rem;
+                /* Subtle glass effect */
+                background: rgba(255, 255, 255, 0.4);
+                border: 1px solid rgba(163, 86, 42, 0.2);
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(122, 59, 35, 0.1);
+                backdrop-filter: blur(8px);
+            }
+
+            .logo {
+                width: 120px;
+                height: auto;
+                margin-bottom: 2rem;
+                filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+            }
+
+            h1 {
+                font-family: 'Cormorant Garamond', serif;
+                font-size: 3.5rem;
+                font-weight: 700;
+                color: var(--heritage-brown);
+                margin: 0 0 1rem 0;
+                letter-spacing: -0.02em;
+                line-height: 1.1;
+            }
+
+            p {
+                font-size: 1.125rem;
+                color: var(--copper-brown);
+                margin-bottom: 2.5rem;
+                line-height: 1.6;
+                font-weight: 500;
+            }
+
+            .btn {
+                display: inline-block;
+                padding: 14px 36px;
+                background: linear-gradient(135deg, var(--copper-brown), var(--heritage-brown));
+                color: #fff;
+                text-decoration: none;
+                font-weight: 500;
+                border-radius: 50px; /* Pill shape */
+                transition: all 0.3s ease;
+                font-family: 'Inter', sans-serif;
+                font-size: 1rem;
+                box-shadow: 0 4px 15px rgba(122, 59, 35, 0.3);
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(122, 59, 35, 0.4);
+                filter: brightness(1.1);
+            }
+
+            .footer {
+                margin-top: 3.5rem;
+                font-size: 0.875rem;
+                color: var(--heritage-brown);
+                opacity: 0.7;
+                font-family: 'Cormorant Garamond', serif;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <img src="https://newvaraha-nwbd.vercel.app/varaha-assets/logo.png" alt="Varaha Jewels Logo" class="logo">
+            <h1>Varaha Jewels</h1>
+            <p>Secure Backend Service<br>Powering Timeless Elegance</p>
+            <a href="/docs" class="btn">Explore API Access</a>
+            <a href="/products" class="btn" style="background: transparent; border: 2px solid var(--heritage-brown); color: var(--heritage-brown); margin-left: 10px;">View Collection</a>
+            
+            <div class="footer">
+                &copy; 2025 Varaha Jewels. System Secure.
+            </div>
+        </div>
+    </body>
+    </html>
+    

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { Search, SlidersHorizontal, Grid, List, Heart, ShoppingBag } from 'lucide-react';
+import { Search, SlidersHorizontal, Grid, List, Heart, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export default function NewArrivals({ initialProducts = [] }) {
@@ -31,7 +31,10 @@ export default function NewArrivals({ initialProducts = [] }) {
     const [wishlist, setWishlist] = useState([]);
 
     // Cart Hook
-    const { addToCart } = useCart();
+    const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
+
+    // Track loading state per product to block multiple clicks
+    const [addingToCart, setAddingToCart] = useState({});
 
     useEffect(() => {
         const savedWishlist = localStorage.getItem('wishlist');
@@ -138,15 +141,94 @@ export default function NewArrivals({ initialProducts = [] }) {
         setWishlist(wishlistArray);
     };
 
-    const handleAddToCart = (product) => {
+    const handleAddToCart = async (product) => {
         if (product.stock !== undefined && product.stock <= 0) return;
+        if (addingToCart[product.id]) return; // Block multiple clicks
+
+        setAddingToCart(prev => ({ ...prev, [product.id]: true }));
         const variant = {
             sku: product.id,
             price: product.price,
             name: product.name,
             image: product.image
         };
-        addToCart(product, variant, 1);
+        await addToCart(product, variant, 1);
+        // Keep loading for a short time for visual feedback
+        setTimeout(() => {
+            setAddingToCart(prev => ({ ...prev, [product.id]: false }));
+        }, 600);
+    };
+
+    // Get cart item for a product (to show qty selector)
+    const getCartItem = (productId) => {
+        return cartItems.find(item => item.variant?.sku === productId || item.productId === productId || item.product_id === productId);
+    };
+
+    // Render Add to Cart button or Quantity Selector
+    const renderCartButton = (product) => {
+        const cartItem = getCartItem(product.id);
+        const isAdding = addingToCart[product.id];
+        const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+
+        if (!product.price) {
+            return (
+                <Link href={`/product/${product.id}`} className="mt-auto w-full px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-heritage transition-all group-hover:shadow-md">
+                    View Details <ShoppingBag size={18} />
+                </Link>
+            );
+        }
+
+        if (isOutOfStock) {
+            return (
+                <button disabled className="mt-auto w-full px-6 py-3 font-semibold rounded-sm flex items-center justify-center gap-2 bg-gray-300 text-gray-500 cursor-not-allowed">
+                    Out of Stock <ShoppingBag size={18} />
+                </button>
+            );
+        }
+
+        if (cartItem && cartItem.quantity > 0) {
+            return (
+                <div className="mt-auto w-full flex items-center rounded-sm overflow-hidden border-2 border-heritage">
+                    <button
+                        onClick={() => {
+                            if (cartItem.quantity <= 1) {
+                                removeFromCart(cartItem.id, cartItem.variant?.sku);
+                            } else {
+                                updateQuantity(cartItem.variant?.sku, cartItem.quantity - 1, cartItem.id);
+                            }
+                        }}
+                        className="px-4 py-3 bg-heritage text-warm-sand hover:bg-copper transition-colors flex items-center justify-center"
+                    >
+                        <Minus size={16} />
+                    </button>
+                    <span className="flex-1 text-center font-bold text-heritage text-lg">
+                        {cartItem.quantity}
+                    </span>
+                    <button
+                        onClick={() => {
+                            updateQuantity(cartItem.variant?.sku, cartItem.quantity + 1, cartItem.id);
+                        }}
+                        className="px-4 py-3 bg-heritage text-warm-sand hover:bg-copper transition-colors flex items-center justify-center"
+                    >
+                        <Plus size={16} />
+                    </button>
+                </div>
+            );
+        }
+
+        return (
+            <button
+                onClick={() => handleAddToCart(product)}
+                disabled={isAdding}
+                className={`mt-auto w-full px-6 py-3 font-semibold rounded-sm flex items-center justify-center gap-2 transition-all group-hover:shadow-md ${isAdding ? 'bg-copper/70 text-warm-sand cursor-wait' : 'bg-heritage text-warm-sand hover:bg-copper'}`}
+            >
+                {isAdding ? (
+                    <><span className="animate-spin rounded-full h-4 w-4 border-2 border-warm-sand border-t-transparent"></span> Adding...</>
+                ) : (
+                    <>Add to Cart <ShoppingBag size={18} /></>
+                )}
+            </button>
+        );
     };
 
     const isInWishlist = (productId) => wishlist.some(item => item.id === productId);
@@ -318,22 +400,7 @@ export default function NewArrivals({ initialProducts = [] }) {
                                                         {product.price ? <p className="text-2xl font-bold text-heritage">₹{product.price.toLocaleString('en-IN')}</p> : <p className="text-lg font-semibold text-copper">Price on Request</p>}
                                                     </div>
                                                 </div>
-                                                {product.price ? (
-                                                    <button
-                                                        onClick={() => handleAddToCart(product)}
-                                                        disabled={product.stock !== undefined && product.stock <= 0}
-                                                        className={`mt-auto w-full px-6 py-3 font-semibold rounded-sm flex items-center justify-center gap-2 transition-all group-hover:shadow-md ${product.stock !== undefined && product.stock <= 0
-                                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                                : 'bg-heritage text-warm-sand hover:bg-copper'
-                                                            }`}
-                                                    >
-                                                        {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'} <ShoppingBag size={18} />
-                                                    </button>
-                                                ) : (
-                                                    <Link href={`/product/${product.id}`} className="mt-auto w-full px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-heritage transition-all group-hover:shadow-md">
-                                                        View Details <ShoppingBag size={18} />
-                                                    </Link>
-                                                )}
+                                                {renderCartButton(product)}
 
                                             </div>
                                         </div>
