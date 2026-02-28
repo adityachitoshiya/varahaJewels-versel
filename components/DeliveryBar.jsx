@@ -160,9 +160,9 @@ export default function DeliveryBar({ variant = 'mobile' }) {
   }, []);
 
   // Determine positioning classes based on variant
-  const positionClasses = variant === 'mobile'
-    ? 'sticky top-16 sm:top-20 lg:hidden' // Mobile: Below header (64px/80px), hidden on desktop
-    : 'hidden lg:block relative'; // Desktop: At top, hidden on mobile
+ const positionClasses = variant === 'mobile'
+  ? 'relative lg:hidden' 
+  : 'hidden lg:block relative';
 
   return (
     <>
