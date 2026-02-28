@@ -3,11 +3,13 @@ import { useRouter } from 'next/router';
 import { getApiUrl } from '../../../../lib/config';
 import AdminLayout from '../../../../components/admin/AdminLayout';
 import { Save, ArrowLeft, Trash2, Plus, Star } from 'lucide-react';
+import { useAdminToast } from '../../../../components/admin/AdminToast';
 import Link from 'next/link';
 import ImageUpload from '../../../../components/admin/ImageUpload';
 
 export default function EditProduct() {
     const router = useRouter();
+    const toast = useAdminToast();
     const { id } = router.query;
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -106,6 +108,7 @@ export default function EditProduct() {
                     stones: parsedStones,
                     polish: product.polish || 'Gold Plated',
                     premium: product.premium || false,
+                    is_mega_deal: product.is_mega_deal || false,
                     tag: product.tag || 'New',
                     style: product.style || '',
                     gender: product.gender || '',
@@ -118,7 +121,7 @@ export default function EditProduct() {
                 console.log("✅ Form data set successfully");
             } else {
                 console.error("Product fetch failed:", productRes.status);
-                alert('Product not found');
+                toast.error('Product not found');
                 router.push('/admin/products');
             }
 
@@ -180,10 +183,10 @@ export default function EditProduct() {
             });
 
             if (!response.ok) throw new Error('Failed to update product');
-            alert('Product updated successfully!');
+            toast.success('Product updated successfully!');
 
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setIsSaving(false);
         }
@@ -205,12 +208,13 @@ export default function EditProduct() {
                 setNewReview({ customer_name: '', rating: 5, comment: '', media_urls: [] });
             }
         } catch (error) {
-            alert('Failed to add review');
+            toast.error('Failed to add review');
         }
     };
 
     const handleDeleteReview = async (reviewId) => {
-        if (!confirm("Delete this review?")) return;
+        const ok = await toast.confirm('Delete this review?', { confirmText: 'Delete', type: 'warning' });
+        if (!ok) return;
         try {
             const API_URL = getApiUrl();
             const token = localStorage.getItem('admin_token');
@@ -323,6 +327,13 @@ export default function EditProduct() {
                                 <div><label className="text-xs text-gray-500">Polish</label><input className="w-full p-2 border rounded" name="polish" value={formData.polish} onChange={handleChange} /></div>
                                 <div className="col-span-2"><label className="text-xs text-gray-500">Stones (comma sep)</label><input className="w-full p-2 border rounded" name="stones" value={formData.stones} onChange={handleChange} /></div>
                                 <div><label className="text-xs text-gray-500">Tag</label><input className="w-full p-2 border rounded" name="tag" value={formData.tag} onChange={handleChange} /></div>
+                                <div className="flex items-center gap-3 col-span-2 md:col-span-1">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" className="sr-only peer" name="is_mega_deal" checked={formData.is_mega_deal} onChange={handleChange} />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                                    </label>
+                                    <span className="text-xs text-gray-700 font-medium">⚡ Mega Deal</span>
+                                </div>
                             </div>
 
                             <button type="submit" disabled={isSaving} className="w-full py-3 bg-copper text-white rounded-lg font-bold hover:bg-heritage transition-colors">
@@ -416,7 +427,7 @@ export default function EditProduct() {
                                         const fileInput = document.getElementById('reviewBulkUpload');
                                         const file = fileInput.files[0];
                                         if (!file) {
-                                            alert("Please select a CSV file first.");
+                                            toast.warning("Please select a CSV file first.");
                                             return;
                                         }
 
@@ -437,14 +448,14 @@ export default function EditProduct() {
 
                                                 const data = await res.json();
                                                 if (res.ok) {
-                                                    alert(data.message + (data.errors?.length ? `\n\nErrors encountered:\n${data.errors.join('\\n')}` : ''));
+                                                    toast.success(data.message + (data.errors?.length ? ` (${data.errors.length} errors)` : ''));
                                                     fileInput.value = ''; // Reset input
                                                     fetchProductData(); // Refresh reviews
                                                 } else {
-                                                    alert(`Upload failed: ${data.detail || 'Unknown error'}`);
+                                                    toast.error(`Upload failed: ${data.detail || 'Unknown error'}`);
                                                 }
                                             } catch (err) {
-                                                alert(`Error: ${err.message}`);
+                                                toast.error(`Error: ${err.message}`);
                                             }
                                         };
                                         reader.readAsText(file);

@@ -159,7 +159,7 @@ export default function QuickLookModal({ isOpen, onClose, product }) {
                     {/* Action Buttons */}
                     <div className="space-y-3 mt-auto">
                       <Link
-                        href={`/product/${product.id}`}
+                        href={`/product/${product.slug || product.id}`}
                         className="block w-full bg-gradient-to-r from-heritage to-copper text-white text-center px-6 py-3.5 rounded-lg font-semibold hover:shadow-xl transition-all duration-300"
                       >
                         View Full Details

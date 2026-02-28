@@ -10,19 +10,31 @@ const defaultSlides = [
     id: 1,
     image: '/varaha-assets/heroimage.avif',
     title: 'Timeless Elegance',
-    subtitle: 'Heritage-inspired masterpieces crafted with tradition and artistry'
+    subtitle: 'Heritage-inspired masterpieces crafted with tradition and artistry',
+    link_text: 'Explore Collections',
+    link_url: '/collections/all',
+    secondary_link_text: 'Our Heritage',
+    secondary_link_url: '/heritage'
   },
   {
     id: 2,
     image: '/varaha-assets/Jimage2.avif',
     title: 'Royal Heritage',
-    subtitle: 'Exquisite pieces that celebrate India\'s rich cultural legacy'
+    subtitle: 'Exquisite pieces that celebrate India\'s rich cultural legacy',
+    link_text: 'Explore Collections',
+    link_url: '/collections/all',
+    secondary_link_text: 'Our Heritage',
+    secondary_link_url: '/heritage'
   },
   {
     id: 3,
     image: '/varaha-assets/Jimage3.webp',
     title: 'Artisan Excellence',
-    subtitle: 'Every piece handcrafted by master artisans with devotion and precision'
+    subtitle: 'Every piece handcrafted by master artisans with devotion and precision',
+    link_text: 'Explore Collections',
+    link_url: '/collections/all',
+    secondary_link_text: 'Our Heritage',
+    secondary_link_url: '/heritage'
   }
 ];
 
@@ -170,7 +182,7 @@ export default function HeroSection({ initialSlides }) {
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-scaleIn" style={{ animationDelay: '0.6s' }}>
                   <Link
-                    href={slide.link_url || "/coming-soon"}
+                    href={slide.link_url || "/collections/all"}
                     className="group px-10 py-4 bg-copper border border-copper text-warm-sand font-medium rounded-sm hover:bg-heritage transition-all duration-300 flex items-center gap-3"
                   >
                     {slide.link_text || "Explore Collections"}
@@ -178,10 +190,10 @@ export default function HeroSection({ initialSlides }) {
                   </Link>
 
                   <Link
-                    href="/coming-soon"
+                    href={slide.secondary_link_url || "/heritage"}
                     className="px-10 py-4 bg-transparent border border-copper text-heritage font-medium rounded-sm hover:bg-copper/5 transition-all duration-300"
                   >
-                    Our Heritage
+                    {slide.secondary_link_text || "Our Heritage"}
                   </Link>
                 </div>
               </div>

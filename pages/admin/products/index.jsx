@@ -4,6 +4,7 @@ import Link from 'next/link';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import { Plus, Search, Edit, Trash2, Filter, Star, Upload } from 'lucide-react';
 import Head from 'next/head';
+import { useAdminToast } from '../../../components/admin/AdminToast';
 
 export default function Products() {
     const [products, setProducts] = useState([]);
@@ -32,8 +33,11 @@ export default function Products() {
         }
     };
 
+    const toast = useAdminToast();
+
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this product?')) return;
+        const ok = await toast.confirm('Are you sure you want to delete this product?', { confirmText: 'Delete', type: 'warning' });
+        if (!ok) return;
         try {
             const API_URL = getApiUrl();
             const token = localStorage.getItem('admin_token');
@@ -47,11 +51,11 @@ export default function Products() {
             if (res.ok) {
                 fetchProducts();
             } else {
-                alert('Failed to delete product');
+                toast.error('Failed to delete product');
             }
         } catch (error) {
             console.error(error);
-            alert('Error deleting product');
+            toast.error('Error deleting product');
         }
     };
 
@@ -69,11 +73,11 @@ export default function Products() {
                     p.id === productId ? { ...p, is_spotlight: data.is_spotlight } : p
                 ));
             } else {
-                alert('Failed to toggle spotlight');
+                toast.error('Failed to toggle spotlight');
             }
         } catch (error) {
             console.error(error);
-            alert('Error toggling spotlight');
+            toast.error('Error toggling spotlight');
         }
     };
 

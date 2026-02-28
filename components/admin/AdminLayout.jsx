@@ -14,10 +14,12 @@ import {
     Tag,
     Activity,
     Image as ImageIcon,
-    TrendingUp
+    TrendingUp,
+    Sparkles
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { getApiUrl } from '../../lib/config';
+import { AdminToastProvider } from './AdminToast';
 
 export default function AdminLayout({ children }) {
     const router = useRouter();
@@ -136,7 +138,7 @@ export default function AdminLayout({ children }) {
         { name: 'Content', href: '/admin/cms', icon: ImageIcon },
         { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
         { name: 'Products', href: '/admin/products', icon: Package },
-        { name: 'Coupons', href: '/admin/coupons', icon: Tag },
+        { name: 'Offers', href: '/admin/offers', icon: Sparkles },
         { name: 'Customers', href: '/admin/customers', icon: Users },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
@@ -158,6 +160,7 @@ export default function AdminLayout({ children }) {
     }
 
     return (
+        <AdminToastProvider>
         <div className="min-h-screen bg-[#F8F9FA] flex font-sans text-gray-800">
             {/* Mobile Overlay */}
             {isMobile && sidebarOpen && (
@@ -347,5 +350,6 @@ export default function AdminLayout({ children }) {
                 </main>
             </div >
         </div >
+        </AdminToastProvider>
     );
 }

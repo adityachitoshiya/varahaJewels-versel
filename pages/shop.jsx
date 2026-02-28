@@ -243,7 +243,7 @@ export default function Shop() {
                                                 <div className="bg-white border border-copper/20 rounded-sm overflow-hidden hover:shadow-lg transition-all duration-300">
                                                     {/* Image */}
                                                     <div className="relative aspect-square overflow-hidden">
-                                                        <Link href={`/product/${product.id}`} onClick={saveScrollPosition}>
+                                                        <Link href={`/product/${product.slug || product.id}`} onClick={saveScrollPosition}>
                                                             <Image
                                                                 src={product.image}
                                                                 alt={product.name}
@@ -271,7 +271,7 @@ export default function Shop() {
 
                                                     {/* Details */}
                                                     <div className="p-3 md:p-4">
-                                                        <Link href={`/product/${product.id}`} onClick={saveScrollPosition}>
+                                                        <Link href={`/product/${product.slug || product.id}`} onClick={saveScrollPosition}>
                                                             <h3 className="text-sm md:text-base font-royal font-bold text-heritage mb-1 line-clamp-1 group-hover:text-copper transition-colors">
                                                                 {product.name}
                                                             </h3>
@@ -301,7 +301,7 @@ export default function Shop() {
                                                             </button>
                                                         ) : (
                                                             <Link
-                                                                href={`/product/${product.id}`}
+                                                                href={`/product/${product.slug || product.id}`}
                                                                 className="mt-3 block w-full py-2 bg-copper text-warm-sand text-xs md:text-sm font-semibold rounded-sm hover:bg-heritage transition-colors text-center"
                                                             >
                                                                 View

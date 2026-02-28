@@ -3,8 +3,11 @@ import { getApiUrl } from '../../lib/config';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
 import { Trash2, Plus, Image as ImageIcon, Video, ExternalLink, TrendingUp, DollarSign, Save } from 'lucide-react';
+import ImageUpload from '../../components/admin/ImageUpload';
+import { useAdminToast } from '../../components/admin/AdminToast';
 
 export default function ContentManagement() {
+    const toast = useAdminToast();
     const [activeTab, setActiveTab] = useState('hero'); // 'hero' or 'creators'
     const [heroSlides, setHeroSlides] = useState([]);
     const [creators, setCreators] = useState([]);
@@ -22,7 +25,7 @@ export default function ContentManagement() {
     const [showCreatorForm, setShowCreatorForm] = useState(false);
 
     // New Item States
-    const [newSlide, setNewSlide] = useState({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections/all' });
+    const [newSlide, setNewSlide] = useState({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections/all', secondary_link_text: 'Our Heritage', secondary_link_url: '/heritage' });
     const [newCreator, setNewCreator] = useState({ name: '', handle: '', platform: 'instagram', followers: '', video_file: null, product_name: '', is_verified: true });
 
     useEffect(() => {
@@ -59,7 +62,8 @@ export default function ContentManagement() {
     };
 
     const handleDelete = async (type, id) => {
-        if (!confirm('Are you sure you want to delete this item?')) return;
+        const ok = await toast.confirm('Are you sure you want to delete this item?', { confirmText: 'Delete', type: 'warning' });
+        if (!ok) return;
 
         try {
             const API_URL = getApiUrl();
@@ -69,7 +73,7 @@ export default function ContentManagement() {
             if (res.ok) {
                 fetchContent(); // Refresh
             } else {
-                alert('Failed to delete item');
+                toast.error('Failed to delete item');
             }
         } catch (error) {
             console.error("Delete error:", error);
@@ -118,17 +122,19 @@ export default function ContentManagement() {
             formData.append('subtitle', newSlide.subtitle);
             formData.append('link_text', newSlide.link_text);
             formData.append('link_url', newSlide.link_url);
+            formData.append('secondary_link_text', newSlide.secondary_link_text);
+            formData.append('secondary_link_url', newSlide.secondary_link_url);
             if (newSlide.image_file) formData.append('image_file', newSlide.image_file);
             if (newSlide.mobile_image_file) formData.append('mobile_image_file', newSlide.mobile_image_file);
 
             await uploadWithProgress(`${API_URL}/api/content/hero`, formData);
 
             setShowHeroForm(false);
-            setNewSlide({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections/all' });
+            setNewSlide({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections/all', secondary_link_text: 'Our Heritage', secondary_link_url: '/heritage' });
             fetchContent();
         } catch (error) {
             console.error("Add error:", error);
-            alert("Upload failed. Please try again.");
+            toast.error("Upload failed. Please try again.");
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
@@ -158,7 +164,7 @@ export default function ContentManagement() {
             fetchContent();
         } catch (error) {
             console.error("Add error:", error);
-            alert("Upload failed. Please try again.");
+            toast.error("Upload failed. Please try again.");
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
@@ -263,6 +269,12 @@ export default function ContentManagement() {
                     className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'offers' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Product Offers
+                </button>
+                <button
+                    onClick={() => setActiveTab('collections')}
+                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'collections' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Collections
                 </button>
             </div>
 
@@ -410,6 +422,24 @@ export default function ContentManagement() {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
                                         <textarea required className="w-full p-2 border rounded-lg" value={newSlide.subtitle} onChange={e => setNewSlide({ ...newSlide, subtitle: e.target.value })} placeholder="Description..." />
                                     </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Button 1 Text</label>
+                                            <input className="w-full p-2 border rounded-lg text-sm" value={newSlide.link_text} onChange={e => setNewSlide({ ...newSlide, link_text: e.target.value })} placeholder="Explore Collections" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Button 1 Link</label>
+                                            <input className="w-full p-2 border rounded-lg text-sm" value={newSlide.link_url} onChange={e => setNewSlide({ ...newSlide, link_url: e.target.value })} placeholder="/collections/all" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Button 2 Text</label>
+                                            <input className="w-full p-2 border rounded-lg text-sm" value={newSlide.secondary_link_text} onChange={e => setNewSlide({ ...newSlide, secondary_link_text: e.target.value })} placeholder="Our Heritage" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Button 2 Link</label>
+                                            <input className="w-full p-2 border rounded-lg text-sm" value={newSlide.secondary_link_url} onChange={e => setNewSlide({ ...newSlide, secondary_link_url: e.target.value })} placeholder="/heritage" />
+                                        </div>
+                                    </div>
                                     {isUploading && (
                                         <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
                                             <div className="bg-copper h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
@@ -547,7 +577,7 @@ export default function ContentManagement() {
 
                             const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
                             if (files.length === 0) {
-                                alert('Please drop image files only');
+                                toast.warning('Please drop image files only');
                                 return;
                             }
 
@@ -573,7 +603,7 @@ export default function ContentManagement() {
 
                             } catch (error) {
                                 console.error("Upload error:", error);
-                                alert("Failed to upload image");
+                                toast.error("Failed to upload image");
                             } finally {
                                 setIsUploading(false);
                                 setUploadProgress(0);
@@ -614,7 +644,7 @@ export default function ContentManagement() {
 
                                     } catch (error) {
                                         console.error("Upload error:", error);
-                                        alert("Failed to upload image");
+                                        toast.error("Failed to upload image");
                                     } finally {
                                         setIsUploading(false);
                                         setUploadProgress(0);
@@ -658,7 +688,8 @@ export default function ContentManagement() {
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                             <button
                                                 onClick={async () => {
-                                                    if (!confirm('Delete this image?')) return;
+                                                    const ok = await toast.confirm('Delete this image?', { confirmText: 'Delete', type: 'warning' });
+                                                    if (!ok) return;
                                                     let current = [];
                                                     try { current = JSON.parse(settings.ciplx_images_json || "[]"); } catch (e) { }
                                                     const newImages = current.filter((_, i) => i !== index);
@@ -693,7 +724,8 @@ export default function ContentManagement() {
                                         </div>
                                         <button
                                             onClick={async () => {
-                                                if (!confirm('Remove background music?')) return;
+                                                const ok = await toast.confirm('Remove background music?', { confirmText: 'Remove', type: 'warning' });
+                                                if (!ok) return;
                                                 await handleSettingsUpdate({ ciplx_music_url: null });
                                             }}
                                             className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -746,7 +778,7 @@ export default function ContentManagement() {
 
                                                 } catch (error) {
                                                     console.error("Upload error:", error);
-                                                    alert("Failed to upload music");
+                                                    toast.error("Failed to upload music");
                                                 } finally {
                                                     setIsUploading(false);
                                                     setUploadProgress(0);
@@ -1017,7 +1049,8 @@ export default function ContentManagement() {
 
                         {/* Bank Offers Section */}
                         <div>
-                            <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Bank & Payment Offers</h3>
+                            <h3 className="font-bold text-gray-800 mb-2 border-b pb-2">Exclusive Offers (Product Page)</h3>
+                            <p className="text-xs text-gray-500 mb-4">These offers appear in the "Exclusive Offers" section on every product page. Use highlight for the bold red text.</p>
 
                             {(() => {
                                 let offers = [];
@@ -1025,58 +1058,83 @@ export default function ContentManagement() {
                                     offers = JSON.parse(settings.bank_offers_json || '[]');
                                 } catch (e) { offers = []; }
 
+                                const iconOptions = [
+                                    { value: 'discount', label: '🏷️ Discount' },
+                                    { value: 'card', label: '💳 Card' },
+                                    { value: 'upi', label: '🏦 UPI' },
+                                    { value: 'onecard', label: '⬛ OneCard' },
+                                    { value: 'mobikwik', label: '📱 Mobikwik' },
+                                    { value: 'cashback', label: '🪙 Cashback' },
+                                    { value: 'emi', label: '📅 EMI' },
+                                    { value: 'gift', label: '🎁 Gift' },
+                                    { value: 'zap', label: '⚡ Prepaid' },
+                                ];
+
+                                const updateOffer = (index, field, value) => {
+                                    const newOffers = [...offers];
+                                    newOffers[index][field] = value;
+                                    handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
+                                };
+
                                 return (
                                     <div className="space-y-3">
                                         {offers.map((offer, index) => (
-                                            <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
-                                                <div className="flex-1 space-y-2">
+                                            <div key={index} className="p-3 bg-gray-50 rounded-lg space-y-2">
+                                                <div className="flex gap-2 items-center">
+                                                    <select
+                                                        className="p-2 border rounded-lg text-sm bg-white w-36"
+                                                        value={offer.icon || 'discount'}
+                                                        onChange={(e) => updateOffer(index, 'icon', e.target.value)}
+                                                    >
+                                                        {iconOptions.map(opt => (
+                                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
                                                     <input
                                                         type="text"
-                                                        className="w-full p-2 border rounded-lg text-sm"
-                                                        value={offer.title}
-                                                        placeholder="Offer title"
-                                                        onChange={(e) => {
-                                                            const newOffers = [...offers];
-                                                            newOffers[index].title = e.target.value;
+                                                        className="flex-1 p-2 border rounded-lg text-sm font-bold text-red-600"
+                                                        value={offer.highlight || ''}
+                                                        placeholder="Highlight text (e.g. 15% Off)"
+                                                        onChange={(e) => updateOffer(index, 'highlight', e.target.value)}
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            const newOffers = offers.filter((_, i) => i !== index);
                                                             handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
                                                         }}
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        className="w-full p-2 border rounded-lg text-sm"
-                                                        value={offer.subtitle}
-                                                        placeholder="Subtitle (optional)"
-                                                        onChange={(e) => {
-                                                            const newOffers = [...offers];
-                                                            newOffers[index].subtitle = e.target.value;
-                                                            handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
-                                                        }}
-                                                    />
+                                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    onClick={() => {
-                                                        const newOffers = offers.filter((_, i) => i !== index);
-                                                        handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
-                                                    }}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <input
+                                                    type="text"
+                                                    className="w-full p-2 border rounded-lg text-sm"
+                                                    value={offer.title || ''}
+                                                    placeholder="Offer description (e.g. on buying 3 or more products)"
+                                                    onChange={(e) => updateOffer(index, 'title', e.target.value)}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    className="w-full p-2 border rounded-lg text-sm text-gray-500"
+                                                    value={offer.subtitle || ''}
+                                                    placeholder="Subtitle / condition (optional)"
+                                                    onChange={(e) => updateOffer(index, 'subtitle', e.target.value)}
+                                                />
                                             </div>
                                         ))}
                                     </div>
                                 );
                             })()}
 
-                            {/* Add New Offer Button - Outside IIFE for fresh state */}
+                            {/* Add New Offer Button */}
                             <button
                                 onClick={() => {
-                                    // Parse fresh from settings to avoid stale closure
                                     let currentOffers = [];
                                     try {
                                         currentOffers = JSON.parse(settings.bank_offers_json || '[]');
                                     } catch (e) { currentOffers = []; }
-                                    const newOffers = [...currentOffers, { title: '', subtitle: '' }];
+                                    const newOffers = [...currentOffers, { icon: 'discount', highlight: '', title: '', subtitle: '' }];
                                     handleSettingsUpdate({ bank_offers_json: JSON.stringify(newOffers) });
                                 }}
                                 className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-copper hover:text-copper transition-colors"
@@ -1125,8 +1183,110 @@ export default function ContentManagement() {
                         <h3 className="font-semibold text-blue-900 mb-2">📌 How it works:</h3>
                         <ul className="text-sm text-blue-800 space-y-1 ml-1">
                             <li>• MEGA DEAL shows discounted price (e.g., 10% off) on product pages</li>
-                            <li>• Bank offers appear in the "Best Offers" section</li>
+                            <li>• Exclusive Offers appear on product pages with icon, highlight (red bold), description & subtitle</li>
                             <li>• Changes apply to all product pages instantly</li>
+                        </ul>
+                    </div>
+                </div>
+            )}
+
+            {/* COLLECTIONS CONTENT */}
+            {activeTab === 'collections' && settings && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Homepage Collection Cards</h3>
+                        <p className="text-sm text-gray-500 mb-6">Manage the collection cards shown on the landing page "Our Collections" section.</p>
+                    </div>
+
+                    {(() => {
+                        let cards = [];
+                        try {
+                            cards = JSON.parse(settings.heritage_cards_json || '[]');
+                        } catch (e) { cards = []; }
+
+                        const updateCard = (index, field, value) => {
+                            const newCards = [...cards];
+                            newCards[index][field] = value;
+                            handleSettingsUpdate({ heritage_cards_json: JSON.stringify(newCards) });
+                        };
+
+                        return (
+                            <div className="space-y-4">
+                                {cards.map((card, index) => (
+                                    <div key={index} className="p-4 bg-gray-50 rounded-xl space-y-3 border">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="w-8 h-8 rounded-full bg-copper/10 text-copper flex items-center justify-center font-bold text-sm">{index + 1}</span>
+                                            <span className="font-semibold text-gray-700">{card.title || `Card ${index + 1}`}</span>
+                                            <button
+                                                onClick={() => {
+                                                    const newCards = cards.filter((_, i) => i !== index);
+                                                    handleSettingsUpdate({ heritage_cards_json: JSON.stringify(newCards) });
+                                                }}
+                                                className="ml-auto p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                                                <input
+                                                    className="w-full p-2 border rounded-lg text-sm"
+                                                    value={card.title || ''}
+                                                    onChange={(e) => updateCard(index, 'title', e.target.value)}
+                                                    placeholder="Heritage Collection"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Link URL</label>
+                                                <input
+                                                    className="w-full p-2 border rounded-lg text-sm"
+                                                    value={card.href || ''}
+                                                    onChange={(e) => updateCard(index, 'href', e.target.value)}
+                                                    placeholder="/shop?category=Heritage"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                                            <input
+                                                className="w-full p-2 border rounded-lg text-sm"
+                                                value={card.description || ''}
+                                                onChange={(e) => updateCard(index, 'description', e.target.value)}
+                                                placeholder="Timeless pieces inspired by royal traditions"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Card Image</label>
+                                            <ImageUpload
+                                                label={`Card ${index + 1} Image`}
+                                                initialImage={card.image || ''}
+                                                onUpload={(url) => updateCard(index, 'image', url)}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <button
+                                    onClick={() => {
+                                        const newCards = [...cards, { title: '', description: '', image: '', href: '/shop' }];
+                                        handleSettingsUpdate({ heritage_cards_json: JSON.stringify(newCards) });
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-copper hover:text-copper transition-colors"
+                                >
+                                    <Plus size={18} /> Add Collection Card
+                                </button>
+                            </div>
+                        );
+                    })()}
+
+                    <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h3 className="font-semibold text-blue-900 mb-2">📌 Tips:</h3>
+                        <ul className="text-sm text-blue-800 space-y-1 ml-1">
+                            <li>• 4 cards recommended for best layout on desktop</li>
+                            <li>• Use Cloudinary URLs or /varaha-assets/* paths for images</li>
+                            <li>• Link to category pages like /shop?category=Heritage</li>
+                            <li>• Changes appear on the homepage instantly</li>
                         </ul>
                     </div>
                 </div>

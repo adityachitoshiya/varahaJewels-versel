@@ -91,6 +91,8 @@ export default function PaymentSuccess() {
           orderId: data.id, // Use NUMERIC ID for display
           displayId: `Order #${data.id}`,
           amount: data.total_amount,
+          originalAmount: data.original_amount || data.total_amount,
+          discountAmount: data.discount_amount || 0,
           paymentId: data.payment_method === 'online' ? id : 'COD', // Use Razorpay ID as ref if needed? Or check history.
           productName: items.length > 0 ? (items.length > 1 ? `${items[0].productName} + ${items.length - 1} more` : items[0].productName) : 'Product',
           quantity: items.reduce((sum, item) => sum + (item.quantity || 1), 0),
@@ -260,15 +262,36 @@ export default function PaymentSuccess() {
               </div>
 
               {/* Total Row */}
-              <div className="flex items-center justify-between mt-4 params-t-4 border-t border-copper/20 pt-4">
-                <p className="font-bold text-heritage">Total Paid</p>
-                <div>
-                  <p className="text-2xl font-royal font-bold text-copper">
-                    ₹{orderDetails.amount.toLocaleString('en-IN')}
+              <div className="mt-4 border-t border-copper/20 pt-4 space-y-2">
+                {/* Subtotal */}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-heritage/60">Subtotal</p>
+                  <p className="text-sm font-medium text-heritage">
+                    ₹{(orderDetails.originalAmount || orderDetails.amount).toLocaleString('en-IN')}
                   </p>
-                  <p className={`text-xs mt-1 font-medium text-right ${orderDetails.isCod ? 'text-orange-600' : 'text-green-600'}`}>
-                    {orderDetails.isCod ? 'Payment Pending' : 'Paid'}
-                  </p>
+                </div>
+
+                {/* Prepaid Discount (show only when discount exists) */}
+                {orderDetails.discountAmount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-green-600 font-medium">Prepaid Discount (5%)</p>
+                    <p className="text-sm font-medium text-green-600">
+                      -₹{orderDetails.discountAmount.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                )}
+
+                {/* Final Total */}
+                <div className="flex items-center justify-between border-t border-copper/10 pt-2">
+                  <p className="font-bold text-heritage">Total Paid</p>
+                  <div>
+                    <p className="text-2xl font-royal font-bold text-copper">
+                      ₹{orderDetails.amount.toLocaleString('en-IN')}
+                    </p>
+                    <p className={`text-xs mt-1 font-medium text-right ${orderDetails.isCod ? 'text-orange-600' : 'text-green-600'}`}>
+                      {orderDetails.isCod ? 'Payment Pending' : 'Paid'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

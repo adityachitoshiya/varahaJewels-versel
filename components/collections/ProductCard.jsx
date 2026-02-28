@@ -97,7 +97,7 @@ export default function ProductCard({ product, onQuickLook }) {
   const isOutOfStock = product.stock !== undefined && product.stock <= 0;
 
   return (
-    <Link href={`/product/${product.id}`}>
+    <Link href={`/product/${product.slug || product.id}`}>
       <div
         className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer border border-heritage/5"
         onMouseEnter={() => setIsHovered(true)}

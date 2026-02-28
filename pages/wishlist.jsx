@@ -213,7 +213,7 @@ function WishlistCard({ item, onRemove, onAddToCart }) {
   return (
     <div className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
       {/* Image */}
-      <Link href={`/product/${item.id}`}>
+      <Link href={`/product/${item.slug || item.id}`}>
         <div className="relative aspect-square overflow-hidden bg-gray-100 cursor-pointer">
           <Image
             src={imageError ? '/varaha-assets/logo.png' : (item.image || item.images?.[0] || '/varaha-assets/logo.png')}
@@ -247,7 +247,7 @@ function WishlistCard({ item, onRemove, onAddToCart }) {
 
       {/* Details */}
       <div className="p-4">
-        <Link href={`/product/${item.id}`}>
+        <Link href={`/product/${item.slug || item.id}`}>
           <h3 className="font-semibold text-heritage mb-2 line-clamp-2 hover:text-copper transition-colors cursor-pointer">
             {item.name || item.title || 'Jewelry Item'}
           </h3>

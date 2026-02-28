@@ -288,6 +288,26 @@ export default function Checkout() {
     }
   }, [paymentMethod]);
 
+  // Auto-remove coupon if payment method changes and restriction is violated
+  useEffect(() => {
+    if (appliedCoupon && appliedCoupon.payment_method_restriction) {
+      const r = appliedCoupon.payment_method_restriction;
+      if (r === 'prepaid_only' && paymentMethod === 'cod') {
+        setAppliedCoupon(null);
+        setDiscount(0);
+        setCouponError('Coupon removed: valid only for prepaid/online payments');
+      } else if (r === 'cod_only' && paymentMethod !== 'cod') {
+        setAppliedCoupon(null);
+        setDiscount(0);
+        setCouponError('Coupon removed: valid only for Cash on Delivery');
+      } else if (r === 'upi_only' && paymentMethod === 'cod') {
+        setAppliedCoupon(null);
+        setDiscount(0);
+        setCouponError('Coupon removed: valid only for UPI payments');
+      }
+    }
+  }, [paymentMethod]);
+
   const handleApplyCoupon = async () => {
     setCouponError('');
     setAppliedCoupon(null);
@@ -304,7 +324,27 @@ export default function Checkout() {
 
       if (res.ok) {
         const data = await res.json();
-        setAppliedCoupon(data); // Store full coupon object: { code, discount_type, discount_value }
+        // Check payment method restriction
+        const restriction = data.payment_method_restriction || 'none';
+        if (restriction === 'prepaid_only' && paymentMethod === 'cod') {
+          setCouponError('This coupon is valid only for prepaid/online payments');
+          return;
+        }
+        if (restriction === 'cod_only' && paymentMethod !== 'cod') {
+          setCouponError('This coupon is valid only for Cash on Delivery');
+          return;
+        }
+        if (restriction === 'upi_only' && paymentMethod === 'cod') {
+          setCouponError('This coupon is valid only for UPI payments');
+          return;
+        }
+        // Check minimum order amount
+        const minOrder = data.min_order_amount;
+        if (minOrder && totalAmount < minOrder) {
+          setCouponError(`Minimum order value of ₹${Math.round(minOrder)} required`);
+          return;
+        }
+        setAppliedCoupon(data);
       } else {
         const err = await res.json();
         setCouponError(err.detail || 'Invalid Coupon');
@@ -336,6 +376,13 @@ export default function Checkout() {
     } else if (appliedCoupon.discount_type === 'flat_price') {
       discountAmount = totalAmount - appliedCoupon.discount_value;
     }
+    // Apply max_discount cap
+    if (appliedCoupon.max_discount && discountAmount > appliedCoupon.max_discount) {
+      discountAmount = appliedCoupon.max_discount;
+    }
+    // Never discount more than total
+    if (discountAmount > totalAmount) discountAmount = totalAmount;
+    if (discountAmount < 0) discountAmount = 0;
   }
 
   // Calculate final amount
@@ -811,6 +858,8 @@ export default function Checkout() {
               setDiscount={setDiscount}
               isFlashDelivery={isFlashDelivery}
               edd={edd}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
             />
           )}
 

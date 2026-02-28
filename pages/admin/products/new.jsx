@@ -3,11 +3,13 @@ import { useRouter } from 'next/router';
 import { getApiUrl, getAuthHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import { Save, ArrowLeft } from 'lucide-react';
+import { useAdminToast } from '../../../components/admin/AdminToast';
 import Link from 'next/link';
 import ImageUpload from '../../../components/admin/ImageUpload';
 
 export default function NewProduct() {
     const router = useRouter();
+    const toast = useAdminToast();
     const [isLoading, setIsLoading] = useState(false);
     const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({
@@ -22,6 +24,7 @@ export default function NewProduct() {
         stones: '',
         polish: 'Gold Plated',
         premium: false,
+        is_mega_deal: false,
         tag: 'New',
         style: '',
         gender: '',
@@ -105,7 +108,7 @@ export default function NewProduct() {
 
             router.push('/admin/products');
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setIsLoading(false);
         }
@@ -317,6 +320,13 @@ export default function NewProduct() {
                                     placeholder="e.g. New"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
                                 />
+                            </div>
+                            <div className="flex items-center gap-3 sm:col-span-2">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" name="is_mega_deal" checked={formData.is_mega_deal} onChange={handleChange} />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                                </label>
+                                <span className="text-sm text-gray-700 font-medium">⚡ Mega Deal — Show bank offer banner on this product</span>
                             </div>
                         </div>
                     </div>

@@ -172,7 +172,7 @@ export default function NewArrivals({ initialProducts = [] }) {
 
         if (!product.price) {
             return (
-                <Link href={`/product/${product.id}`} className="mt-auto w-full px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-heritage transition-all group-hover:shadow-md">
+                <Link href={`/product/${product.slug || product.id}`} className="mt-auto w-full px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm flex items-center justify-center gap-2 hover:bg-heritage transition-all group-hover:shadow-md">
                     View Details <ShoppingBag size={18} />
                 </Link>
             );
@@ -370,7 +370,7 @@ export default function NewArrivals({ initialProducts = [] }) {
                                     {filteredProducts.map((product) => (
                                         <div key={product.id} className={`group bg-white border border-copper/30 rounded-sm overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col ${viewMode === 'list' ? 'sm:flex-row' : 'h-full'}`}>
                                             <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 h-48 sm:h-auto flex-shrink-0' : 'aspect-square'}`}>
-                                                <Link href={`/product/${product.id}`} className="block h-full cursor-pointer">
+                                                <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer">
                                                     <Image
                                                         src={product.image}
                                                         alt={product.name}
@@ -392,7 +392,7 @@ export default function NewArrivals({ initialProducts = [] }) {
                                             </div>
                                             <div className="p-6 flex flex-col flex-1">
                                                 <div className="flex-grow">
-                                                    <Link href={`/product/${product.id}`} className="block group-hover:text-copper transition-colors">
+                                                    <Link href={`/product/${product.slug || product.id}`} className="block group-hover:text-copper transition-colors">
                                                         <h3 className="text-lg font-royal font-bold text-heritage mb-1 line-clamp-2">{product.name}</h3>
                                                     </Link>
                                                     <p className="text-sm text-heritage/60">{product.category} • {product.metal}</p>

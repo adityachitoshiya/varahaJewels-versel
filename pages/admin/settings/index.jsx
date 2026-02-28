@@ -5,8 +5,10 @@ import VideoUpload from '../../../components/admin/VideoUpload';
 import MediaUpload from '../../../components/admin/MediaUpload';
 import Head from 'next/head';
 import { Save, Plus, Trash2, X, Check, ShieldCheck, Zap, MapPin, Globe, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useAdminToast } from '../../../components/admin/AdminToast';
 
 export default function Settings() {
+    const toast = useAdminToast();
     const [activeTab, setActiveTab] = useState('general'); // 'general' or 'payment'
     const [isLoading, setIsLoading] = useState(true);
     const [settings, setSettings] = useState({
@@ -85,10 +87,10 @@ export default function Settings() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings)
             });
-            if (res.ok) alert('Store settings saved!');
+            if (res.ok) toast.success('Store settings saved!');
         } catch (e) {
             console.error(e);
-            alert('Failed to save settings');
+            toast.error('Failed to save settings');
         } finally {
             setIsSaving(false);
         }
@@ -146,7 +148,7 @@ export default function Settings() {
 
         } catch (error) {
             console.error(error);
-            alert("Failed to toggle status. Please try again.");
+            toast.error("Failed to toggle status. Please try again.");
             fetchData(); // Revert
         }
     };
@@ -172,20 +174,21 @@ export default function Settings() {
             });
 
             if (res.ok) {
-                alert(`Settings for ${gateway.name} saved!`);
+                toast.success(`Settings for ${gateway.name} saved!`);
                 fetchData();
             } else {
                 throw new Error('Failed to save');
             }
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Delete this gateway?')) return;
+        const ok = await toast.confirm('Delete this gateway?', { confirmText: 'Delete', type: 'warning' });
+        if (!ok) return;
         try {
             const token = localStorage.getItem('admin_token');
             const API_URL = getApiUrl();
@@ -194,7 +197,7 @@ export default function Settings() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) setGateways(prev => prev.filter(g => g.id !== id));
-        } catch (error) { alert('Error deleting'); }
+        } catch (error) { toast.error('Error deleting'); }
     };
 
     const handleAddGateway = async (e) => {
@@ -225,7 +228,7 @@ export default function Settings() {
                 setNewGateway({ name: '', provider: 'razorpay' });
                 fetchData();
             }
-        } catch (error) { alert('Error creating gateway'); }
+        } catch (error) { toast.error('Error creating gateway'); }
     };
 
     // ... (Helper: getIcon) ...
@@ -527,9 +530,9 @@ export default function Settings() {
                                     fetchData();
                                 } else {
                                     const err = await res.json();
-                                    alert(err.detail || 'Failed to add');
+                                    toast.error(err.detail || 'Failed to add');
                                 }
-                            } catch (err) { alert('Error adding pincode'); }
+                            } catch (err) { toast.error('Error adding pincode'); }
                         }} className="flex flex-wrap gap-3 mb-6 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                             <input
                                 type="text"
@@ -562,12 +565,13 @@ export default function Settings() {
                                     </div>
                                     <button
                                         onClick={async () => {
-                                            if (!confirm(`Delete ${pin.pincode}?`)) return;
+                                            const ok = await toast.confirm(`Delete ${pin.pincode}?`, { confirmText: 'Delete', type: 'warning' });
+                                            if (!ok) return;
                                             try {
                                                 const API_URL = getApiUrl();
                                                 await fetch(`${API_URL}/api/settings/flash-pincodes/${pin.pincode}`, { method: 'DELETE' });
                                                 fetchData();
-                                            } catch (err) { alert('Error'); }
+                                            } catch (err) { toast.error('Error deleting pincode'); }
                                         }}
                                         className="text-red-400 hover:text-red-600 p-1"
                                     >
@@ -626,7 +630,7 @@ export default function Settings() {
                                                     method: 'PUT'
                                                 });
                                                 if (res.ok) fetchData();
-                                            } catch (err) { alert('Error toggling region'); }
+                                            } catch (err) { toast.error('Error toggling region'); }
                                         }}
                                         className="text-2xl"
                                     >

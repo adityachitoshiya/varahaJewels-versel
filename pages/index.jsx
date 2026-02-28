@@ -129,9 +129,9 @@ export default function Home({ heroSlides, initialSettings }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Favicon */}
-        <link rel="icon" href="/varaha-assets/og.jpg" type="image/jpeg" />
-        <link rel="apple-touch-icon" href="/varaha-assets/og.jpg" />
-        <link rel="shortcut icon" href="/varaha-assets/og.jpg" />
+        <link rel="icon" href="/apple-touch-icon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="shortcut icon" href="/apple-touch-icon.png" />
 
         {/* Open Graph / Social Media */}
         <meta property="og:type" content="website" />
@@ -289,7 +289,7 @@ export default function Home({ heroSlides, initialSettings }) {
           <main className="bg-warm-sand">
             {/* Pass SSG props to HeroSection */}
             <HeroSection initialSlides={heroSlides} />
-            <FeaturedCollections />
+            <FeaturedCollections settings={initialSettings} />
             <ProductSpotlight />
             <TestimonialsSection />
             <CreatorShowcase />

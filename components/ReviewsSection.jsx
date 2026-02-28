@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star } from 'lucide-react';
+import { Star, CheckCircle } from 'lucide-react';
 
 export default function ReviewsSection({ reviews, averageRating, reviewCount }) {
   const [visibleCount, setVisibleCount] = useState(3);
@@ -55,8 +55,20 @@ export default function ReviewsSection({ reviews, averageRating, reviewCount }) 
                 <StarRating rating={review.rating} />
               </div>
             </div>
-            <h4 className="font-semibold text-gray-900 mb-2">{review.title}</h4>
+            {review.title && <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-1.5">
+              {review.title === 'Verified Purchase' && <CheckCircle size={14} className="text-green-500" />}
+              {review.title}
+            </h4>}
             <p className="text-gray-700 leading-relaxed">{review.text}</p>
+            {review.media_urls && review.media_urls.length > 0 && (
+              <div className="flex gap-2 mt-3 flex-wrap">
+                {review.media_urls.map((url, idx) => (
+                  <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                    <img src={url} alt={`Review photo ${idx + 1}`} className="w-16 h-16 object-cover rounded-lg border hover:opacity-80 transition" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

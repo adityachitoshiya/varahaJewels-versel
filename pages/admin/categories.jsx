@@ -3,9 +3,11 @@ import { useRouter } from 'next/router';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
 import { Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
+import { useAdminToast } from '../../components/admin/AdminToast';
 
 export default function CategoriesAdmin() {
     const router = useRouter();
+    const toast = useAdminToast();
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -61,22 +63,23 @@ export default function CategoriesAdmin() {
             });
 
             if (res.ok) {
-                alert(editingCategory ? 'Category updated!' : 'Category created!');
+                toast.success(editingCategory ? 'Category updated!' : 'Category created!');
                 setShowModal(false);
                 resetForm();
                 fetchCategories();
             } else {
                 const error = await res.json();
-                alert(error.detail || 'Error saving category');
+                toast.error(error.detail || 'Error saving category');
             }
         } catch (error) {
             console.error("Error saving category:", error);
-            alert('Error saving category');
+            toast.error('Error saving category');
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this category?')) return;
+        const ok = await toast.confirm('Are you sure you want to delete this category?', { confirmText: 'Delete', type: 'warning' });
+        if (!ok) return;
 
         const API_URL = getApiUrl();
         try {
@@ -86,7 +89,7 @@ export default function CategoriesAdmin() {
             });
 
             if (res.ok) {
-                alert('Category deleted!');
+                toast.success('Category deleted!');
                 fetchCategories();
             }
         } catch (error) {

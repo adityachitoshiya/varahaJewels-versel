@@ -23,7 +23,7 @@ const PriceDetails = ({
 
     const totalMRP = cartItems.length > 0
         ? cartItems.reduce((sum, item) => {
-            const mrp = item.product?.mrp || item.variant?.compareAt || item.variant?.price * 1.15 || 0;
+            const mrp = item.product?.mrp || item.variant?.compareAt || item.variant?.price || 0;
             return sum + (mrp * item.quantity);
         }, 0)
         : sellingPriceTotal;

@@ -254,7 +254,7 @@ export default function MenCategory() {
                                 >
                                     {/* Product Image */}
                                     <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 h-48 sm:h-auto flex-shrink-0' : 'aspect-square'}`}>
-                                        <Link href={`/product/${product.id}`} className="block h-full cursor-pointer">
+                                        <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer">
                                             <Image
                                                 src={product.image}
                                                 alt={product.name}
@@ -282,7 +282,7 @@ export default function MenCategory() {
 
                                     {/* Product Details */}
                                     <div className="p-4 flex flex-col flex-1">
-                                        <Link href={`/product/${product.id}`}>
+                                        <Link href={`/product/${product.slug || product.id}`}>
                                             <h3 className="text-lg font-royal font-bold text-heritage mb-1 line-clamp-2 hover:text-copper transition-colors">
                                                 {product.name}
                                             </h3>
@@ -305,7 +305,7 @@ export default function MenCategory() {
                                                 </button>
                                             ) : (
                                                 <Link
-                                                    href={`/product/${product.id}`}
+                                                    href={`/product/${product.slug || product.id}`}
                                                     className="block w-full px-4 py-2.5 bg-copper text-warm-sand font-semibold rounded-sm hover:bg-heritage transition-all text-center"
                                                 >
                                                     View Details

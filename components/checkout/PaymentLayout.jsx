@@ -19,9 +19,19 @@ const PaymentLayout = ({
     setAppliedCoupon,
     setDiscount,
     isFlashDelivery,
-    edd
+    edd,
+    paymentMethod,
+    setPaymentMethod
 }) => {
     const [activeTab, setActiveTab] = useState('recommended');
+
+    // Sync activeTab with parent's paymentMethod for coupon restriction checks
+    useEffect(() => {
+        if (setPaymentMethod) {
+            // Map tab to payment method: 'cod' stays 'cod', everything else is 'online'
+            setPaymentMethod(activeTab === 'cod' ? 'cod' : 'online');
+        }
+    }, [activeTab, setPaymentMethod]);
     const [prepaidSettings, setPrepaidSettings] = useState({ enabled: false, percent: 5 });
 
     // Fetch prepaid discount settings
@@ -58,6 +68,12 @@ const PaymentLayout = ({
         } else if (appliedCoupon.discount_type === 'flat_price') {
             discountAmount = totalAmount - appliedCoupon.discount_value;
         }
+        // Apply max_discount cap
+        if (appliedCoupon.max_discount && discountAmount > appliedCoupon.max_discount) {
+            discountAmount = appliedCoupon.max_discount;
+        }
+        if (discountAmount > totalAmount) discountAmount = totalAmount;
+        if (discountAmount < 0) discountAmount = 0;
     }
     let finalAmount = totalAmount - discountAmount;
     if (finalAmount < 0) finalAmount = 0;

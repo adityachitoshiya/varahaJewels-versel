@@ -132,7 +132,7 @@ export default function CategoryPage() {
                                     >
                                         {/* Image */}
                                         <div className="relative aspect-square overflow-hidden">
-                                            <Link href={`/product/${product.id}`}>
+                                            <Link href={`/product/${product.slug || product.id}`}>
                                                 <Image
                                                     src={product.image}
                                                     alt={product.name}
@@ -165,7 +165,7 @@ export default function CategoryPage() {
 
                                         {/* Details */}
                                         <div className="p-3 md:p-4">
-                                            <Link href={`/product/${product.id}`}>
+                                            <Link href={`/product/${product.slug || product.id}`}>
                                                 <h3 className="text-sm md:text-base font-royal font-bold text-heritage mb-1 line-clamp-2 group-hover:text-copper transition-colors">
                                                     {product.name}
                                                 </h3>
@@ -194,7 +194,7 @@ export default function CategoryPage() {
                                                 </button>
                                             ) : (
                                                 <Link
-                                                    href={`/product/${product.id}`}
+                                                    href={`/product/${product.slug || product.id}`}
                                                     className="mt-3 block w-full py-2 bg-copper text-warm-sand text-xs md:text-sm font-semibold rounded-sm hover:bg-heritage transition-colors text-center"
                                                 >
                                                     View

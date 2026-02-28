@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 import ShimmerImage from '../ShimmerImage';
 
-const collections = [
+const defaultCollections = [
   {
     id: 1,
     title: 'Heritage Collection',
@@ -80,8 +80,19 @@ function CollectionCard({ collection, delay }) {
   );
 }
 
-export default function FeaturedCollections() {
+export default function FeaturedCollections({ settings }) {
   const [ref, isVisible] = useScrollAnimation();
+
+  // Dynamic collections from CMS settings
+  const collections = (() => {
+    if (settings?.heritage_cards_json) {
+      try {
+        const parsed = JSON.parse(settings.heritage_cards_json);
+        if (parsed.length > 0) return parsed.map((c, i) => ({ ...c, id: i + 1 }));
+      } catch (e) { }
+    }
+    return defaultCollections;
+  })();
 
   return (
     <section className="py-24 bg-warm-sand">

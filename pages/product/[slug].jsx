@@ -14,7 +14,7 @@ import ProductDetailSkeleton from '../../components/ProductDetailSkeleton';
 
 export default function ProductPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { slug } = router.query;
   const suggestionsRef = useRef(null);
 
   const [product, setProduct] = useState(null);
@@ -26,11 +26,11 @@ export default function ProductPage() {
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      fetchProduct(id);
+    if (slug) {
+      fetchProduct(slug);
     }
     fetchSettings();
-  }, [id]);
+  }, [slug]);
 
   const fetchSettings = async () => {
     try {
@@ -126,6 +126,7 @@ export default function ProductPage() {
 
           // Stock info
           stock: data.stock || 0,
+          is_mega_deal: data.is_mega_deal || false,
 
           // Tech specs
           metal: data.metal,
@@ -157,9 +158,9 @@ export default function ProductPage() {
 
         setProduct(adaptedProduct);
 
-        // Fetch actual reviews
+        // Fetch actual reviews using real product ID
         try {
-          const revRes = await fetch(`${API_URL}/api/reviews/${productId}`);
+          const revRes = await fetch(`${API_URL}/api/reviews/${data.id}`);
           if (revRes.ok) {
             const revData = await revRes.json();
             if (revData && revData.length > 0) {
@@ -169,6 +170,7 @@ export default function ProductPage() {
                 rating: r.rating || 5,
                 title: r.verified_purchase ? 'Verified Purchase' : '',
                 text: r.comment || '',
+                media_urls: r.media_urls || [],
                 date: new Date(r.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
               }));
 
@@ -346,7 +348,7 @@ export default function ProductPage() {
                   {suggestedProducts.map((item) => (
                     <div
                       key={item.id}
-                      onClick={() => router.push(`/product/${item.id}`)}
+                      onClick={() => router.push(`/product/${item.slug || item.id}`)}
                       className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
                     >
                       <div className="aspect-square bg-warm-sand overflow-hidden">

@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Calendar, Download, RefreshCw, Filter } from 'lucide-react';
 import Head from 'next/head';
 import { getApiUrl } from '../../lib/config';
+import { useAdminToast } from '../../components/admin/AdminToast';
 
 export default function Reports() {
+    const toast = useAdminToast();
     const [loading, setLoading] = useState(false);
     const [reportData, setReportData] = useState([]);
     const [stats, setStats] = useState({ total_sales: 0, total_orders: 0 });
@@ -84,7 +86,7 @@ export default function Reports() {
 
             // Validate: Start Date is required for FP
             if (!startDate) {
-                alert("Please select a Start Date to determine the Financial Period.");
+                toast.warning("Please select a Start Date to determine the Financial Period.");
                 return;
             }
 
@@ -104,7 +106,7 @@ export default function Reports() {
                 a.click();
                 a.remove();
             } else {
-                alert("Failed to export JSON");
+                toast.error("Failed to export JSON");
             }
         } catch (err) {
             console.error("GSTR1 Export failed", err);

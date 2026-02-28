@@ -172,14 +172,14 @@ export default function ProductSpotlight() {
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href={`/product/${currentProduct.id}`}
+                    href={`/product/${currentProduct.slug || currentProduct.id}`}
                     className="flex-1 py-4 bg-heritage text-white text-center rounded-lg font-medium hover:bg-copper transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-heritage/20"
                   >
                     Shop Now
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
-                    href={`/product/${currentProduct.id}`}
+                    href={`/product/${currentProduct.slug || currentProduct.id}`}
                     className="px-6 py-4 border border-heritage/20 text-heritage rounded-lg hover:bg-heritage/5 transition-colors flex items-center justify-center group"
                   >
                     <ShoppingBag size={20} className="group-hover:scale-110 transition-transform" />

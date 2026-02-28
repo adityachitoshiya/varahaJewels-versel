@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, MapPin, Check, Gift, CreditCard, X, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, MapPin, Check, Gift, CreditCard, X, Zap, Minus, Percent, Sparkles } from 'lucide-react';
 import { formatCurrency } from '../lib/productData';
 import WishlistButton from './WishlistButton';
 
@@ -64,20 +64,27 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
     }
   };
 
-  // Dynamic offers from settings (with fallback)
-  const offers = (() => {
-    if (settings?.bank_offers_json) {
+  // Dynamic offers from Promotions API (database-driven)
+  const [offers, setOffers] = useState([]);
+  useEffect(() => {
+    const fetchOffers = async () => {
       try {
-        return JSON.parse(settings.bank_offers_json);
-      } catch (e) { }
-    }
-    // Default fallback
-    return [
-      { title: '10% Instant Discount on Axis Bank Cards', subtitle: 'Min Spend ₹3,500, Max Discount ₹500' },
-      { title: '5% Unlimited Cashback on Credit Cards', subtitle: '' },
-      { title: 'EMI option available', subtitle: 'EMI starting from ₹500/month' },
-    ];
-  })();
+        const API_URL = getApiUrl();
+        const category = product.category || '';
+        const res = await fetch(`${API_URL}/api/offers?active=true${category ? `&category=${category}` : ''}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOffers(data);
+        }
+      } catch (e) {
+        // Fallback: try old settings-based offers
+        if (settings?.bank_offers_json) {
+          try { setOffers(JSON.parse(settings.bank_offers_json)); } catch (_) {}
+        }
+      }
+    };
+    fetchOffers();
+  }, [product.category]);
 
   // Dynamic mega deal settings
   const megaDealEnabled = settings?.mega_deal_enabled ?? true;
@@ -160,8 +167,8 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
         )}
       </div>
 
-      {/* Bank Offer Banner - Myntra Style (Dynamic from Admin) */}
-      {megaDealEnabled && (
+      {/* Bank Offer Banner - Myntra Style (Dynamic from Admin, per-product) */}
+      {megaDealEnabled && product.is_mega_deal && (
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -313,35 +320,75 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
         )}
       </div>
 
-      {/* Best Offers */}
-      <div className="pb-4 border-b border-copper/20">
+      {/* Exclusive Offers */}
+      <div className="rounded-xl border border-orange-300 overflow-hidden shadow-sm">
+        {/* Header */}
         <button
           onClick={() => setShowOffers(!showOffers)}
-          className="w-full flex items-center justify-between py-2"
+          className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-200"
         >
           <div className="flex items-center gap-2">
-            <Gift size={18} className="text-royal-orange" />
-            <span className="text-base font-semibold text-heritage">
-              Best Offers
-            </span>
+            <span className="text-base font-bold text-gray-900">Exclusive Offers</span>
+            <Sparkles size={18} className="text-amber-400" />
           </div>
-          {showOffers ? <ChevronUp size={18} className="text-copper" /> : <ChevronDown size={18} className="text-copper" />}
+          {showOffers
+            ? <Minus size={18} className="text-gray-500" />
+            : <ChevronDown size={18} className="text-gray-500" />
+          }
         </button>
 
+        {/* Offers List */}
         {showOffers && (
-          <div className="mt-3 space-y-3">
-            {offers.map((offer, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 bg-copper rounded-full mt-2 flex-shrink-0" />
-                <div>
-                  <p className="text-sm text-heritage">{offer.title}</p>
-                  {offer.subtitle && <p className="text-xs text-matte-brown">{offer.subtitle}</p>}
+          <div className="bg-white divide-y divide-gray-100">
+            {offers.map((offer, index) => {
+              const iconMap = {
+                discount: { bg: 'bg-pink-50', el: <Percent size={18} className="text-pink-500" /> },
+                upi: { bg: 'bg-green-50', el: <span className="text-base">🏦</span> },
+                card: { bg: 'bg-blue-50', el: <CreditCard size={18} className="text-blue-600" /> },
+                onecard: { bg: 'bg-gray-900', el: <span className="text-[10px] font-black text-white px-1.5 py-0.5">one</span> },
+                mobikwik: { bg: 'bg-purple-50', el: <span className="text-base">💳</span> },
+                cashback: { bg: 'bg-amber-50', el: <span className="text-base">🪙</span> },
+                emi: { bg: 'bg-sky-50', el: <span className="text-base">📅</span> },
+                gift: { bg: 'bg-rose-50', el: <Gift size={18} className="text-rose-500" /> },
+                zap: { bg: 'bg-green-50', el: <Zap size={18} className="text-green-600" /> },
+                bogo: { bg: 'bg-indigo-50', el: <span className="text-base">🔁</span> },
+              };
+              const ic = iconMap[offer.icon] || iconMap['discount'];
+              return (
+                <div key={offer.id || index} className="flex items-center gap-4 px-5 py-4">
+                  <div className={`w-10 h-10 rounded-full ${ic.bg} flex items-center justify-center flex-shrink-0`}>
+                    {offer.icon_url ? (
+                      <img src={offer.icon_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : ic.el}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-700">
+                      {offer.highlight && <span className="font-bold text-red-600">{offer.highlight} </span>}
+                      {offer.title}
+                      {offer.subtitle && <span className="block text-xs text-gray-500 mt-0.5">{offer.subtitle}</span>}
+                    </p>
+                    {offer.coupon_code && (
+                      <span className="inline-block mt-1 text-[10px] font-mono font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                        Use: {offer.coupon_code}
+                      </span>
+                    )}
+                  </div>
                 </div>
+              );
+            })}
+
+            {/* Prepaid Discount - Auto from settings */}
+            {settings?.prepaid_discount_enabled && (
+              <div className="flex items-center gap-4 px-5 py-4">
+                <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                  <Zap size={18} className="text-green-600" />
+                </div>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold text-red-600">Extra {settings.prepaid_discount_percent || 5}%</span>{' '}
+                  instant discount on all UPI payments. No code required
+                </p>
               </div>
-            ))}
-            <button className="text-sm text-copper font-semibold hover:text-heritage">
-              View all offers &gt;
-            </button>
+            )}
           </div>
         )}
       </div>

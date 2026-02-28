@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { getApiUrl } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import Head from 'next/head';
-import { Search, Eye, Filter, Truck, Mail, Check, X } from 'lucide-react';
+import { Search, Eye, Filter, Truck, Mail, Check, X, Download } from 'lucide-react';
+import { useAdminToast } from '../../../components/admin/AdminToast';
 
 export default function Orders() {
+    const toast = useAdminToast();
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +78,7 @@ export default function Orders() {
             console.log(`Shipping Order: ${orderId} to ${API_URL}`);
 
             if (!token) {
-                alert("Admin token missing. Please login again.");
+                toast.error("Admin token missing. Please login again.");
                 return;
             }
 
@@ -101,9 +103,9 @@ export default function Orders() {
                 const data = await res.json();
                 const shipment = data.shipment;
                 if (shipment.courierName === 'Mock Courier') {
-                    alert(`Order shipped (SIMULATION). AWB: ${shipment.awb}`);
+                    toast.success(`Order shipped (SIMULATION). AWB: ${shipment.awb}`);
                 } else {
-                    alert(`Order shipped successfully via ${shipment.courierName}! AWB: ${shipment.awb}`);
+                    toast.success(`Order shipped successfully via ${shipment.courierName}! AWB: ${shipment.awb}`);
                 }
                 fetchOrders(); // Refresh list to show new status
                 setSelectedOrder(null); // Close modal
@@ -112,14 +114,14 @@ export default function Orders() {
                 console.error("Shipment Failed Body:", errorText);
                 try {
                     const data = JSON.parse(errorText);
-                    alert(`Failed to ship order: ${data.detail || 'Unknown error'}`);
+                    toast.error(`Failed to ship order: ${data.detail || 'Unknown error'}`);
                 } catch {
-                    alert(`Failed to ship order: ${errorText}`);
+                    toast.error(`Failed to ship order: ${errorText}`);
                 }
             }
         } catch (e) {
             console.error("Ship Error Catch:", e);
-            alert(`Error processing shipping request: ${e.message}. Check console for details.`);
+            toast.error(`Error processing shipping: ${e.message}`);
         }
     };
 
@@ -344,6 +346,29 @@ export default function Orders() {
                                                 <p className="font-bold flex items-center gap-1"><Truck size={14} /> Shipped via {selectedOrder.courier_name}</p>
                                                 <p>AWB: {selectedOrder.awb_number}</p>
                                                 <p className="text-xs mt-1">Ref: {selectedOrder.shipping_id}</p>
+                                                {/* Download Buttons */}
+                                                <div className="flex gap-2 mt-3">
+                                                    {selectedOrder.label_url && (
+                                                        <a
+                                                            href={selectedOrder.label_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-copper text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition-colors"
+                                                        >
+                                                            <Download size={13} /> Label
+                                                        </a>
+                                                    )}
+                                                    {selectedOrder.manifest_url && (
+                                                        <a
+                                                            href={selectedOrder.manifest_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-gray-700 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
+                                                        >
+                                                            <Download size={13} /> Manifest
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </div>
                                         ) : (
                                             selectedOrder.status !== 'cancelled' ? (
