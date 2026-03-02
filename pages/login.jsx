@@ -5,8 +5,8 @@ import { useRouter } from 'next/router';
 import { getApiUrl } from '../lib/config';
 import { supabase } from '../lib/supabaseClient';
 import { Mail, Lock, AlertCircle, ArrowRight, Loader2, Facebook, CheckCircle } from 'lucide-react';
-import { signInWithGoogle } from '../lib/firebase';
-import { authenticateWithBackend } from '../lib/authUtils';
+import { useGoogleLogin } from '@react-oauth/google';
+import { authenticateWithGoogleBackend, authenticateWithBackend } from '../lib/authUtils';
 import TelegramLoginModal from '../components/TelegramLoginModal';
 
 export default function Login() {
@@ -21,6 +21,28 @@ export default function Login() {
     const [successMsg, setSuccessMsg] = useState('');
     const [showFacebookModal, setShowFacebookModal] = useState(false);
     const [showTelegramModal, setShowTelegramModal] = useState(false);
+
+    // Google OAuth sign-in via Google Identity Services
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setLoading(true);
+            setError(null);
+            try {
+                const result = await authenticateWithGoogleBackend(tokenResponse.access_token);
+                if (!result.success) throw new Error(result.error || 'Backend authentication failed');
+                setSuccessMsg('Signed in with Google!');
+                setTimeout(() => router.push(redirect || '/'), 500);
+            } catch (err) {
+                setError('Google Sign In Failed: ' + (err.message || 'Please try again.'));
+            } finally {
+                setLoading(false);
+            }
+        },
+        onError: () => {
+            setError('Google Sign In Failed. Please try again.');
+            setLoading(false);
+        },
+    });
 
     // 2FA Admin State
     const [showOtp, setShowOtp] = useState(false);
@@ -250,45 +272,7 @@ export default function Login() {
 
         if (provider === 'Google') {
             setLoading(true);
-            setError(null);
-            
-            try {
-                // Step 1: Sign in with Firebase (popup - bypasses ISP blocks)
-                const { user, idToken } = await signInWithGoogle();
-                console.log("Firebase Google sign-in successful:", user.email);
-                
-                // Step 2: Authenticate with our backend using Firebase token
-                const result = await authenticateWithBackend(idToken);
-                
-                if (!result.success) {
-                    throw new Error(result.error || "Backend authentication failed");
-                }
-                
-                setSuccessMsg("Signed in with Google!");
-                
-                // Redirect to intended page or home
-                setTimeout(() => {
-                    if (redirect) {
-                        router.push(redirect);
-                    } else {
-                        router.push('/');
-                    }
-                }, 500);
-
-            } catch (error) {
-                console.error("Google Login Error:", error);
-                
-                // Handle specific Firebase errors
-                if (error.code === 'auth/popup-closed-by-user') {
-                    setError("Sign-in was cancelled. Please try again.");
-                } else if (error.code === 'auth/popup-blocked') {
-                    setError("Popup was blocked. Please allow popups for this site.");
-                } else {
-                    setError("Google Sign In Failed: " + (error.message || "Please try again."));
-                }
-            } finally {
-                setLoading(false);
-            }
+            googleLogin();
             return;
         }
 

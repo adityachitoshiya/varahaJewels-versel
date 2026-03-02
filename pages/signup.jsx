@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getApiUrl } from '../lib/config';
-import { signInWithGoogle } from '../lib/firebase';
-import { authenticateWithBackend } from '../lib/authUtils';
+import { useGoogleLogin } from '@react-oauth/google';
+import { authenticateWithGoogleBackend } from '../lib/authUtils';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -18,6 +18,28 @@ export default function Signup() {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+
+    // Google OAuth sign-in via Google Identity Services
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setLoading(true);
+            setError(null);
+            try {
+                const result = await authenticateWithGoogleBackend(tokenResponse.access_token);
+                if (!result.success) throw new Error(result.error || 'Backend authentication failed');
+                setSuccess(true);
+                setTimeout(() => router.push('/'), 1500);
+            } catch (err) {
+                setError('Google Sign Up Failed: ' + (err.message || 'Please try again.'));
+            } finally {
+                setLoading(false);
+            }
+        },
+        onError: () => {
+            setError('Google Sign Up Failed. Please try again.');
+            setLoading(false);
+        },
+    });
 
     const [existingAccount, setExistingAccount] = useState(null);
 
@@ -132,39 +154,11 @@ export default function Signup() {
         }
     };
 
-    // Handle Google signup (uses Firebase Auth)
-    const handleGoogleSignup = async () => {
+    // Handle Google signup (uses Google OAuth 2.0)
+    const handleGoogleSignup = () => {
         setLoading(true);
         setError(null);
-        
-        try {
-            // Sign in with Firebase (popup)
-            const { user, idToken } = await signInWithGoogle();
-            console.log("Firebase Google sign-in successful:", user.email);
-            
-            // Authenticate with backend
-            const result = await authenticateWithBackend(idToken);
-            
-            if (!result.success) {
-                throw new Error(result.error || "Backend authentication failed");
-            }
-            
-            setSuccess(true);
-            setTimeout(() => router.push('/'), 1500);
-            
-        } catch (error) {
-            console.error("Google Signup Error:", error);
-            
-            if (error.code === 'auth/popup-closed-by-user') {
-                setError("Sign-up was cancelled. Please try again.");
-            } else if (error.code === 'auth/popup-blocked') {
-                setError("Popup was blocked. Please allow popups for this site.");
-            } else {
-                setError("Google Sign Up Failed: " + (error.message || "Please try again."));
-            }
-        } finally {
-            setLoading(false);
-        }
+        googleLogin();
     };
 
     return (
