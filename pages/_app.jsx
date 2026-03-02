@@ -12,8 +12,11 @@ import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { WishlistProvider } from '../context/WishlistContext';
+import clarity from '@microsoft/clarity';
 
 const CookieConsent = dynamic(() => import('../components/CookieConsent'), { ssr: false });
+
+const CLARITY_PROJECT_ID = 'vme6nv0h09';
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
@@ -22,8 +25,18 @@ function MyApp({ Component, pageProps }) {
   const isCiplx = router.pathname === '/ciplx';
   const isHeritage = router.pathname === '/heritage';
 
+  // Initialize Microsoft Clarity (only in production, client-side)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+      clarity.init(CLARITY_PROJECT_ID);
+    }
+  }, []);
+
   useEffect(() => {
     const trackVisit = async () => {
+      // Wait for router to be ready (avoids logging /product/[slug] template paths)
+      if (!router.isReady) return;
+
       // Skip tracking on localhost / development
       if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         return;
@@ -69,7 +82,7 @@ function MyApp({ Component, pageProps }) {
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleError);
     };
-  }, [router.asPath]);
+  }, [router.asPath, router.isReady]);
 
   if (isAdmin) {
     return (

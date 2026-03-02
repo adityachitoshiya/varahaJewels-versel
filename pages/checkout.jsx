@@ -761,39 +761,20 @@ export default function Checkout() {
           </div>}
 
 
-          {/* STEP 1: VERIFICATION or ADDRESS */}
+          {/* STEP 1: ADDRESS FORM (Guest + Logged In) */}
           {currentStep === 1 && (
-
-            !isLoggedIn ? (
-              // LOGIN REQUIRED PROMPT
-              <div className="max-w-md mx-auto bg-white rounded-2xl shadow-sm p-8 text-center animate-fadeIn border border-heritage/10 mt-12">
-                <div className="w-16 h-16 bg-heritage/10 text-heritage rounded-full flex items-center justify-center mx-auto mb-6">
-                  <User size={32} />
-                </div>
-                <h2 className="text-2xl font-bold text-heritage mb-3 font-royal">Login Required</h2>
-                <p className="text-gray-500 mb-8 leading-relaxed">
-                  To ensure a secure checkout and order tracking, please log in or create an account to proceed.
-                </p>
-                <div className="space-y-4">
-                  <Link
-                    href="/login?redirect=/checkout"
-                    className="block w-full py-4 bg-heritage text-white font-bold rounded-xl shadow-lg hover:bg-heritage/90 hover:shadow-xl transition-all transform hover:-translate-y-1"
-                  >
-                    Login / Sign Up
-                  </Link>
-                  <Link href="/cart" className="block text-sm text-heritage/60 hover:text-heritage font-medium">
-                    Return to Cart
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              // LOGGED IN - SHOW ADDRESS FORM
               <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm p-6 lg:p-10 animate-fadeIn">
                 <div className="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
                   <h2 className="text-2xl font-bold text-heritage font-royal">Shipping Details</h2>
-                  <div className="text-sm text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 font-medium">
-                    <CheckCircle size={14} /> Logged In
-                  </div>
+                  {isLoggedIn ? (
+                    <div className="text-sm text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 font-medium">
+                      <CheckCircle size={14} /> Logged In
+                    </div>
+                  ) : (
+                    <Link href="/login?redirect=/checkout" className="text-sm text-heritage hover:text-heritage/80 font-medium underline underline-offset-2">
+                      Login for faster checkout
+                    </Link>
+                  )}
                 </div>
 
                 {/* ── Saved Addresses quick-select ── */}
@@ -924,7 +905,6 @@ export default function Checkout() {
                   </button>
                 </form>
               </div>
-            )
           )}
 
           {/* STEP 2: PAYMENT LAYOUT */}
