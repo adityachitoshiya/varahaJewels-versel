@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import Head from 'next/head';
 import { getApiUrl } from '../lib/config';
 import dynamic from 'next/dynamic';
-import '../lib/firebase'; // Initialize Firebase
+import '../lib/firebase'; // Initialize Firebase (for Phone OTP)
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import '../styles/globals.css';
 import DeliveryBar from '../components/DeliveryBar';
 import { useRouter } from 'next/router';
@@ -10,7 +11,7 @@ import { CartProvider } from '../context/CartContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import { WishlistProvider } from '../context/WishlistContext';
 import clarity from '@microsoft/clarity';
 
@@ -96,7 +97,10 @@ function MyApp({ Component, pageProps }) {
     );
   }
 
+  const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '390681375827-jt3d2qcr9bo0geboirt03ii5m0tqfiij.apps.googleusercontent.com';
+
   return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
@@ -127,6 +131,10 @@ function MyApp({ Component, pageProps }) {
         </CartProvider>
       </NotificationProvider>
     </>
+  );
+}
+
+  </GoogleOAuthProvider>
   );
 }
 
