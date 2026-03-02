@@ -76,8 +76,10 @@ export default function PaymentSuccess() {
     try {
       const API_URL = getApiUrl();
       console.log(`Fetching order: ${id} (Attempt ${attempt})`);
-
-      const res = await fetch(`${API_URL}/api/orders/${id}`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
+      const res = await fetch(`${API_URL}/api/orders/${id}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (res.ok) {
         const data = await res.json();
 

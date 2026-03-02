@@ -51,7 +51,7 @@ export default function About() {
                             <div className="relative">
                                 <div className="aspect-square rounded-sm overflow-hidden shadow-2xl">
                                     <Image
-                                        src="/varaha-assets/heroimage.avif"
+                                        src="https://res.cloudinary.com/du0s3mpmh/image/upload/v1772188834/ciplx_images/g9jy9znuhx3bkuodm93n.webp"
                                         alt="Varaha Jewels Craftsmanship"
                                         width={600}
                                         height={600}
@@ -119,7 +119,7 @@ export default function About() {
                             <div className="order-2 md:order-1 relative">
                                 <div className="aspect-square rounded-sm overflow-hidden shadow-2xl">
                                     <Image
-                                        src="/varaha-assets/dp3.avif"
+                                        src="https://res.cloudinary.com/du0s3mpmh/image/upload/v1772188633/ciplx_images/k6ttgdkmjmsxy0zjnbdz.jpg"
                                         alt="Artisan Craftsmanship"
                                         width={600}
                                         height={600}

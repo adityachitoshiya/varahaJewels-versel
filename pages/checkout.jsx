@@ -10,7 +10,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
 
-import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User, MapPin } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User, MapPin, Home, Briefcase, ChevronDown } from 'lucide-react';
 import { useMsg91OTP } from '../hooks/useMsg91OTP';
 
 import { useCart } from '../context/CartContext';
@@ -67,6 +67,8 @@ export default function Checkout() {
   // const [isPhoneVerified, setIsPhoneVerified] = useState(true); // Removed - No Guest Checkout
   // const [isOtpLoading, setIsOtpLoading] = useState(false); // Removed
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [showSavedAddrs, setShowSavedAddrs] = useState(false);
 
   // Check if user is logged in
   // Check if user is logged in - STRICTLY check customer_token
@@ -91,6 +93,32 @@ export default function Checkout() {
       } catch (e) {
         console.error("Failed to parse user data", e);
       }
+
+      // Fetch saved addresses
+      (async () => {
+        try {
+          const res = await fetch(`${getApiUrl()}/api/addresses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const addrs = await res.json();
+            setSavedAddresses(addrs);
+            // Auto-fill default address if form is empty
+            const def = addrs.find(a => a.is_default) || addrs[0];
+            if (def) {
+              setFormData(prev => ({
+                ...prev,
+                name: def.full_name || prev.name,
+                contact: def.phone || prev.contact,
+                address: [def.address_line1, def.address_line2].filter(Boolean).join(', '),
+                city: def.city,
+                state: def.state,
+                pincode: def.pincode
+              }));
+            }
+          }
+        } catch (e) { /* ignore */ }
+      })();
     } else {
       setIsLoggedIn(false);
     }
@@ -710,7 +738,7 @@ export default function Checkout() {
       {/* Simplified Mobile Header */}
       <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between shadow-sm">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/varaha-assets/logo.png" alt="Varaha" width={100} height={30} className="h-6 w-auto" />
+          <Image src="/varaha-assets/logo.png" alt="Varaha" width={100} height={30} className="h-6 w-auto" onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
         </Link>
         <div className="flex items-center gap-2">
           {currentStep > 1 && (
@@ -767,6 +795,65 @@ export default function Checkout() {
                     <CheckCircle size={14} /> Logged In
                   </div>
                 </div>
+
+                {/* ── Saved Addresses quick-select ── */}
+                {savedAddresses.length > 0 && (
+                  <div className="mb-6">
+                    <div
+                      className="flex items-center justify-between cursor-pointer select-none"
+                      onClick={() => setShowSavedAddrs(p => !p)}
+                    >
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <MapPin size={13} className="text-copper" /> Saved Addresses
+                        <span className="ml-1 px-1.5 py-0.5 bg-copper/10 text-copper rounded text-[10px] font-bold">{savedAddresses.length}</span>
+                      </p>
+                      <ChevronDown size={15} className={`text-gray-400 transition-transform duration-200 ${showSavedAddrs ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    {showSavedAddrs && (
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {savedAddresses.map(addr => {
+                          const LabelIcon = addr.label === 'Home' ? Home : addr.label === 'Office' ? Briefcase : MapPin;
+                          const isFilled = formData.address === [addr.address_line1, addr.address_line2].filter(Boolean).join(', ')
+                            && formData.city === addr.city && formData.pincode === addr.pincode;
+                          return (
+                            <button
+                              key={addr.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  name: addr.full_name || prev.name,
+                                  contact: addr.phone || prev.contact,
+                                  address: [addr.address_line1, addr.address_line2].filter(Boolean).join(', '),
+                                  city: addr.city,
+                                  state: addr.state,
+                                  pincode: addr.pincode
+                                }));
+                                setShowSavedAddrs(false);
+                              }}
+                              className={`text-left p-3 rounded-xl border transition-all flex gap-2.5 items-start ${isFilled ? 'border-copper bg-copper/5 ring-1 ring-copper/40' : 'border-gray-200 hover:border-copper/50 bg-white hover:bg-copper/3'}`}
+                            >
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isFilled ? 'bg-copper text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                <LabelIcon size={13} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                  {addr.label}
+                                  {addr.is_default && <span className="text-[9px] text-copper font-bold">· Default</span>}
+                                </p>
+                                <p className="text-xs text-gray-500 leading-snug truncate mt-0.5">
+                                  {addr.address_line1}, {addr.city} – {addr.pincode}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="mt-3 border-b border-gray-100" />
+                  </div>
+                )}
 
                 <form onSubmit={(e) => { e.preventDefault(); handleContinueToStep2(); }} className="space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -3,8 +3,10 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { getApiUrl } from '../lib/config';
-import { Mail, Lock, AlertCircle, ArrowRight, Loader2, Facebook, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { Mail, Lock, AlertCircle, ArrowRight, Loader2, Facebook, CheckCircle } from 'lucide-react';
+import { signInWithGoogle } from '../lib/firebase';
+import { authenticateWithBackend } from '../lib/authUtils';
 import TelegramLoginModal from '../components/TelegramLoginModal';
 
 export default function Login() {
@@ -33,60 +35,15 @@ export default function Login() {
             setSuccessMsg("Account created! Please check your email to verify your account, then sign in.");
         }
 
-        const handleSession = (session) => {
-            const fullName = session.user.user_metadata.full_name || session.user.user_metadata.name || session.user.email.split('@')[0];
-            const userData = {
-                id: session.user.id,
-                full_name: fullName,
-                name: fullName,  // For backward compatibility
-                email: session.user.email,
-                role: 'customer'
-            };
-
-            localStorage.setItem('customer_token', session.access_token);
-            localStorage.setItem('customer_user', JSON.stringify(userData));
-
-            // Clean the URL hash before redirecting to avoid /#
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, null, window.location.pathname);
-            }
-
-            if (redirect) {
-                setTimeout(() => router.push(redirect), 100);
-            } else {
-                setTimeout(() => router.push('/'), 100);
-            }
-        };
-
-        // Only auto-login if returning from OAuth (hash present)
+        // Check if already logged in
         if (typeof window !== 'undefined') {
-            // Check if already logged in (for manual users)
             const existingToken = localStorage.getItem('customer_token');
             const existingUser = localStorage.getItem('customer_user');
 
-            // If user is already logged in and not coming from OAuth redirect, go to home
-            if (existingToken && existingUser && !window.location.hash?.includes('access_token')) {
+            // If user is already logged in, go to home
+            if (existingToken && existingUser) {
                 router.push('/');
                 return;
-            }
-
-            if (window.location.hash && window.location.hash.includes('access_token')) {
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    if (session) handleSession(session);
-                });
-
-                // Allow listener to catch the immediate SIGNED_IN event from the hash
-                const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-                    if (event === 'SIGNED_IN' && session) {
-                        handleSession(session);
-                    }
-                });
-
-                return () => {
-                    if (authListener && authListener.subscription) {
-                        authListener.subscription.unsubscribe();
-                    }
-                };
             }
         }
     }, [registered, router]);
@@ -292,29 +249,45 @@ export default function Login() {
         }
 
         if (provider === 'Google') {
+            setLoading(true);
+            setError(null);
+            
             try {
-                // Use Supabase Auth
-                // Use production URL for redirect, fallback to env or window.location
-                const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ||
-                    (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-                        ? window.location.origin
-                        : 'https://newvaraha-nwbd.vercel.app');
-                // Append current redirect param to the callback URL so it persists
-                const redirectTo = `${siteUrl}/login${redirect ? `?redirect=${redirect}` : ''}`;
-
-                const { error } = await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                        redirectTo: redirectTo
+                // Step 1: Sign in with Firebase (popup - bypasses ISP blocks)
+                const { user, idToken } = await signInWithGoogle();
+                console.log("Firebase Google sign-in successful:", user.email);
+                
+                // Step 2: Authenticate with our backend using Firebase token
+                const result = await authenticateWithBackend(idToken);
+                
+                if (!result.success) {
+                    throw new Error(result.error || "Backend authentication failed");
+                }
+                
+                setSuccessMsg("Signed in with Google!");
+                
+                // Redirect to intended page or home
+                setTimeout(() => {
+                    if (redirect) {
+                        router.push(redirect);
+                    } else {
+                        router.push('/');
                     }
-                });
-
-                if (error) throw error;
-                // No need to handle success here, the redirect happens immediately
+                }, 500);
 
             } catch (error) {
                 console.error("Google Login Error:", error);
-                setError("Google Sign In Failed: " + error.message);
+                
+                // Handle specific Firebase errors
+                if (error.code === 'auth/popup-closed-by-user') {
+                    setError("Sign-in was cancelled. Please try again.");
+                } else if (error.code === 'auth/popup-blocked') {
+                    setError("Popup was blocked. Please allow popups for this site.");
+                } else {
+                    setError("Google Sign In Failed: " + (error.message || "Please try again."));
+                }
+            } finally {
+                setLoading(false);
             }
             return;
         }
@@ -385,6 +358,7 @@ export default function Login() {
                         className="h-20 w-auto"
                         src="/varaha-assets/logo.png"
                         alt="Varaha Jewels"
+                        onError={(e) => { e.target.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
                     />
                 </Link>
 

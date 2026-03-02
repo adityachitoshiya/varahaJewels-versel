@@ -160,9 +160,9 @@ export default function DeliveryBar({ variant = 'mobile' }) {
   }, []);
 
   // Determine positioning classes based on variant
- const positionClasses = variant === 'mobile'
-  ? 'relative lg:hidden' 
-  : 'hidden lg:block relative';
+  const positionClasses = variant === 'mobile'
+    ? 'relative lg:hidden'
+    : 'hidden lg:block relative';
 
   return (
     <>

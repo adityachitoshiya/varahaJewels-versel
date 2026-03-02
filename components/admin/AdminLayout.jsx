@@ -182,9 +182,9 @@ export default function AdminLayout({ children }) {
                 <div className="h-24 flex items-center justify-center border-b border-gray-50/50 mb-2">
                     <div className={`transition-all duration-300 flex items-center justify-center ${!isMobile && !sidebarOpen ? 'w-12 h-12' : 'w-48'}`}>
                         {(!isMobile && !sidebarOpen) ? (
-                            <img src="/varaha-assets/logo.png" alt="V" className="h-10 w-10 object-contain" />
+                            <img src="/varaha-assets/logo.png" alt="V" className="h-10 w-10 object-contain" onError={(e) => { e.target.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
                         ) : (
-                            <img src="/varaha-assets/logo.png" alt="Varaha Jewels" className="h-auto w-full max-w-[160px] object-contain" />
+                            <img src="/varaha-assets/logo.png" alt="Varaha Jewels" className="h-auto w-full max-w-[160px] object-contain" onError={(e) => { e.target.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
                         )}
                     </div>
                     {/* Close button for mobile */}

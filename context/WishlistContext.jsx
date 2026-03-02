@@ -9,21 +9,13 @@ export function WishlistProvider({ children }) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    // Load initial wishlist
+    // Load initial wishlist — only for logged-in users
     useEffect(() => {
         const token = localStorage.getItem('customer_token');
         if (token) {
             fetchRemoteWishlist(token);
-        } else {
-            const saved = localStorage.getItem('wishlist');
-            if (saved) {
-                try {
-                    setWishlist(JSON.parse(saved));
-                } catch (e) {
-                    console.error('Error parsing local wishlist', e);
-                }
-            }
         }
+        // Guest users get no wishlist — login required
     }, []);
 
     // Sync on login/auth change
@@ -93,52 +85,52 @@ export function WishlistProvider({ children }) {
     };
 
     const addToWishlist = async (productId) => {
+        const token = localStorage.getItem('customer_token');
+
+        // 🔒 Login required to use wishlist
+        if (!token) {
+            router.push('/login?next=/wishlist');
+            return false;
+        }
+
         // Optimistic update
         const updatedList = [...wishlist, productId];
         setWishlist(updatedList);
 
-        const token = localStorage.getItem('customer_token');
-
-        if (token) {
-            // Server Sync
-            try {
-                const API_URL = getApiUrl();
-                await fetch(`${API_URL}/api/wishlist`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ product_id: productId })
-                });
-            } catch (e) {
-                console.error('Add to remote wishlist failed', e);
-                // Revert if failed? keeping simple for now
-            }
-        } else {
-            // Local Storage
-            localStorage.setItem('wishlist', JSON.stringify(updatedList));
+        try {
+            const API_URL = getApiUrl();
+            await fetch(`${API_URL}/api/wishlist`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ product_id: productId })
+            });
+        } catch (e) {
+            console.error('Add to remote wishlist failed', e);
         }
+        return true;
     };
 
     const removeFromWishlist = async (productId) => {
+        const token = localStorage.getItem('customer_token');
+        if (!token) {
+            router.push('/login?next=/wishlist');
+            return;
+        }
+
         const updatedList = wishlist.filter(id => id !== productId);
         setWishlist(updatedList);
 
-        const token = localStorage.getItem('customer_token');
-
-        if (token) {
-            try {
-                const API_URL = getApiUrl();
-                await fetch(`${API_URL}/api/wishlist/${productId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-            } catch (e) {
-                console.error('Remove from remote wishlist failed', e);
-            }
-        } else {
-            localStorage.setItem('wishlist', JSON.stringify(updatedList));
+        try {
+            const API_URL = getApiUrl();
+            await fetch(`${API_URL}/api/wishlist/${productId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (e) {
+            console.error('Remove from remote wishlist failed', e);
         }
     };
 

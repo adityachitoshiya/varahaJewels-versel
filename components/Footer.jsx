@@ -192,6 +192,7 @@ export default function Footer() {
                   width={200}
                   height={70}
                   className="h-16 w-auto brightness-[2] group-hover:brightness-[2.5] transition-all duration-300"
+                  onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
                 />
                 <div className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-copper via-royal-orange to-copper transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
               </div>

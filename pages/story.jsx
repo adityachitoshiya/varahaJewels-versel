@@ -36,7 +36,7 @@ export default function Story() {
                             <div className="relative">
                                 <div className="aspect-[4/3] rounded-sm overflow-hidden shadow-2xl">
                                     <Image
-                                        src="/varaha-assets/dp1.avif"
+                                        src="https://res.cloudinary.com/du0s3mpmh/image/upload/v1772188293/ciplx_images/gsdvrsi0oer5o6pjsxm6.webp"
                                         alt="Varaha Jewels Heritage"
                                         width={800}
                                         height={600}
@@ -77,22 +77,22 @@ export default function Story() {
                         <div className="space-y-8">
                             {[
                                 {
-                                    year: '1995',
+                                    year: '2018',
                                     title: 'The Foundation',
                                     description: 'Varaha Jewels was established in Jaipur with a vision to preserve traditional jewelry-making techniques.'
                                 },
                                 {
-                                    year: '2005',
+                                    year: '2021',
                                     title: 'Expanding Horizons',
                                     description: 'Opened our first flagship showroom and introduced contemporary designs while maintaining heritage aesthetics.'
                                 },
                                 {
-                                    year: '2015',
+                                    year: '2023',
                                     title: 'Digital Transformation',
                                     description: 'Launched our online platform, making authentic heritage jewelry accessible across India.'
                                 },
                                 {
-                                    year: '2020',
+                                    year: '2024',
                                     title: 'Sustainability Initiative',
                                     description: 'Committed to ethical sourcing and sustainable practices in jewelry production.'
                                 },

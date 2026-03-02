@@ -21,6 +21,7 @@ export default function GeoBlocked() {
                             width={180}
                             height={60}
                             className="mx-auto"
+                            onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
                         />
                     </div>
 

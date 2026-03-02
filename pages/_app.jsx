@@ -76,7 +76,7 @@ function MyApp({ Component, pageProps }) {
       <>
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
-          <link rel="icon" href="/apple-touch-icon.png" />
+          <link rel="icon" href="/favicon-circle.png" />
         </Head>
         <Component {...pageProps} />
       </>
@@ -90,7 +90,7 @@ function MyApp({ Component, pageProps }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#F4E6D8" />
-        <link rel="icon" href="/apple-touch-icon.png" />
+        <link rel="icon" href="/favicon-circle.png" />
         <link rel="canonical" href={`https://www.varahajewels.in${router.asPath === '/' ? '' : router.asPath.split('?')[0]}`} />
       </Head>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import { Heart, X, ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -10,11 +11,20 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 
 export default function Wishlist() {
+  const router = useRouter();
   const { wishlist, removeFromWishlist: contextRemoveItem } = useWishlist();
   const [products, setProducts] = useState([]);
   const [enrichedWishlist, setEnrichedWishlist] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { addToCart } = useCart();
+
+  // 🔒 Redirect to login if not authenticated
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
+    if (!token) {
+      router.replace('/login?next=/wishlist');
+    }
+  }, []);
 
   // Load products on mount
   useEffect(() => {

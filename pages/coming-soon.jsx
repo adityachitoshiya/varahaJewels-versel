@@ -67,6 +67,7 @@ export default function ComingSoon() {
               width={200}
               height={70}
               className="h-12 sm:h-16 w-auto"
+              onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
             />
           </div>
 

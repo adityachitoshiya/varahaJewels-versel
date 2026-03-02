@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // Optimize compilation and reduce recompilation
-    reactStrictMode: false, // Disable strict mode to prevent double rendering in dev
-    swcMinify: true, // Use SWC for faster minification
+    reactStrictMode: false,
+    swcMinify: true,
 
     // Performance optimizations
     compiler: {
@@ -22,7 +22,6 @@ const nextConfig = {
     },
 
     images: {
-        // Optimize image loading
         unoptimized: false,
         formats: ['image/avif', 'image/webp'],
         minimumCacheTTL: 60 * 60 * 24 * 30, // Cache images for 30 days

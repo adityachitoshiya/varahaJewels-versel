@@ -145,6 +145,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 height={50}
                 className="h-8 sm:h-10 w-auto transition-transform duration-300 group-hover:scale-105"
                 priority
+                onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
               />
               <span className="text-[8px] sm:text-[9px] text-heritage/60 font-light tracking-[0.12em] sm:tracking-[0.15em] mt-0.5 italic whitespace-nowrap">
                 Where heritage meets royalty

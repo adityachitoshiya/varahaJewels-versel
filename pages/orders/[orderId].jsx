@@ -116,7 +116,10 @@ export default function OrderDetails() {
     const fetchOrderDetails = async () => {
         try {
             const API_URL = getApiUrl();
-            const response = await fetch(`${API_URL}/api/orders/${orderId}`);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
+            const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
             if (response.ok) {
                 const data = await response.json();
 
@@ -153,7 +156,10 @@ export default function OrderDetails() {
         setRefreshing(true);
         try {
             const API_URL = getApiUrl();
-            const res = await fetch(`${API_URL}/api/orders/${orderId}/refresh-tracking`);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
+            const res = await fetch(`${API_URL}/api/orders/${orderId}/refresh-tracking`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
             if (res.ok) {
                 // Refetch order to get updated tracking
                 await fetchOrderDetails();

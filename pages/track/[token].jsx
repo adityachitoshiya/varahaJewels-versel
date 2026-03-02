@@ -114,6 +114,7 @@ export default function TrackOrder() {
                             width={120}
                             height={40}
                             className="h-8 w-auto"
+                            onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
                         />
                     </div>
 
