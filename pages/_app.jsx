@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { getApiUrl } from '../lib/config';
 import dynamic from 'next/dynamic';
@@ -24,6 +24,19 @@ function MyApp({ Component, pageProps }) {
   const isAdmin = router.pathname.startsWith('/admin');
   const isCiplx = router.pathname === '/ciplx';
   const isHeritage = router.pathname === '/heritage';
+
+  const [faviconUrl, setFaviconUrl] = useState('/favicon-circle.png');
+
+  // Fetch favicon from store settings once
+  useEffect(() => {
+    const API_URL = getApiUrl();
+    fetch(`${API_URL}/api/settings`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.favicon_url) setFaviconUrl(data.favicon_url);
+      })
+      .catch(() => {});
+  }, []);
 
   // Initialize Microsoft Clarity (only in production, client-side)
   useEffect(() => {
@@ -89,7 +102,7 @@ function MyApp({ Component, pageProps }) {
       <>
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
-          <link rel="icon" href="/favicon-circle.png" />
+          <link rel="icon" href={faviconUrl} />
         </Head>
         <Component {...pageProps} />
       </>
@@ -105,7 +118,9 @@ function MyApp({ Component, pageProps }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#F4E6D8" />
-        <link rel="icon" href="/favicon-circle.png" />
+        <link rel="icon" href={faviconUrl} />
+        <link rel="apple-touch-icon" href={faviconUrl} />
+        <link rel="shortcut icon" href={faviconUrl} />
         <link rel="canonical" href={`https://www.varahajewels.in${router.asPath === '/' ? '' : router.asPath.split('?')[0]}`} />
       </Head>
 

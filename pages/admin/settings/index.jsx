@@ -20,7 +20,8 @@ export default function Settings() {
         show_announcement: true,
         announcement_bar_json: '[]',
         delivery_free_threshold: 1000.0,
-        logo_url: "/varaha-assets/logo.png"
+        logo_url: "/varaha-assets/logo.png",
+        favicon_url: "/favicon-circle.png"
     });
 
     // Payment Gateway State
@@ -293,6 +294,29 @@ export default function Settings() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
                                 <input value={settings.logo_url} onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })} className="w-full p-2 border rounded-lg" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Favicon</label>
+                                <p className="text-xs text-gray-500 mb-2">Square image recommended (PNG/ICO, min 32×32px)</p>
+                                <div className="flex items-center gap-4">
+                                    {settings.favicon_url && (
+                                        <img src={settings.favicon_url} alt="favicon preview" className="w-10 h-10 rounded border object-contain bg-gray-50" />
+                                    )}
+                                    <div className="flex-1">
+                                        <MediaUpload
+                                            key={`favicon-${settings.favicon_url || 'empty'}`}
+                                            label="Upload Favicon"
+                                            initialMedia={settings.favicon_url || ''}
+                                            onUpload={(url) => setSettings({ ...settings, favicon_url: url })}
+                                        />
+                                    </div>
+                                </div>
+                                <input
+                                    value={settings.favicon_url || ''}
+                                    onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
+                                    className="w-full p-2 border rounded-lg mt-2 text-sm"
+                                    placeholder="Or paste image URL directly"
+                                />
                             </div>
                         </div>
                     </div>
