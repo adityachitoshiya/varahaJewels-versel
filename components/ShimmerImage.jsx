@@ -36,7 +36,7 @@ const ShimmerImage = forwardRef(({ src, alt, className, priority = false, ...pro
                     ref={ref}
                     src={src}
                     alt={alt}
-                    className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+                    className={`w-full h-full object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
                     onLoad={(e) => {
                         setIsLoading(false);
                         if (props.onLoad) props.onLoad(e);

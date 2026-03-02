@@ -2,7 +2,7 @@ import { Heart, ShoppingBag, CreditCard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function StickyBuyBar({ variant, onAddToCart, onBuyNow }) {
+export default function StickyBuyBar({ variant, onAddToCart, onBuyNow, hidden = false }) {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -77,7 +77,7 @@ export default function StickyBuyBar({ variant, onAddToCart, onBuyNow }) {
   );
 
   // Use Portal to render outside of any potential overflow/transform parents
-  if (!mounted) return null;
+  if (!mounted || hidden) return null;
 
   return (
     <>

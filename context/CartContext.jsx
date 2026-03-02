@@ -203,7 +203,7 @@ export function CartProvider({ children }) {
         }
     };
 
-    const addToCart = async (product, variant, quantity) => {
+    const addToCart = async (product, variant, quantity, { silent = false } = {}) => {
         // 1. Optimistic Update
         const newItem = {
             productId: product.id,
@@ -225,12 +225,14 @@ export function CartProvider({ children }) {
             return [...prev, newItem];
         });
 
-        // Show Notification
-        showNotification('cart', {
-            name: product.name,
-            image: variant.image || product.images?.[0]?.url,
-            price: variant.price
-        }, 'Added to Bag');
+        // Show Notification (suppressed from product detail page)
+        if (!silent) {
+            showNotification('cart', {
+                name: product.name,
+                image: variant.image || product.images?.[0]?.url,
+                price: variant.price
+            }, 'Added to Bag');
+        }
 
         // 2. Server Update (if logged in)
         if (token) {

@@ -201,7 +201,7 @@ export default function NewArrivals({ initialProducts = [] }) {
                     >
                         <Minus size={16} />
                     </button>
-                    <span className="flex-1 text-center font-bold text-heritage text-lg">
+                    <span className="flex-1 text-center font-bold text-heritage text-lg bg-white">
                         {cartItem.quantity}
                     </span>
                     <button

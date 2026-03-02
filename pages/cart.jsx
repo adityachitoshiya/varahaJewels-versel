@@ -242,7 +242,7 @@ export default function Cart() {
                                 >
                                   <Minus size={16} className={isOutOfStock ? 'text-gray-400' : 'text-copper'} />
                                 </button>
-                                <span className={`px-4 sm:px-6 py-2 font-semibold min-w-[50px] sm:min-w-[60px] text-center text-sm sm:text-base ${isOutOfStock ? 'text-gray-400' : 'text-heritage'}`}>
+                                <span className={`px-4 sm:px-6 py-2 font-semibold min-w-[50px] sm:min-w-[60px] text-center text-sm sm:text-base bg-white ${isOutOfStock ? 'text-gray-400' : 'text-heritage'}`}>
                                   {item.quantity}
                                 </span>
                                 <button

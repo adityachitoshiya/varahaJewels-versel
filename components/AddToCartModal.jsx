@@ -133,7 +133,7 @@ export default function AddToCartModal({
                         >
                           <Minus size={16} />
                         </button>
-                        <span className="w-8 text-center text-sm font-semibold text-heritage">{item.quantity}</span>
+                        <span className="w-8 text-center text-sm font-semibold text-heritage bg-white">{item.quantity}</span>
                         <button
                           onClick={() => onUpdateQuantity(item.variant.sku, item.quantity + 1)}
                           className="w-9 h-9 flex items-center justify-center text-heritage hover:bg-white hover:shadow-sm rounded-r-lg transition active:scale-95"

@@ -200,7 +200,7 @@ export default function ProductCard({ product, onQuickLook }) {
                       >
                         <Minus size={14} />
                       </button>
-                      <span className="flex-1 text-center font-bold text-heritage text-sm">{cartItem.quantity}</span>
+                      <span className="flex-1 text-center font-bold text-heritage text-sm bg-white">{cartItem.quantity}</span>
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -310,7 +310,7 @@ export default function ProductCard({ product, onQuickLook }) {
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="flex-1 text-center font-bold text-heritage text-sm">{cartItem.quantity}</span>
+                    <span className="flex-1 text-center font-bold text-heritage text-sm bg-white">{cartItem.quantity}</span>
                     <button
                       onClick={(e) => {
                         e.preventDefault();

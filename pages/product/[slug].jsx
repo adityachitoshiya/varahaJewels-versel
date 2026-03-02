@@ -206,7 +206,7 @@ export default function ProductPage() {
 
   // Add to Cart Handler
   const handleAddToCart = (variant, quantity) => {
-    addToCart(product, variant, quantity);
+    addToCart(product, variant, quantity, { silent: true });
     setIsCartModalOpen(true);
   };
 
@@ -381,6 +381,7 @@ export default function ProductPage() {
           variant={product.variants[0]}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
+          hidden={isCartModalOpen}
         />
 
         {/* Footer */}

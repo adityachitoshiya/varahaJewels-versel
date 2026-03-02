@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { getApiUrl } from '../lib/config';
 import dynamic from 'next/dynamic';
-import '../lib/firebase'; // Initialize Firebase (for Phone OTP)
+// Lazy load Firebase - only needed for Phone OTP (not critical path)
+if (typeof window !== 'undefined') {
+  import('../lib/firebase').catch(() => {});
+}
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import '../styles/globals.css';
 import DeliveryBar from '../components/DeliveryBar';
@@ -12,7 +15,6 @@ import { NotificationProvider } from '../context/NotificationContext';
 import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { WishlistProvider } from '../context/WishlistContext';
-import clarity from '@microsoft/clarity';
 
 const CookieConsent = dynamic(() => import('../components/CookieConsent'), { ssr: false });
 
@@ -38,10 +40,16 @@ function MyApp({ Component, pageProps }) {
       .catch(() => {});
   }, []);
 
-  // Initialize Microsoft Clarity (only in production, client-side)
+  // Initialize Microsoft Clarity (only in production, client-side) - Delayed for LCP
   useEffect(() => {
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
-      clarity.init(CLARITY_PROJECT_ID);
+      // Delay Clarity init to not block main thread during initial paint
+      const timer = setTimeout(() => {
+        import('@microsoft/clarity').then(({ default: clarity }) => {
+          clarity.init(CLARITY_PROJECT_ID);
+        }).catch(() => {});
+      }, 3000);
+      return () => clearTimeout(timer);
     }
   }, []);
 

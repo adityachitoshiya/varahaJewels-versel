@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
 import dynamic from 'next/dynamic';
-const HeroSection = dynamic(() => import('../components/homepage/HeroSection'));
+import HeroSection from '../components/homepage/HeroSection';
 // Lazy load below-fold components
 const FeaturedCollections = dynamic(() => import('../components/homepage/FeaturedCollections'), {
   loading: () => <div className="h-96 w-full bg-warm-sand/20 animate-pulse rounded-sm" />
@@ -85,7 +85,7 @@ export default function Home({ heroSlides, initialSettings }) {
       setIsLoading(false);
     } else {
       const startTime = Date.now();
-      const MIN_LOADER_TIME = 800; // Reduced from 2000ms/1500ms to 800ms for better UX/LCP
+      const MIN_LOADER_TIME = 300; // Reduced to 300ms for better LCP
 
       const elapsed = Date.now() - startTime;
       const remainingTime = Math.max(0, MIN_LOADER_TIME - elapsed);
