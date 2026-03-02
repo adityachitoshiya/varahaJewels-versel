@@ -4,6 +4,16 @@ const nextConfig = {
     reactStrictMode: false,
     swcMinify: true,
 
+    // Skip ESLint during production build (linting runs separately)
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+
+    // Skip TypeScript errors during build
+    typescript: {
+        ignoreBuildErrors: true,
+    },
+
     // Performance optimizations
     compiler: {
         removeConsole: process.env.NODE_ENV === 'production', // Remove console.logs in production

@@ -37,9 +37,9 @@ const ShimmerImage = forwardRef(({ src, alt, className, priority = false, ...pro
                     src={src}
                     alt={alt}
                     className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-                    onLoadingComplete={(img) => {
+                    onLoad={(e) => {
                         setIsLoading(false);
-                        if (props.onLoadingComplete) props.onLoadingComplete(img);
+                        if (props.onLoad) props.onLoad(e);
                     }}
                     priority={priority}
                     fill // Default to fill, can be overridden by className sizing
