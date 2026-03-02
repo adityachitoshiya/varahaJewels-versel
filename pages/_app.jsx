@@ -11,7 +11,6 @@ import { CartProvider } from '../context/CartContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
-import { Analytics } from "@vercel/analytics/react";
 import { WishlistProvider } from '../context/WishlistContext';
 import clarity from '@microsoft/clarity';
 
@@ -118,7 +117,6 @@ function MyApp({ Component, pageProps }) {
 
             {/* Main Content with Transition */}
             <Component {...pageProps} />
-            <SpeedInsights />
 
             <CookieConsent />
 
