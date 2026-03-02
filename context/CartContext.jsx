@@ -25,7 +25,15 @@ export function CartProvider({ children }) {
             localStorage.setItem('cart_version', CART_VERSION);
         }
 
-        // 1. Load Local Cart immediately with VALIDATION
+        // 1. Load Local Cart immediately with VALIDATION + EXPIRY CHECK (6 hours)
+        const CART_EXPIRY_MS = 6 * 60 * 60 * 1000; // 6 hours
+        const cartSavedAt = localStorage.getItem('cart_saved_at');
+        if (cartSavedAt && Date.now() - parseInt(cartSavedAt, 10) > CART_EXPIRY_MS) {
+            console.log('🕐 Cart expired (6h), clearing...');
+            localStorage.removeItem('cart');
+            localStorage.removeItem('cart_saved_at');
+        }
+
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
             try {
@@ -106,6 +114,14 @@ export function CartProvider({ children }) {
     useEffect(() => {
         if (!loading && !token) {
             localStorage.setItem('cart', JSON.stringify(cartItems));
+            // Save timestamp for 6-hour expiry check
+            if (cartItems.length > 0) {
+                if (!localStorage.getItem('cart_saved_at')) {
+                    localStorage.setItem('cart_saved_at', String(Date.now()));
+                }
+            } else {
+                localStorage.removeItem('cart_saved_at');
+            }
         }
         // Always dispatch event for Header cart count (works for both guest & logged in)
         if (!loading) {
@@ -161,6 +177,7 @@ export function CartProvider({ children }) {
                     // CLEAR localStorage — DB is now the truth
                     initialCartRef.current = [];
                     localStorage.removeItem('cart');
+                    localStorage.removeItem('cart_saved_at');
                 }
             } else {
                 // No guest items — just fetch from DB (source of truth)
@@ -176,6 +193,7 @@ export function CartProvider({ children }) {
 
                     // Ensure localStorage is clean
                     localStorage.removeItem('cart');
+                    localStorage.removeItem('cart_saved_at');
                 }
             }
         } catch (err) {
@@ -320,7 +338,10 @@ export function CartProvider({ children }) {
 
     const clearCart = async () => {
         setCartItems([]);
-        if (localStorage) localStorage.removeItem('cart');
+        if (localStorage) {
+            localStorage.removeItem('cart');
+            localStorage.removeItem('cart_saved_at');
+        }
 
         // Also clear server-side cart if logged in
         if (token) {

@@ -71,6 +71,17 @@ function MyApp({ Component, pageProps }) {
     // Subscribe to route changes
     router.events.on('routeChangeComplete', trackVisit);
 
+    // --- Stale Build ID Fix ---
+    // After a new Vercel/Render deployment, the build ID changes.
+    // Old clients trying to fetch /_next/data/{oldBuildId}/page.json get 404.
+    // Hard-navigate to the target URL so the new build loads cleanly.
+    const handleRouteChangeError = (err, url) => {
+      if (!err.cancelled) {
+        window.location.href = url;
+      }
+    };
+    router.events.on('routeChangeError', handleRouteChangeError);
+
     // --- Global Error Logging ---
     const handleError = (event) => {
       // Avoid loops
@@ -92,6 +103,7 @@ function MyApp({ Component, pageProps }) {
 
     return () => {
       router.events.off('routeChangeComplete', trackVisit);
+      router.events.off('routeChangeError', handleRouteChangeError);
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleError);
     };
@@ -133,7 +145,8 @@ function MyApp({ Component, pageProps }) {
             {/* Main Content with Transition */}
             <Component {...pageProps} />
 
-            <CookieConsent />
+            {/* Cookie Consent — only on Homepage */}
+            {isHomePage && <CookieConsent />}
 
             {/* Mobile Bottom Nav - Hidden on Product, Checkout, Ciplx & Heritage Pages */}
             {!router.pathname.startsWith('/product/') && router.pathname !== '/checkout' && !isCiplx && !isHeritage && (

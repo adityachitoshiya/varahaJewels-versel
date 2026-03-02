@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiUrl } from '../../lib/config';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
@@ -204,22 +204,35 @@ export default function ContentManagement() {
         }
     };
 
-    const handleSettingsUpdate = async (newSettings) => {
-        try {
-            const API_URL = getApiUrl();
-            const res = await fetch(`${API_URL}/api/settings`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...settings, ...newSettings })
-            });
+    const debounceTimer = useRef(null);
+    const pendingSettingsRef = useRef(null);
 
-            if (res.ok) {
-                setSettings(await res.json());
+    const handleSettingsUpdate = useCallback((newSettings) => {
+        // 1. Immediately update local state — UI stays responsive
+        setSettings(prev => {
+            const merged = { ...prev, ...newSettings };
+            pendingSettingsRef.current = merged;
+            return merged;
+        });
+
+        // 2. Debounce API call — fire only after 600ms of no more changes
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        debounceTimer.current = setTimeout(async () => {
+            try {
+                const API_URL = getApiUrl();
+                const res = await fetch(`${API_URL}/api/settings`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pendingSettingsRef.current)
+                });
+                if (!res.ok) {
+                    console.error('Settings save failed:', res.status);
+                }
+            } catch (error) {
+                console.error("Settings update error:", error);
             }
-        } catch (error) {
-            console.error("Update error:", error);
-        }
-    };
+        }, 600);
+    }, []);
 
     return (
         <AdminLayout>
