@@ -470,7 +470,9 @@ export async function getStaticProps() {
   try {
     const API_URL = getApiUrl();
     // Fetch all products for initial static generation
-    const res = await fetch(`${API_URL}/api/products`);
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${API_URL}/api/products`, { signal: controller.signal });
 
     let initialProducts = [];
     if (res.ok) {

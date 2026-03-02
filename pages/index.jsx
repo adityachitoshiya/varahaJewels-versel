@@ -316,10 +316,15 @@ export async function getStaticProps() {
   let initialSettings = null;
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
     const [heroRes, settingsRes] = await Promise.allSettled([
-      fetch(`${API_URL}/api/content/hero`, { headers: getAuthHeaders() }),
-      fetch(`${API_URL}/api/settings`, { headers: getAuthHeaders() })
+      fetch(`${API_URL}/api/content/hero`, { headers: getAuthHeaders(), signal: controller.signal }),
+      fetch(`${API_URL}/api/settings`, { headers: getAuthHeaders(), signal: controller.signal })
     ]);
+
+    clearTimeout(timeout);
 
     if (heroRes.status === 'fulfilled' && heroRes.value.ok) {
       heroSlides = await heroRes.value.json();

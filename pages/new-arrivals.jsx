@@ -421,7 +421,9 @@ export async function getStaticProps() {
         const API_URL = getApiUrl();
         // Fetch all products (sorted by newest by default via logic or just fetch all and let client sort)
         // Ideally we pass ?sort=newest from backend
-        const res = await fetch(`${API_URL}/api/products?sort=newest`);
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(`${API_URL}/api/products?sort=newest`, { signal: controller.signal });
 
         let initialProducts = [];
         if (res.ok) {
