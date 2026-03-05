@@ -261,7 +261,41 @@ export default function Reports() {
                         </span>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    {/* Mobile Cards */}
+                    <div className="block md:hidden divide-y divide-gray-100">
+                        {loading ? (
+                            <div className="p-8 text-center flex flex-col items-center gap-3">
+                                <RefreshCw size={24} className="animate-spin text-copper" />
+                                <span className="text-sm text-gray-500">Loading Report Data...</span>
+                            </div>
+                        ) : reportData.length === 0 ? (
+                            <div className="p-8 text-center text-gray-400">No orders found for the selected criteria.</div>
+                        ) : reportData.map((row) => (
+                            <div key={row.order_id} className="p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                        <p className="font-semibold text-gray-900 text-sm">{row.order_id}</p>
+                                        <p className="text-xs text-gray-400">{row.date}</p>
+                                    </div>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold capitalize ${row.status === 'paid' || row.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : row.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                                        {row.status}
+                                    </span>
+                                </div>
+                                <p className="text-sm font-medium text-gray-800">{row.customer}</p>
+                                <p className="text-xs text-gray-400 truncate">{row.email}</p>
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+                                    <div className="text-xs text-gray-500">
+                                        <span>{row.state || 'N/A'}</span>
+                                        <span className="mx-2">·</span>
+                                        <span>GST ₹{(row.cgst + row.sgst + row.igst).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <p className="font-bold text-gray-900 text-sm">₹{row.gross_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-50 text-gray-500 text-xs font-bold uppercase tracking-wider border-b border-gray-200">

@@ -139,62 +139,80 @@ export default function CategoriesAdmin() {
                     <div className="text-center py-8">Loading...</div>
                 ) : (
                     <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {categories.map((cat) => (
-                                    <tr key={cat.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap font-medium">{cat.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{cat.display_name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 rounded text-xs ${cat.gender === 'Men' ? 'bg-blue-100 text-blue-800' :
-                                                cat.gender === 'Women' ? 'bg-pink-100 text-pink-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {cat.gender || 'Both'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{cat.sort_order}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {cat.is_active ? (
-                                                <span className="flex items-center gap-1 text-green-600">
-                                                    <Eye size={16} /> Active
+                        {/* Mobile Cards */}
+                        <div className="block md:hidden divide-y divide-gray-100">
+                            {categories.map((cat) => (
+                                <div key={cat.id} className="p-4">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <p className="font-semibold text-gray-900">{cat.display_name || cat.name}</p>
+                                            <p className="text-xs text-gray-400 mt-0.5 font-mono">{cat.name}</p>
+                                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${cat.gender === 'Men' ? 'bg-blue-100 text-blue-800' : cat.gender === 'Women' ? 'bg-pink-100 text-pink-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                    {cat.gender || 'Both'}
                                                 </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1 text-gray-400">
-                                                    <EyeOff size={16} /> Inactive
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => openEditModal(cat)}
-                                                    className="text-copper hover:text-heritage"
-                                                >
-                                                    <Edit2 size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(cat.id)}
-                                                    className="text-red-500 hover:text-red-700"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <span className="text-xs text-gray-400">Order: {cat.sort_order}</span>
+                                                {cat.is_active ? (
+                                                    <span className="flex items-center gap-1 text-green-600 text-xs"><Eye size={12} /> Active</span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1 text-gray-400 text-xs"><EyeOff size={12} /> Inactive</span>
+                                                )}
                                             </div>
-                                        </td>
+                                        </div>
+                                        <div className="flex gap-2 ml-3">
+                                            <button onClick={() => openEditModal(cat)} className="p-2 hover:bg-gray-100 rounded-lg text-copper">
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button onClick={() => handleDelete(cat.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Desktop Table */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Display Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {categories.map((cat) => (
+                                        <tr key={cat.id}>
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium">{cat.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{cat.display_name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-2 py-1 rounded text-xs ${cat.gender === 'Men' ? 'bg-blue-100 text-blue-800' : cat.gender === 'Women' ? 'bg-pink-100 text-pink-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                    {cat.gender || 'Both'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{cat.sort_order}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {cat.is_active ? (
+                                                    <span className="flex items-center gap-1 text-green-600"><Eye size={16} /> Active</span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1 text-gray-400"><EyeOff size={16} /> Inactive</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => openEditModal(cat)} className="text-copper hover:text-heritage"><Edit2 size={18} /></button>
+                                                    <button onClick={() => handleDelete(cat.id)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
 

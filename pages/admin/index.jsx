@@ -135,10 +135,10 @@ export default function AdminDashboard() {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50/50">
                                 <tr>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Amount</th>
+                                    <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
+                                    <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Customer</th>
+                                    <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Amount</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -149,12 +149,13 @@ export default function AdminDashboard() {
                                 ) : (
                                     recentOrders.map(order => (
                                         <tr key={order.id} className="hover:bg-gray-50/80 transition-colors group cursor-pointer">
-                                            <td className="px-6 py-4">
-                                                <span className="font-mono text-sm font-medium text-gray-900 group-hover:text-copper transition-colors">
+                                            <td className="px-4 md:px-6 py-4">
+                                                <span className="font-mono text-sm font-medium text-gray-900 group-hover:text-copper transition-colors block truncate max-w-[100px]">
                                                     {order.order_id || `#${order.id}`}
                                                 </span>
+                                                <span className="text-xs text-gray-400 sm:hidden">{order.customer_name}</span>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 md:px-6 py-4 hidden sm:table-cell">
                                                 <div className="flex items-center">
                                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 mr-3">
                                                         {order.customer_name?.charAt(0).toUpperCase()}
@@ -165,8 +166,8 @@ export default function AdminDashboard() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                            <td className="px-4 md:px-6 py-4">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${order.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
                                                     order.status === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
                                                         'bg-gray-50 text-gray-700 border border-gray-200'
                                                     }`}>
@@ -177,10 +178,8 @@ export default function AdminDashboard() {
                                                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <span className="text-sm font-bold text-gray-900">
-                                                    ₹{order.total_amount?.toLocaleString() || 0}
-                                                </span>
+                                            <td className="px-4 md:px-6 py-4 text-right">
+                                                <span className="text-sm font-bold text-gray-900">₹{order.total_amount?.toLocaleString() || 0}</span>
                                             </td>
                                         </tr>
                                     ))

@@ -81,7 +81,39 @@ export default function Customers() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile Cards */}
+                <div className="block md:hidden divide-y divide-gray-100">
+                    {isLoading ? (
+                        <div className="p-6 text-center text-gray-500">Loading customers...</div>
+                    ) : filteredCustomers.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">No customers found</div>
+                    ) : (
+                        filteredCustomers.map((customer) => (
+                            <div key={customer.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="h-10 w-10 rounded-full bg-copper/10 text-copper flex items-center justify-center font-bold flex-shrink-0">
+                                        {customer.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-gray-900 truncate">{customer.name}</p>
+                                        <p className="text-xs text-gray-500 truncate">{customer.email}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{customer.totalOrders} orders</span>
+                                        <p className="text-sm font-bold text-gray-900 mt-1">₹{customer.totalSpent.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 text-xs text-gray-500 pl-13">
+                                    {customer.phone && <span className="flex items-center gap-1"><Phone size={11} /> {customer.phone}</span>}
+                                    {customer.city && <span className="flex items-center gap-1"><MapPin size={11} /> {customer.city}</span>}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-gray-50">
                             <tr>
@@ -94,50 +126,27 @@ export default function Customers() {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">Loading customers...</td>
-                                </tr>
+                                <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-500">Loading customers...</td></tr>
                             ) : filteredCustomers.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">No customers found</td>
-                                </tr>
+                                <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-500">No customers found</td></tr>
                             ) : (
                                 filteredCustomers.map((customer) => (
                                     <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">
-                                                <div className="h-10 w-10 rounded-full bg-copper/10 text-copper flex items-center justify-center font-bold mr-3">
-                                                    {customer.name.charAt(0).toUpperCase()}
-                                                </div>
+                                                <div className="h-10 w-10 rounded-full bg-copper/10 text-copper flex items-center justify-center font-bold mr-3">{customer.name.charAt(0).toUpperCase()}</div>
                                                 <div className="font-medium text-gray-900">{customer.name}</div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
-                                                <div className="flex items-center text-sm text-gray-500">
-                                                    <Mail size={14} className="mr-2" />
-                                                    {customer.email}
-                                                </div>
-                                                <div className="flex items-center text-sm text-gray-500">
-                                                    <Phone size={14} className="mr-2" />
-                                                    {customer.phone}
-                                                </div>
+                                                <div className="flex items-center text-sm text-gray-500"><Mail size={14} className="mr-2" />{customer.email}</div>
+                                                <div className="flex items-center text-sm text-gray-500"><Phone size={14} className="mr-2" />{customer.phone}</div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">
-                                            <div className="flex items-center">
-                                                <MapPin size={14} className="mr-2" />
-                                                {customer.city}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                {customer.totalOrders}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                                            ₹{customer.totalSpent.toLocaleString()}
-                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-500"><div className="flex items-center"><MapPin size={14} className="mr-2" />{customer.city}</div></td>
+                                        <td className="px-6 py-4 text-center"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{customer.totalOrders}</span></td>
+                                        <td className="px-6 py-4 text-sm font-bold text-gray-900">₹{customer.totalSpent.toLocaleString()}</td>
                                     </tr>
                                 ))
                             )}

@@ -184,8 +184,52 @@ export default function Orders() {
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto">
+                {/* Mobile Cards */}
+                <div className="block md:hidden divide-y divide-gray-100">
+                    {isLoading ? (
+                        <div className="p-6 text-center text-gray-500">Loading orders...</div>
+                    ) : filteredOrders.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">No orders found</div>
+                    ) : (
+                        filteredOrders.map((order) => (
+                            <div key={order.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                        <p className="font-mono text-sm font-semibold text-copper">{order.order_id}</p>
+                                        <p className="text-xs text-gray-400 mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                            {order.status}
+                                        </span>
+                                        <button onClick={() => setSelectedOrder(order)} className="p-1.5 text-gray-400 hover:text-copper transition-colors">
+                                            <Eye size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">{order.customer_name}</p>
+                                        <p className="text-xs text-gray-500">{order.email}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-gray-900">₹{order.total_amount?.toLocaleString() || 0}</p>
+                                        <div className="flex items-center justify-end mt-1">
+                                            {order.email_status === 'sent' ? (
+                                                <span className="inline-flex items-center gap-1 text-xs text-green-600"><Check size={12} strokeWidth={3} /> Mail Sent</span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 text-xs text-red-400"><X size={12} strokeWidth={3} /> Mail Pending</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-gray-50">
                             <tr>
@@ -200,52 +244,31 @@ export default function Orders() {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
-                                <tr>
-                                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">Loading orders...</td>
-                                </tr>
+                                <tr><td colSpan="7" className="px-6 py-8 text-center text-gray-500">Loading orders...</td></tr>
                             ) : filteredOrders.length === 0 ? (
-                                <tr>
-                                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">No orders found</td>
-                                </tr>
+                                <tr><td colSpan="7" className="px-6 py-8 text-center text-gray-500">No orders found</td></tr>
                             ) : (
                                 filteredOrders.map((order) => (
                                     <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 font-mono text-sm text-copper font-medium">
-                                            {order.order_id}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">
-                                            {new Date(order.created_at).toLocaleDateString()}
-                                        </td>
+                                        <td className="px-6 py-4 font-mono text-sm text-copper font-medium">{order.order_id}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900">{order.customer_name}</div>
                                             <div className="text-xs text-gray-500">{order.email}</div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             {order.email_status === 'sent' ? (
-                                                <div className="inline-flex items-center justify-center p-1.5 bg-green-100 text-green-600 rounded-full" title="Email Sent Successfully">
-                                                    <Check size={16} strokeWidth={3} />
-                                                </div>
+                                                <div className="inline-flex items-center justify-center p-1.5 bg-green-100 text-green-600 rounded-full" title="Email Sent Successfully"><Check size={16} strokeWidth={3} /></div>
                                             ) : (
-                                                <div className="inline-flex items-center justify-center p-1.5 bg-red-100 text-red-500 rounded-full" title={order.email_status === 'failed' ? "Email Failed" : "Email Pending"}>
-                                                    <X size={16} strokeWidth={3} />
-                                                </div>
+                                                <div className="inline-flex items-center justify-center p-1.5 bg-red-100 text-red-500 rounded-full" title={order.email_status === 'failed' ? "Email Failed" : "Email Pending"}><X size={16} strokeWidth={3} /></div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                                            ₹{order.total_amount?.toLocaleString() || 0}
-                                        </td>
+                                        <td className="px-6 py-4 text-sm font-bold text-gray-900">₹{order.total_amount?.toLocaleString() || 0}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                                                {order.status}
-                                            </span>
+                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>{order.status}</span>
                                         </td>
                                         <td className="px-6 py-4 text-right text-sm font-medium">
-                                            <button
-                                                onClick={() => setSelectedOrder(order)}
-                                                className="text-gray-400 hover:text-copper transition-colors"
-                                            >
-                                                <Eye size={20} />
-                                            </button>
+                                            <button onClick={() => setSelectedOrder(order)} className="text-gray-400 hover:text-copper transition-colors"><Eye size={20} /></button>
                                         </td>
                                     </tr>
                                 ))

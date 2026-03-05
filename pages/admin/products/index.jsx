@@ -150,8 +150,57 @@ export default function Products() {
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto">
+                {/* Mobile Cards */}
+                <div className="block md:hidden divide-y divide-gray-100">
+                    {isLoading ? (
+                        <div className="p-6 text-center text-gray-500">Loading inventory...</div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">No products found</div>
+                    ) : (
+                        filteredProducts.map((product) => (
+                            <div key={product.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="h-14 w-14 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                        <img className="h-full w-full object-cover" src={product.image} alt={product.name} onError={(e) => e.target.src = '/varaha-assets/logo.png'} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-gray-900 truncate">{product.name}</p>
+                                        <p className="text-xs text-gray-500">{product.category}</p>
+                                        <p className="text-sm font-bold text-gray-900 mt-0.5">₹{product.price?.toLocaleString() || 'On Request'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        {product.category === 'Artificial' ? (
+                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-800 border border-pink-200">Artificial</span>
+                                        ) : product.premium ? (
+                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Premium</span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">Standard</span>
+                                        )}
+                                        {product.tag && (
+                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 border border-orange-200">{product.tag}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => handleToggleSpotlight(product.id)} className={`p-1.5 rounded-full transition-all duration-200 ${product.is_spotlight ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:text-amber-400'}`} title={product.is_spotlight ? 'Remove from Spotlight' : 'Add to Spotlight'}>
+                                            <Star size={18} fill={product.is_spotlight ? 'currentColor' : 'none'} />
+                                        </button>
+                                        <Link href={`/admin/products/edit/${product.id}`} className="p-1.5 text-gray-400 hover:text-copper transition-colors">
+                                            <Edit size={18} />
+                                        </Link>
+                                        <button onClick={() => handleDelete(product.id)} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-gray-50">
                             <tr>
@@ -165,25 +214,16 @@ export default function Products() {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
-                                <tr>
-                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">Loading inventory...</td>
-                                </tr>
+                                <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-500">Loading inventory...</td></tr>
                             ) : filteredProducts.length === 0 ? (
-                                <tr>
-                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">No products found</td>
-                                </tr>
+                                <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-500">No products found</td></tr>
                             ) : (
                                 filteredProducts.map((product) => (
                                     <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-3">
                                             <div className="flex items-center">
                                                 <div className="h-12 w-12 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden mr-4 border border-gray-200">
-                                                    <img
-                                                        className="h-full w-full object-cover"
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        onError={(e) => e.target.src = '/varaha-assets/logo.png'}
-                                                    />
+                                                    <img className="h-full w-full object-cover" src={product.image} alt={product.name} onError={(e) => e.target.src = '/varaha-assets/logo.png'} />
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-gray-900">{product.name}</div>
@@ -197,49 +237,28 @@ export default function Products() {
                                                 <span className="block text-xs">Purity: <span className="text-gray-700">{product.carat || 'N/A'}</span></span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-3 text-sm font-bold text-gray-900">
-                                            ₹{product.price?.toLocaleString() || 'On Request'}
-                                        </td>
+                                        <td className="px-6 py-3 text-sm font-bold text-gray-900">₹{product.price?.toLocaleString() || 'On Request'}</td>
                                         <td className="px-6 py-3">
                                             {product.category === 'Artificial' ? (
-                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-pink-100 text-pink-800 border border-pink-200">
-                                                    Artificial
-                                                </span>
+                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-pink-100 text-pink-800 border border-pink-200">Artificial</span>
                                             ) : product.premium ? (
-                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">
-                                                    Premium
-                                                </span>
+                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Premium</span>
                                             ) : (
-                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">
-                                                    Standard
-                                                </span>
+                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">Standard</span>
                                             )}
                                             {product.tag && (
-                                                <span className="ml-2 px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-orange-100 text-orange-800 border border-orange-200">
-                                                    {product.tag}
-                                                </span>
+                                                <span className="ml-2 px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-orange-100 text-orange-800 border border-orange-200">{product.tag}</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-3 text-center">
-                                            <button
-                                                onClick={() => handleToggleSpotlight(product.id)}
-                                                className={`p-1.5 rounded-full transition-all duration-200 ${product.is_spotlight ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-gray-300 hover:text-amber-400 hover:bg-gray-50'}`}
-                                                title={product.is_spotlight ? 'Remove from Spotlight' : 'Add to Spotlight'}
-                                            >
+                                            <button onClick={() => handleToggleSpotlight(product.id)} className={`p-1.5 rounded-full transition-all duration-200 ${product.is_spotlight ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-gray-300 hover:text-amber-400 hover:bg-gray-50'}`} title={product.is_spotlight ? 'Remove from Spotlight' : 'Add to Spotlight'}>
                                                 <Star size={20} fill={product.is_spotlight ? 'currentColor' : 'none'} />
                                             </button>
                                         </td>
                                         <td className="px-6 py-3 text-right text-sm font-medium">
                                             <div className="flex items-center justify-end gap-2">
-                                                <Link href={`/admin/products/edit/${product.id}`} className="p-1 text-gray-400 hover:text-copper transition-colors">
-                                                    <Edit size={18} />
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(product.id)}
-                                                    className="p-1 text-gray-400 hover:text-red-600 transition-colors text-trash"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <Link href={`/admin/products/edit/${product.id}`} className="p-1 text-gray-400 hover:text-copper transition-colors"><Edit size={18} /></Link>
+                                                <button onClick={() => handleDelete(product.id)} className="p-1 text-gray-400 hover:text-red-600 transition-colors text-trash"><Trash2 size={18} /></button>
                                             </div>
                                         </td>
                                     </tr>
