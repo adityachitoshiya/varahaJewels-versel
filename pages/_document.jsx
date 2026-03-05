@@ -62,8 +62,7 @@ export default function Document() {
         {/* Preload Hero Image for LCP */}
         <link rel="preload" as="image" href="/varaha-assets/heroimage.avif" type="image/avif" />
 
-        {/* Canonical URL */}
-        <link rel="canonical" href="https://varahajewels.vercel.app" />
+        {/* Canonical URL handled per-page in _app.jsx */}
       </Head>
       <body className="antialiased">
         {/* Responsive viewport handled in individual pages */}

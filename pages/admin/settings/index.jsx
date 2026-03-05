@@ -250,28 +250,28 @@ export default function Settings() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-4 mb-8 border-b border-gray-200">
+            <div className="flex gap-1 md:gap-4 mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hide -mx-4 md:mx-0 px-4 md:px-0">
                 <button
                     onClick={() => setActiveTab('general')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'general' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'general' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     General
                 </button>
                 <button
                     onClick={() => setActiveTab('payment')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'payment' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'payment' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Payment Gateways
                 </button>
                 <button
                     onClick={() => setActiveTab('delivery')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'delivery' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'delivery' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Flash Delivery
                 </button>
                 <button
                     onClick={() => setActiveTab('geoblocking')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'geoblocking' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'geoblocking' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Geo-Blocking
                 </button>

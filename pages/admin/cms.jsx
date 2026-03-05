@@ -246,46 +246,46 @@ export default function ContentManagement() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-4 mb-8 border-b border-gray-200">
+            <div className="flex gap-1 md:gap-4 mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hide -mx-4 md:mx-0 px-4 md:px-0">
                 <button
                     onClick={() => setActiveTab('hero')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'hero' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'hero' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Hero Slider
                 </button>
                 <button
                     onClick={() => setActiveTab('creators')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'creators' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'creators' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Influencer Videos
                 </button>
                 <button
                     onClick={() => setActiveTab('settings')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'settings' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'settings' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Display Settings
                 </button>
                 <button
                     onClick={() => setActiveTab('metal-rates')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'metal-rates' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'metal-rates' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Metal Rates
                 </button>
                 <button
                     onClick={() => setActiveTab('ciplx')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'ciplx' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'ciplx' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Ciplx Images
                 </button>
                 <button
                     onClick={() => setActiveTab('offers')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'offers' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'offers' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Product Offers
                 </button>
                 <button
                     onClick={() => setActiveTab('collections')}
-                    className={`pb-4 px-4 font-medium transition-colors relative ${activeTab === 'collections' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`pb-4 px-3 md:px-4 font-medium transition-colors relative whitespace-nowrap flex-shrink-0 text-sm md:text-base ${activeTab === 'collections' ? 'text-copper border-b-2 border-copper' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Collections
                 </button>

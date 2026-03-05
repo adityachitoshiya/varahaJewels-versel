@@ -159,20 +159,19 @@ export default function Home({ heroSlides, initialSettings }) {
               "url": "https://www.varahajewels.in",
               "logo": "https://www.varahajewels.in/varaha-assets/logo.png",
               "image": "https://www.varahajewels.in/varaha-assets/og.jpg",
-              "telephone": "+91-98765-43210",
-              "email": "support@varahajewels.com",
+              "telephone": "+91-99999-99999",
+              "email": "help@varahajewels.in",
               "address": {
                 "@type": "PostalAddress",
-                "streetAddress": "123 Heritage Lane, Jewelry District",
-                "addressLocality": "Mumbai",
-                "addressRegion": "Maharashtra",
-                "postalCode": "400001",
+                "addressLocality": "Jaipur",
+                "addressRegion": "Rajasthan",
+                "postalCode": "302031",
                 "addressCountry": "IN"
               },
               "geo": {
                 "@type": "GeoCoordinates",
-                "latitude": "19.0760",
-                "longitude": "72.8777"
+                "latitude": "26.9124",
+                "longitude": "75.7873"
               },
               "openingHoursSpecification": [
                 {

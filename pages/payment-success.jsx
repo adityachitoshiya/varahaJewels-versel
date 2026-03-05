@@ -273,10 +273,10 @@ export default function PaymentSuccess() {
                   </p>
                 </div>
 
-                {/* Prepaid Discount (show only when discount exists) */}
+                {/* Discount (coupon or prepaid) */}
                 {orderDetails.discountAmount > 0 && (
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-green-600 font-medium">Prepaid Discount (5%)</p>
+                    <p className="text-sm text-green-600 font-medium">Discount Applied</p>
                     <p className="text-sm font-medium text-green-600">
                       -₹{orderDetails.discountAmount.toLocaleString('en-IN')}
                     </p>

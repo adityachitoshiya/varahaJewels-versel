@@ -443,7 +443,8 @@ export default function Checkout() {
           state: formData.state,
           pincode: formData.pincode,
           isCartCheckout: true,
-          paymentMethod: 'online'
+          paymentMethod: 'online',
+          couponCode: appliedCoupon?.code || ''
         }
         : {
           productId: orderDetails.productId,
@@ -457,7 +458,8 @@ export default function Checkout() {
           city: formData.city,
           state: formData.state,
           pincode: formData.pincode,
-          paymentMethod: 'online'
+          paymentMethod: 'online',
+          couponCode: appliedCoupon?.code || ''
         };
 
       // Explicitly verify and create order in backend
@@ -566,7 +568,8 @@ export default function Checkout() {
           state: formData.state,
           pincode: formData.pincode,
           isCartCheckout: true,
-          paymentMethod: 'cod'
+          paymentMethod: 'cod',
+          couponCode: appliedCoupon?.code || ''
         }
         : {
           productId: orderDetails.productId,
@@ -580,7 +583,8 @@ export default function Checkout() {
           city: formData.city,
           state: formData.state,
           pincode: formData.pincode,
-          paymentMethod: 'cod'
+          paymentMethod: 'cod',
+          couponCode: appliedCoupon?.code || ''
         };
 
       const response = await fetch(`${API_URL}/api/create-cod-order`, {
@@ -633,7 +637,8 @@ export default function Checkout() {
           state: formData.state,
           pincode: formData.pincode,
           isCartCheckout: true,
-          paymentMethod: 'online'
+          paymentMethod: 'online',
+          couponCode: appliedCoupon?.code || ''
         }
         : {
           productId: orderDetails.productId,
@@ -647,7 +652,8 @@ export default function Checkout() {
           city: formData.city,
           state: formData.state,
           pincode: formData.pincode,
-          paymentMethod: 'online'
+          paymentMethod: 'online',
+          couponCode: appliedCoupon?.code || ''
         };
 
 
@@ -677,7 +683,7 @@ export default function Checkout() {
       }
 
       // Razorpay flow
-      if (data && data.key && data.orderId) {
+      if (data && data.key && typeof data.key === 'string' && data.key.trim() !== '' && data.key !== 'undefined' && data.orderId) {
         const options = {
           key: data.key,
           amount: data.amount,
