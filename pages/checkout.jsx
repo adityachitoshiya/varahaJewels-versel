@@ -40,6 +40,23 @@ export default function Checkout() {
     return () => setMounted(false);
   }, []);
 
+  // Fetch blocked regions on mount (for early UI feedback before backend rejects)
+  useEffect(() => {
+    const fetchBlockedRegions = async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/settings/blocked-regions`);
+        if (res.ok) {
+          const regions = await res.json();
+          const blocked = regions
+            .filter(r => r.is_blocked)
+            .map(r => r.region_name.trim().toLowerCase());
+          setBlockedStateNames(blocked);
+        }
+      } catch (e) { /* silently fail — backend will enforce anyway */ }
+    };
+    fetchBlockedRegions();
+  }, []);
+
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -58,6 +75,9 @@ export default function Checkout() {
   const [isFlashDelivery, setIsFlashDelivery] = useState(false);
   const [serviceabilityMsg, setServiceabilityMsg] = useState("");
 
+  // Blocked regions (states where delivery is not allowed)
+  const [blockedStateNames, setBlockedStateNames] = useState([]);
+
   // Pincode locality suggestions (Shopify-style autocomplete)
   const [pincodeSuggestions, setPincodeSuggestions] = useState([]);
   const [showPincodeSuggestions, setShowPincodeSuggestions] = useState(false);
@@ -69,6 +89,13 @@ export default function Checkout() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showSavedAddrs, setShowSavedAddrs] = useState(false);
+
+  // Shipping Override Settings
+  const [shippingSettings, setShippingSettings] = useState({
+    minimumPrice: 99.0,
+    shippingCharge: 50.0
+  });
+  const [shippingCharge, setShippingCharge] = useState(0);
 
   // Check if user is logged in
   // Check if user is logged in - STRICTLY check customer_token
@@ -176,6 +203,43 @@ export default function Checkout() {
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]); // Only run once when router is ready, not on every cart change
+
+  // Fetch shipping override settings
+  useEffect(() => {
+    const fetchShippingSettings = async () => {
+      try {
+        const response = await fetch(`${getApiUrl()}/api/settings`);
+        if (response.ok) {
+          const data = await response.json();
+          setShippingSettings({
+            minimumPrice: data.minimum_product_price_for_free_shipping || 99.0,
+            shippingCharge: data.mandatory_shipping_charge || 50.0
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch shipping settings:', error);
+      }
+    };
+    fetchShippingSettings();
+  }, []);
+
+  // Calculate shipping charge based on product prices
+  useEffect(() => {
+    let needsShipping = false;
+    
+    if (cartItems && cartItems.length > 0) {
+      // Check if any item's price is below threshold
+      needsShipping = cartItems.some(item => {
+        const price = item.variant?.price || 0;
+        return price < shippingSettings.minimumPrice;
+      });
+    } else if (orderDetails) {
+      // For single product checkout, check the price
+      needsShipping = orderDetails.amount < shippingSettings.minimumPrice;
+    }
+
+    setShippingCharge(needsShipping ? shippingSettings.shippingCharge : 0);
+  }, [cartItems, orderDetails, shippingSettings]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -414,7 +478,7 @@ export default function Checkout() {
   }
 
   // Calculate final amount
-  let finalAmount = totalAmount - discountAmount;
+  let finalAmount = totalAmount + shippingCharge - discountAmount;
   if (finalAmount < 0) finalAmount = 0;
 
   // Handle Razorpay Payment Success
@@ -722,6 +786,11 @@ export default function Checkout() {
       setError('Please enter a valid mobile number');
       return false;
     }
+    // Check if delivery state is blocked
+    if (blockedStateNames.length > 0 && blockedStateNames.includes(formData.state.trim().toLowerCase())) {
+      setError(`We currently do not deliver to ${formData.state.trim()}. We apologize for the inconvenience.`);
+      return false;
+    }
     setError(null);
     return true;
   };
@@ -933,6 +1002,8 @@ export default function Checkout() {
               edd={edd}
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
+              shippingCharge={shippingCharge}
+              shippingSettings={shippingSettings}
             />
           )}
 

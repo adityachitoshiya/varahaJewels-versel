@@ -21,7 +21,9 @@ const PaymentLayout = ({
     isFlashDelivery,
     edd,
     paymentMethod,
-    setPaymentMethod
+    setPaymentMethod,
+    shippingCharge = 0,
+    shippingSettings = {}
 }) => {
     const [activeTab, setActiveTab] = useState('recommended');
 
@@ -75,7 +77,7 @@ const PaymentLayout = ({
         if (discountAmount > totalAmount) discountAmount = totalAmount;
         if (discountAmount < 0) discountAmount = 0;
     }
-    let finalAmount = totalAmount - discountAmount;
+    let finalAmount = totalAmount + shippingCharge - discountAmount;
     if (finalAmount < 0) finalAmount = 0;
 
     // Add COD charges visually to final amount if COD selected?
@@ -223,6 +225,8 @@ const PaymentLayout = ({
                     appliedCoupon={appliedCoupon}
                     setAppliedCoupon={setAppliedCoupon}
                     setDiscount={setDiscount}
+                    shippingCharge={shippingCharge}
+                    shippingSettings={shippingSettings}
                 />
             </div>
 

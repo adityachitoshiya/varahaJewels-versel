@@ -290,7 +290,7 @@ export default function Home({ heroSlides, initialSettings }) {
             <HeroSection initialSlides={heroSlides} />
             <FeaturedCollections settings={initialSettings} />
             <ProductSpotlight />
-            <TestimonialsSection />
+            <TestimonialsSection testimonialsJson={initialSettings?.testimonials_json} />
             <CreatorShowcase />
           </main>
 

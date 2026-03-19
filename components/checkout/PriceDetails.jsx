@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tag } from 'lucide-react';
 
 const PriceDetails = ({
@@ -13,8 +13,64 @@ const PriceDetails = ({
     couponError,
     appliedCoupon,
     setAppliedCoupon,
-    setDiscount
+    setDiscount,
+    shippingCharge: passedShippingCharge = null,
+    shippingSettings: passedShippingSettings = null
 }) => {
+    const [shippingSettings, setShippingSettings] = useState({
+        minimumPrice: 99.0,
+        shippingCharge: 50.0
+    });
+    const [shippingCharge, setShippingCharge] = useState(passedShippingCharge !== null ? passedShippingCharge : 0);
+
+    // Fetch shipping override settings if not passed from parent
+    useEffect(() => {
+        if (passedShippingSettings && Object.keys(passedShippingSettings).length > 0) {
+            setShippingSettings(passedShippingSettings);
+            return; // Use passed settings, don't fetch
+        }
+
+        const fetchSettings = async () => {
+            try {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const response = await fetch(`${API_URL}/api/settings`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setShippingSettings({
+                        minimumPrice: data.minimum_product_price_for_free_shipping || 99.0,
+                        shippingCharge: data.mandatory_shipping_charge || 50.0
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to fetch shipping settings:', error);
+            }
+        };
+        fetchSettings();
+    }, [passedShippingSettings]);
+
+    // Use passed shipping charge if available, otherwise calculate
+    useEffect(() => {
+        if (passedShippingCharge !== null) {
+            setShippingCharge(passedShippingCharge);
+            return; // Use passed value, don't recalculate
+        }
+
+        let needsShipping = false;
+        
+        if (cartItems.length > 0) {
+            // Check if any item's price is below threshold
+            needsShipping = cartItems.some(item => {
+                const price = item.variant?.price || 0;
+                return price < shippingSettings.minimumPrice;
+            });
+        } else if (orderDetails) {
+            // For single product checkout, check the price
+            const price = orderDetails.amount;
+            needsShipping = price < shippingSettings.minimumPrice;
+        }
+
+        setShippingCharge(needsShipping ? shippingSettings.shippingCharge : 0);
+    }, [cartItems, orderDetails, shippingSettings, passedShippingCharge]);
 
     // Calculate total MRP (before discount)
     const sellingPriceTotal = cartItems.length > 0
@@ -65,7 +121,9 @@ const PriceDetails = ({
 
                 <div className="flex justify-between items-center text-gray-700">
                     <span>Shipping Fee</span>
-                    <span className="text-green-500">FREE</span>
+                    <span className={shippingCharge > 0 ? "text-red-500 font-semibold" : "text-green-500"}>
+                        {shippingCharge > 0 ? `₹${Math.round(shippingCharge).toLocaleString()}` : 'FREE'}
+                    </span>
                 </div>
             </div>
 

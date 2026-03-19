@@ -19,6 +19,7 @@ export default function Settings() {
         announcement_date: "2026-02-12T00:00:00",
         show_announcement: true,
         announcement_bar_json: '[]',
+        testimonials_json: '[]',
         delivery_free_threshold: 1000.0,
         logo_url: "/varaha-assets/logo.png",
         favicon_url: "/favicon-circle.png"
@@ -442,6 +443,145 @@ export default function Settings() {
                         >
                             <Plus size={16} /> Add Item
                         </button>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
+                        <h2 className="text-lg font-bold text-gray-800 mb-4">Homepage Testimonials</h2>
+                        <p className="text-sm text-gray-500 mb-4">Upload testimonial profile images and edit content shown on homepage.</p>
+
+                        {(() => {
+                            const fallbackTestimonials = [
+                                {
+                                    id: 1,
+                                    name: 'Priya Sharma',
+                                    location: 'Mumbai',
+                                    rating: 5,
+                                    text: 'The craftsmanship is absolutely exquisite. I purchased a bridal set for my wedding, and it became the centerpiece of my entire ensemble. The attention to detail is remarkable.',
+                                    image: '/varaha-assets/dp1.avif',
+                                    verified: true,
+                                    platform: 'Amazon'
+                                },
+                                {
+                                    id: 2,
+                                    name: 'Anjali Reddy',
+                                    location: 'Hyderabad',
+                                    rating: 5,
+                                    text: 'Varaha Jewels perfectly blends traditional artistry with contemporary elegance. Each piece feels like wearing a piece of heritage. Truly exceptional quality.',
+                                    image: '/varaha-assets/DP.png',
+                                    verified: true,
+                                    platform: 'Flipkart'
+                                },
+                                {
+                                    id: 3,
+                                    name: 'Kavita Mehta',
+                                    location: 'Delhi',
+                                    rating: 5,
+                                    text: 'I have been a loyal customer for over a decade. The timeless designs and impeccable service keep me coming back. These are heirlooms I will pass to my daughters.',
+                                    image: '/varaha-assets/dp3.avif',
+                                    verified: true,
+                                    platform: 'Amazon'
+                                }
+                            ];
+
+                            let testimonials = fallbackTestimonials;
+                            try {
+                                const parsed = JSON.parse(settings.testimonials_json || '[]');
+                                if (Array.isArray(parsed) && parsed.length > 0) testimonials = parsed;
+                            } catch (e) {
+                                testimonials = fallbackTestimonials;
+                            }
+
+                            return (
+                                <div className="space-y-6">
+                                    {testimonials.map((t, index) => (
+                                        <div key={t.id || index} className="p-4 border border-gray-200 rounded-lg">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+                                                    <input
+                                                        value={t.name || ''}
+                                                        onChange={(e) => {
+                                                            const updated = [...testimonials];
+                                                            updated[index] = { ...updated[index], name: e.target.value };
+                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
+                                                        }}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
+                                                    <input
+                                                        value={t.location || ''}
+                                                        onChange={(e) => {
+                                                            const updated = [...testimonials];
+                                                            updated[index] = { ...updated[index], location: e.target.value };
+                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
+                                                        }}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-3">
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">Review Text</label>
+                                                <textarea
+                                                    value={t.text || ''}
+                                                    onChange={(e) => {
+                                                        const updated = [...testimonials];
+                                                        updated[index] = { ...updated[index], text: e.target.value };
+                                                        setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
+                                                    }}
+                                                    className="w-full p-2 border rounded-lg text-sm min-h-[90px]"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Platform</label>
+                                                    <input
+                                                        value={t.platform || ''}
+                                                        onChange={(e) => {
+                                                            const updated = [...testimonials];
+                                                            updated[index] = { ...updated[index], platform: e.target.value };
+                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
+                                                        }}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Rating (1-5)</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="5"
+                                                        value={t.rating || 5}
+                                                        onChange={(e) => {
+                                                            const updated = [...testimonials];
+                                                            updated[index] = { ...updated[index], rating: Math.max(1, Math.min(5, Number(e.target.value) || 5)) };
+                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
+                                                        }}
+                                                        className="w-full p-2 border rounded-lg text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4">
+                                                <MediaUpload
+                                                    key={`testimonial-${index}-${t.image || 'empty'}`}
+                                                    label={`Testimonial ${index + 1} Profile Image`}
+                                                    initialMedia={t.image || ''}
+                                                    onUpload={(url) => {
+                                                        const updated = [...testimonials];
+                                                        updated[index] = { ...updated[index], image: url };
+                                                        setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <div className="flex justify-end">

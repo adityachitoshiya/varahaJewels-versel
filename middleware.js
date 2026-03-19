@@ -22,6 +22,14 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const geoCache = new Map();
 const GEO_CACHE_DURATION = 30 * 60 * 1000;
 
+function normalizeCode(value) {
+    return (value || '').toString().trim().toUpperCase();
+}
+
+function normalizeName(value) {
+    return (value || '').toString().trim().toLowerCase();
+}
+
 async function getBlockedRegions() {
     const now = Date.now();
 
@@ -30,12 +38,18 @@ async function getBlockedRegions() {
     }
 
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.varahajewels.in'}/api/settings/blocked-regions/active`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.varahajewels.in'}/api/settings/blocked-regions`, {
             next: { revalidate: 300 }
         });
 
         if (res.ok) {
-            cachedBlockedRegions = await res.json();
+            const regions = await res.json();
+            cachedBlockedRegions = regions
+                .filter((r) => r && r.is_blocked)
+                .map((r) => ({
+                    code: normalizeCode(r.region_code),
+                    name: normalizeName(r.region_name)
+                }));
             cacheTime = now;
         }
     } catch (error) {
@@ -55,16 +69,17 @@ async function getGeoFromIP(ip) {
     }
 
     try {
-        // Free IP geo lookup API (no key needed, 45 req/min)
-        const res = await fetch(`http://ip-api.com/json/${ip}?fields=countryCode,region`, {
+        // HTTPS fallback geo lookup for edge/runtime compatibility
+        const res = await fetch(`https://ipapi.co/${ip}/json/`, {
             signal: AbortSignal.timeout(3000) // 3s timeout
         });
 
         if (res.ok) {
             const data = await res.json();
             const result = {
-                country: data.countryCode || '',
-                region: data.region || ''  // Returns state code like "GJ", "MH"
+                country: normalizeCode(data.country_code || data.country),
+                regionCode: normalizeCode(data.region_code),
+                regionName: normalizeName(data.region)
             };
             geoCache.set(ip, { data: result, time: now });
 
@@ -85,10 +100,13 @@ async function getGeoFromIP(ip) {
 }
 
 export async function middleware(request) {
-    // Try Vercel's built-in geo first (works on Pro plan)
-    let geo = request.geo || {};
-    let region = geo.region || '';
-    let country = geo.country || '';
+    const geo = request.geo || {};
+    const headerCountry = request.headers.get('x-vercel-ip-country');
+    const headerRegion = request.headers.get('x-vercel-ip-country-region');
+
+    let country = normalizeCode(headerCountry || geo.country);
+    let regionCode = normalizeCode(headerRegion || geo.region);
+    let regionName = normalizeName(geo.regionName);
 
     // Fallback: If Vercel geo is empty, use IP-based lookup
     if (!country) {
@@ -99,22 +117,25 @@ export async function middleware(request) {
         const ipGeo = await getGeoFromIP(ip);
         if (ipGeo) {
             country = ipGeo.country;
-            region = ipGeo.region;
+            regionCode = ipGeo.regionCode;
+            regionName = ipGeo.regionName;
         }
-    }
-
-    // Only check for Indian visitors
-    if (country !== 'IN') {
-        return NextResponse.next();
     }
 
     // Get blocked regions
     const blockedRegions = await getBlockedRegions();
+    const blockedCodes = new Set(blockedRegions.map((r) => r.code).filter(Boolean));
+    const blockedNames = new Set(blockedRegions.map((r) => r.name).filter(Boolean));
 
-    // Check if user's region is blocked
-    if (region && blockedRegions.includes(region)) {
-        // Redirect to geo-blocked page
-        return NextResponse.rewrite(new URL('/geo-blocked', request.url));
+    // Check blocked region first, even when country is missing from geo provider.
+    // This avoids bypass when only region data is available.
+    if ((regionCode && blockedCodes.has(regionCode)) || (regionName && blockedNames.has(regionName))) {
+        return NextResponse.redirect(new URL('/geo-blocked', request.url));
+    }
+
+    // Allow non-Indian visitors when no blocked region match exists
+    if (country && country !== 'IN') {
+        return NextResponse.next();
     }
 
     return NextResponse.next();
