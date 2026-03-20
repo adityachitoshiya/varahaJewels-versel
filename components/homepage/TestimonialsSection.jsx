@@ -18,7 +18,7 @@ const defaultTestimonials = [
     location: 'Hyderabad',
     rating: 5,
     text: 'Varaha Jewels perfectly blends traditional artistry with contemporary elegance. Each piece feels like wearing a piece of heritage. Truly exceptional quality.',
-    image: '/varaha-assets/dp2.jpeg',
+    image: '/varaha-assets/dp2.jpg',
     verified: true,
     platform: 'Flipkart'
   },
