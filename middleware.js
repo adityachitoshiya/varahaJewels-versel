@@ -39,7 +39,8 @@ async function getBlockedRegions() {
 
     try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.varahajewels.in'}/api/settings/blocked-regions`, {
-            next: { revalidate: 300 }
+            next: { revalidate: 300 },
+            signal: AbortSignal.timeout(3000)
         });
 
         if (res.ok) {

@@ -16,8 +16,8 @@ export default function Shop() {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Default to Men initially (server-safe)
-    const [selectedGender, setSelectedGender] = useState('Men');
+    // Default to Women initially (server-safe)
+    const [selectedGender, setSelectedGender] = useState('Women');
 
     // Restore selected gender from session storage on mount
     useEffect(() => {
@@ -162,15 +162,6 @@ export default function Shop() {
                     <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 sticky top-20 z-40 bg-warm-sand/95 backdrop-blur-sm py-2">
                         <div className="flex bg-white rounded-full p-1 shadow-sm border border-copper/20">
                             <button
-                                onClick={() => handleGenderChange('Men')}
-                                className={`px-8 py-2 rounded-full text-sm font-bold transition-all duration-300 ${selectedGender === 'Men'
-                                    ? 'bg-heritage text-white shadow-md'
-                                    : 'text-heritage hover:bg-gray-50'
-                                    }`}
-                            >
-                                Men
-                            </button>
-                            <button
                                 onClick={() => handleGenderChange('Women')}
                                 className={`px-8 py-2 rounded-full text-sm font-bold transition-all duration-300 ${selectedGender === 'Women'
                                     ? 'bg-heritage text-white shadow-md'
@@ -178,6 +169,15 @@ export default function Shop() {
                                     }`}
                             >
                                 Women
+                            </button>
+                            <button
+                                onClick={() => handleGenderChange('Men')}
+                                className={`px-8 py-2 rounded-full text-sm font-bold transition-all duration-300 ${selectedGender === 'Men'
+                                    ? 'bg-heritage text-white shadow-md'
+                                    : 'text-heritage hover:bg-gray-50'
+                                    }`}
+                            >
+                                Men
                             </button>
                         </div>
 

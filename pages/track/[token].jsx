@@ -38,7 +38,8 @@ export default function TrackOrder() {
             const hash = parts[parts.length - 1]; // Last part is hash
 
             const API_URL = getApiUrl();
-            const res = await fetch(`${API_URL}/api/track/${order_id}/${hash}`);
+            // Automatically fetch live sync from database/rapidshyp to guarantee fresh data
+            const res = await fetch(`${API_URL}/api/track/${order_id}/${hash}?refresh=true`);
 
             if (!res.ok) {
                 if (res.status === 403) {

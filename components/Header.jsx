@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, Menu, ShoppingBag, X, Heart, User, LogOut, ChevronDown } from 'lucide-react';
+import { Search, Menu, ShoppingBag, X, Heart, User, LogOut, ChevronDown, Package, MapPin } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import Link from 'next/link';
@@ -274,28 +274,95 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 )}
               </button>
 
-              {/* User Profile / Login - Visible on desktop only (moved to bottom nav for mobile) */}
-              <div className="hidden lg:block relative">
-                {user ? (
-                  <button
-                    onClick={() => router.push('/account')}
-                    className="flex items-center gap-2 text-heritage hover:text-copper transition-colors duration-200 flex-shrink-0"
-                    aria-label="My Account"
-                  >
-                    <User size={18} className="sm:w-5 sm:h-5" />
+              {/* User Profile / Login - Desktop Dropdown */}
+              <div className="hidden lg:block relative" ref={profileRef}>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 text-heritage hover:text-copper transition-colors duration-200 flex-shrink-0"
+                  aria-label={user ? 'My Account' : 'Login'}
+                >
+                  <User size={18} className="sm:w-5 sm:h-5" />
+                  {user && (
                     <span className="hidden sm:block text-sm font-medium whitespace-nowrap">
                       Hi {user.full_name?.split(' ')[0] || user.name?.split(' ')[0] || 'User'}!
                     </span>
-                  </button>
-                ) : (
-                  <Link
-                    href="/login"
-                    prefetch={false}
-                    className="flex items-center justify-center w-10 h-10 text-heritage hover:text-copper transition-colors duration-200 flex-shrink-0"
-                    aria-label="Sign In"
-                  >
-                    <User size={18} className="sm:w-5 sm:h-5" />
-                  </Link>
+                  )}
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full mt-3 w-56 bg-white rounded-xl shadow-2xl border border-heritage/10 py-2 z-50 animate-slideDown">
+                    {/* Arrow */}
+                    <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-l border-t border-heritage/10 transform rotate-45" />
+                    
+                    {user ? (
+                      <>
+                        {/* Logged in user info */}
+                        <div className="px-4 py-3 border-b border-heritage/10">
+                          <p className="text-sm font-semibold text-heritage truncate">{user.full_name || user.name}</p>
+                          <p className="text-xs text-heritage/50 truncate">{user.email}</p>
+                        </div>
+                        <Link
+                          href="/account"
+                          prefetch={false}
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-heritage hover:bg-copper/5 hover:text-copper transition-colors"
+                        >
+                          <User size={16} />
+                          My Account
+                        </Link>
+                        <Link
+                          href="/orders"
+                          prefetch={false}
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-heritage hover:bg-copper/5 hover:text-copper transition-colors"
+                        >
+                          <Package size={16} />
+                          My Orders
+                        </Link>
+                        <Link
+                          href="/track-order"
+                          prefetch={false}
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-heritage hover:bg-copper/5 hover:text-copper transition-colors"
+                        >
+                          <MapPin size={16} />
+                          Track Order
+                        </Link>
+                        <div className="border-t border-heritage/10 mt-1 pt-1">
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <LogOut size={16} />
+                            Logout
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/login"
+                          prefetch={false}
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-sm text-heritage hover:bg-copper/5 hover:text-copper transition-colors font-medium"
+                        >
+                          <User size={16} />
+                          Login / Register
+                        </Link>
+                        <Link
+                          href="/track-order"
+                          prefetch={false}
+                          onClick={() => setIsProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-sm text-heritage hover:bg-copper/5 hover:text-copper transition-colors font-medium"
+                        >
+                          <MapPin size={16} />
+                          Track Order
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -584,6 +651,25 @@ export default function Header({ cartCount = 0, onCartClick }) {
                   <User size={18} className="text-heritage group-hover:text-copper transition-all duration-200" />
                   <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
                     My Account
+                  </span>
+                </div>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
+              </div>
+            </Link>
+
+            {/* Track Order Link - Mobile Menu */}
+            <Link
+              href="/track-order"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '350ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-gradient-to-r from-copper/5 to-heritage/5 backdrop-blur-sm border border-copper/20 hover:border-copper/50 hover:bg-copper/10 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <MapPin size={18} className="text-copper group-hover:text-heritage transition-all duration-200" />
+                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                    Track Order
                   </span>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
