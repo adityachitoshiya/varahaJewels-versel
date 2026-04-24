@@ -138,8 +138,10 @@ export default function Orders() {
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
-            case 'completed': return 'bg-green-100 text-green-800';
+            case 'completed': case 'delivered': return 'bg-green-100 text-green-800';
+            case 'paid': return 'bg-emerald-100 text-emerald-800';
             case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'shipped': return 'bg-blue-100 text-blue-800';
             case 'cancelled': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
         }
@@ -178,6 +180,8 @@ export default function Orders() {
                         >
                             <option value="all">All Status</option>
                             <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="shipped">Shipped</option>
                             <option value="completed">Completed</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
@@ -353,8 +357,13 @@ export default function Orders() {
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600">Payment Status</span>
-                                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${selectedOrder.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                                            }`}>{selectedOrder.payment_status || 'Pending'}</span>
+                                        {(() => {
+                                            const isPaid = selectedOrder.payment_method === 'online' && ['paid', 'shipped', 'completed', 'delivered'].includes(selectedOrder.status?.toLowerCase());
+                                            const isCOD = selectedOrder.payment_method === 'cod';
+                                            const label = isPaid ? 'Paid' : isCOD ? 'COD' : 'Pending';
+                                            const colorClass = isPaid ? 'bg-green-100 text-green-700' : isCOD ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700';
+                                            return <span className={`px-2 py-0.5 rounded text-xs font-semibold ${colorClass}`}>{label}</span>;
+                                        })()}
                                     </div>
                                     <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-gray-900 text-lg">
                                         <span>Total Amount</span>
