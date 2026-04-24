@@ -527,9 +527,13 @@ export default function Checkout() {
         };
 
       // Explicitly verify and create order in backend
+      const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
       const verifyRes = await fetch(`${API_URL}/api/update-order-status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_order_id: response.razorpay_order_id,
@@ -559,7 +563,7 @@ export default function Checkout() {
             name: formData.name
           }
         });
-      }, 2000);
+      }, 800);
 
     } catch (err) {
       console.error("Payment Success Handler Error:", err);
@@ -669,7 +673,7 @@ export default function Checkout() {
             pathname: '/payment-success',
             query: { orderId: data.orderId, amount: finalAmount + COD_CHARGE, codMode: 'true', email: formData.email, name: formData.name }
           });
-        }, 2000);
+        }, 800);
       } else {
         throw new Error(data.detail || 'Failed to place order');
       }
