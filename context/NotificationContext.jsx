@@ -11,12 +11,17 @@ export function NotificationProvider({ children }) {
     });
 
     const timerRef = useRef(null);
+    const justShownRef = useRef(false);
 
     const showNotification = useCallback((type, product, message) => {
         // Clear existing timer if any
         if (timerRef.current) {
             clearTimeout(timerRef.current);
         }
+
+        // Mark as just shown to prevent immediate dismiss from same click
+        justShownRef.current = true;
+        setTimeout(() => { justShownRef.current = false; }, 150);
 
         setNotification({
             show: true,
@@ -39,6 +44,22 @@ export function NotificationProvider({ children }) {
         }
         setNotification(prev => ({ ...prev, show: false }));
     }, []);
+
+    // Dismiss notification on any click anywhere
+    useEffect(() => {
+        const handleAnyClick = () => {
+            if (notification.show && !justShownRef.current) {
+                hideNotification();
+            }
+        };
+
+        document.addEventListener('click', handleAnyClick, true);
+        document.addEventListener('touchstart', handleAnyClick, true);
+        return () => {
+            document.removeEventListener('click', handleAnyClick, true);
+            document.removeEventListener('touchstart', handleAnyClick, true);
+        };
+    }, [notification.show, hideNotification]);
 
     // Cleanup on unmount
     useEffect(() => {
