@@ -15,7 +15,8 @@ import {
     Activity,
     Image as ImageIcon,
     TrendingUp,
-    Sparkles
+    Sparkles,
+    FileText
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { getApiUrl } from '../../lib/config';
@@ -136,6 +137,7 @@ export default function AdminLayout({ children }) {
         { name: 'Overview', href: '/admin', icon: LayoutDashboard },
         { name: 'Analytics', href: '/admin/analytics', icon: Activity },
         { name: 'Content', href: '/admin/cms', icon: ImageIcon },
+        { name: 'Blogs', href: '/admin/blogs', icon: FileText },
         { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
         { name: 'Products', href: '/admin/products', icon: Package },
         { name: 'Offers', href: '/admin/offers', icon: Sparkles },

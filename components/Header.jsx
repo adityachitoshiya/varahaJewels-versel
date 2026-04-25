@@ -229,6 +229,9 @@ export default function Header({ cartCount = 0, onCartClick }) {
               <Link href="/new-arrivals" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 New Arrivals
               </Link>
+              <Link href="/blogs" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+                Blog
+              </Link>
               <Link href="/contact" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Contact
               </Link>
@@ -595,6 +598,21 @@ export default function Header({ cartCount = 0, onCartClick }) {
               <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
                 <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
                   New Arrivals
+                </span>
+                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
+              </div>
+            </Link>
+
+            <Link
+              href="/blogs"
+              prefetch={false}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="group block relative overflow-hidden"
+              style={{ animationDelay: '175ms' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
+                <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                  Blog
                 </span>
                 <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
               </div>
