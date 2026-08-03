@@ -223,7 +223,7 @@ export default function OffersPage() {
 
     const openCouponCreate = () => {
         setEditingCouponId(null);
-        setCouponForm({ code: '', discount_type: 'percentage', discount_value: '', min_order_amount: '', max_discount: '', payment_method_restriction: 'none', is_active: true });
+        setCouponForm({ code: '', discount_type: 'percentage', discount_value: '', min_order_amount: '', max_discount: '', payment_method_restriction: 'none', is_active: true, usage_limit: '', per_user_limit: '' });
         setShowCouponForm(true);
     };
 
@@ -241,6 +241,9 @@ export default function OffersPage() {
             max_discount: coupon.max_discount || '',
             payment_method_restriction: coupon.payment_method_restriction || 'none',
             is_active: coupon.is_active !== false,
+            // Fix #14 — Usage limit fields
+            usage_limit: coupon.usage_limit ?? '',
+            per_user_limit: coupon.per_user_limit || '',
         });
         setShowCouponForm(true);
     };
@@ -256,6 +259,9 @@ export default function OffersPage() {
                 max_discount: parseFloat(couponForm.max_discount) || null,
                 payment_method_restriction: couponForm.payment_method_restriction || 'none',
                 is_active: couponForm.is_active,
+                // Fix #14 — Usage limits
+                usage_limit: couponForm.usage_limit !== '' ? parseInt(couponForm.usage_limit) : null,
+                per_user_limit: parseInt(couponForm.per_user_limit) || 0,
             };
 
             const url = editingCouponId
@@ -839,6 +845,7 @@ export default function OffersPage() {
                                             <th className="text-left px-4 py-3 font-semibold text-gray-600">Type</th>
                                             <th className="text-left px-4 py-3 font-semibold text-gray-600">Value</th>
                                             <th className="text-left px-4 py-3 font-semibold text-gray-600">Conditions</th>
+                                            <th className="text-left px-4 py-3 font-semibold text-gray-600">Usage</th>
                                             <th className="text-left px-4 py-3 font-semibold text-gray-600">Source</th>
                                             <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
                                             <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
@@ -996,6 +1003,37 @@ export default function OffersPage() {
                                         ))}
                                     </select>
                                 </div>
+                                {/* Fix #14 — Usage Limits */}
+                                <div className="pt-3 border-t">
+                                    <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">Usage Limits</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Total Usage Limit</label>
+                                            <input
+                                                type="number"
+                                                value={couponForm.usage_limit}
+                                                onChange={e => setCouponForm({ ...couponForm, usage_limit: e.target.value })}
+                                                placeholder="∞ Unlimited"
+                                                className="w-full p-2.5 border rounded-lg text-sm"
+                                                min="1"
+                                            />
+                                            <p className="text-[10px] text-gray-400 mt-1">Leave blank for unlimited</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">Per Customer Limit</label>
+                                            <input
+                                                type="number"
+                                                value={couponForm.per_user_limit}
+                                                onChange={e => setCouponForm({ ...couponForm, per_user_limit: e.target.value })}
+                                                placeholder="0 = Unlimited"
+                                                className="w-full p-2.5 border rounded-lg text-sm"
+                                                min="0"
+                                            />
+                                            <p className="text-[10px] text-gray-400 mt-1">Max uses per customer email</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="flex items-center gap-3">
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input

@@ -413,7 +413,7 @@ export default function EditProduct() {
 
                         <div className="mt-8 border-t pt-4">
                             <h4 className="font-medium text-sm text-gray-700 mb-2">Bulk Upload via CSV</h4>
-                            <p className="text-xs text-gray-500 mb-3">Required columns: <code className="bg-gray-100 px-1 rounded">customer_name</code>, <code className="bg-gray-100 px-1 rounded">rating</code>, <code className="bg-gray-100 px-1 rounded">comment</code></p>
+                            <p className="text-xs text-gray-500 mb-3">Required columns: <code className="bg-gray-100 px-1 rounded">customer_name</code>, <code className="bg-gray-100 px-1 rounded">rating</code>, <code className="bg-gray-100 px-1 rounded">comment</code>.<br/>Optional: <code className="bg-gray-100 px-1 rounded">date</code> (e.g. 2023-10-25)</p>
 
                             <div className="space-y-3">
                                 <input

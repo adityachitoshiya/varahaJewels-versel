@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import AddToCartModal from './AddToCartModal';
-import AnnouncementBar from './AnnouncementBar';
+import DeliveryBar from './DeliveryBar';
 
 export default function Header({ cartCount = 0, onCartClick }) {
   const router = useRouter();
@@ -132,8 +132,8 @@ export default function Header({ cartCount = 0, onCartClick }) {
   return (
     <>
       <header ref={headerRef} className="fixed lg:sticky top-0 left-0 right-0 z-[1000] w-full bg-[#EFE9E2] border-b border-heritage/15 shadow-sm backdrop-blur-sm">
-        {/* Announcement Bar - Edge to edge, above nav */}
-        <AnnouncementBar />
+        {/* Top Banner (Delivery + Announcements) */}
+        <DeliveryBar variant="desktop" />
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}

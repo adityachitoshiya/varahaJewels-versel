@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Build standalone server for low-memory VPS/EC2 deployments
-    output: 'standalone',
+    // Build standalone server for low-memory VPS/EC2 deployments (production only)
+    output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 
     // Optimize compilation and reduce recompilation
     reactStrictMode: false,
@@ -17,10 +17,10 @@ const nextConfig = {
         ignoreBuildErrors: true,
     },
 
-    // Performance optimizations
-    compiler: {
-        removeConsole: process.env.NODE_ENV === 'production', // Remove console.logs in production
-    },
+    // Remove console.logs in production builds only (incompatible with Turbopack in dev)
+    ...(process.env.NODE_ENV === 'production' ? {
+        compiler: { removeConsole: true },
+    } : {}),
 
     experimental: {
         // Reduce client bundle size by tree-shaking icon imports more aggressively
@@ -29,17 +29,10 @@ const nextConfig = {
 
     productionBrowserSourceMaps: false,
 
-    // Reduce recompilation on file changes
-    webpack: (config, { dev }) => {
-        if (dev) {
-            config.watchOptions = {
-                poll: 1000, // Check for changes every second
-                aggregateTimeout: 300, // Delay rebuild after first change
-                ignored: /node_modules/,
-            };
-        }
-        return config;
-    },
+    // Webpack config only applies to production builds (Turbopack handles dev)
+    ...(process.env.NODE_ENV === 'production' ? {
+        webpack: (config) => config,
+    } : {}),
 
     images: {
         unoptimized: false,

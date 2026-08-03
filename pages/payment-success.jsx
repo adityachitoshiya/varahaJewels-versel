@@ -101,6 +101,7 @@ export default function PaymentSuccess() {
           email: data.email,
           name: data.customer_name,
           isCod: data.payment_method === 'cod',
+          taxAmount: (data.cgst_amount || 0) + (data.sgst_amount || 0) + (data.igst_amount || 0),
           items: items // Store full items
         });
 
@@ -265,13 +266,57 @@ export default function PaymentSuccess() {
 
               {/* Total Row */}
               <div className="mt-4 border-t border-copper/20 pt-4 space-y-2">
-                {/* Subtotal */}
+                {/* Subtotal / Product Cost */}
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-heritage/60">Subtotal</p>
+                  <p className="text-sm text-heritage/60">Product Cost</p>
                   <p className="text-sm font-medium text-heritage">
                     ₹{(orderDetails.originalAmount || orderDetails.amount).toLocaleString('en-IN')}
                   </p>
                 </div>
+
+                {/* Additional Charges (Shipping & COD) */}
+                {(() => {
+                  const subtotal = orderDetails.originalAmount || orderDetails.amount;
+                  const otherCharges = orderDetails.amount - subtotal + (orderDetails.discountAmount || 0);
+                  
+                  if (otherCharges > 0) {
+                    // Split into Shipping and Handling if it's COD
+                    let codFee = 0;
+                    let shippingFee = otherCharges;
+                    
+                    if (orderDetails.isCod) {
+                      codFee = otherCharges >= 59 ? 59 : otherCharges;
+                      shippingFee = otherCharges - codFee;
+                    }
+                    
+                    return (
+                      <>
+                        {shippingFee > 0 && (
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-heritage/60">Shipping Cost</p>
+                            <p className="text-sm font-medium text-heritage">
+                              +₹{shippingFee.toLocaleString('en-IN')}
+                            </p>
+                          </div>
+                        )}
+                        {codFee > 0 && (
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-heritage/60">Handling Cost (COD)</p>
+                            <p className="text-sm font-medium text-heritage">
+                              +₹{codFee.toLocaleString('en-IN')}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  }
+                  return (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-heritage/60">Shipping Cost</p>
+                      <p className="text-sm font-medium text-heritage">FREE</p>
+                    </div>
+                  );
+                })()}
 
                 {/* Discount (coupon or prepaid) */}
                 {orderDetails.discountAmount > 0 && (
@@ -283,9 +328,19 @@ export default function PaymentSuccess() {
                   </div>
                 )}
 
+                {/* GST (Tax) */}
+                {orderDetails.taxAmount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-heritage/60">GST (Included in price)</p>
+                    <p className="text-sm font-medium text-heritage/80">
+                      ₹{orderDetails.taxAmount.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                )}
+
                 {/* Final Total */}
                 <div className="flex items-center justify-between border-t border-copper/10 pt-2">
-                  <p className="font-bold text-heritage">Total Paid</p>
+                  <p className="font-bold text-heritage">Final Price</p>
                   <div>
                     <p className="text-2xl font-royal font-bold text-copper">
                       ₹{orderDetails.amount.toLocaleString('en-IN')}

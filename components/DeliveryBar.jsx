@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { MapPin, X, ChevronDown } from 'lucide-react';
+import { MapPin, X, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { calculateDeliveryInfo, getCoordinatesFromPincode, isValidPincode, calculateDistance, JAIPUR_COORDS } from '../lib/deliveryCalculator';
+import { getApiUrl } from '../lib/config';
 
 /**
  * Premium Delivery Availability Bar for Varaha Jewels
@@ -21,6 +22,70 @@ export default function DeliveryBar({ variant = 'mobile' }) {
   const [pincode, setPincode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Announcement State
+  const [announcementItems, setAnnouncementItems] = useState([]);
+  const [currentAnnouncement, setCurrentAnnouncement] = useState(0);
+  const [isAnnouncementVisible, setIsAnnouncementVisible] = useState(true);
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  // Fetch announcement items
+  useEffect(() => {
+    const dismissed = localStorage.getItem('topBarDismissed');
+    if (dismissed === 'true') {
+      setIsDismissed(true);
+    }
+
+    const fetchAnnouncements = async () => {
+      try {
+        const API_URL = getApiUrl();
+        const res = await fetch(`${API_URL}/api/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          let barItems = [];
+          try {
+            barItems = JSON.parse(data.announcement_bar_json || '[]');
+          } catch (e) { barItems = []; }
+          const activeItems = barItems.filter(item => item.active && item.text && item.text.trim());
+          setAnnouncementItems(activeItems);
+        }
+      } catch (err) {
+        console.error('Failed to fetch announcements:', err);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
+
+  // Auto-rotate announcements
+  useEffect(() => {
+    if (announcementItems.length <= 1) return;
+    const interval = setInterval(() => {
+      setIsAnnouncementVisible(false);
+      setTimeout(() => {
+        setCurrentAnnouncement(prev => (prev + 1) % announcementItems.length);
+        setIsAnnouncementVisible(true);
+      }, 400);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [announcementItems.length]);
+
+  const goToNextAnnouncement = () => {
+    if (announcementItems.length <= 1) return;
+    setIsAnnouncementVisible(false);
+    setTimeout(() => {
+      setCurrentAnnouncement(prev => (prev + 1) % announcementItems.length);
+      setIsAnnouncementVisible(true);
+    }, 400);
+  };
+
+  const goToPrevAnnouncement = () => {
+    if (announcementItems.length <= 1) return;
+    setIsAnnouncementVisible(false);
+    setTimeout(() => {
+      setCurrentAnnouncement(prev => (prev - 1 + announcementItems.length) % announcementItems.length);
+      setIsAnnouncementVisible(true);
+    }, 400);
+  };
 
   // Jaipur Express Zone Configuration references imported JAIPUR_COORDS
 
@@ -162,23 +227,25 @@ export default function DeliveryBar({ variant = 'mobile' }) {
   // Determine positioning classes based on variant
   const positionClasses = variant === 'mobile'
     ? 'relative lg:hidden'
-    : 'hidden lg:block relative';
+    : 'relative'; // Changed to show on all sizes if used in Header
+
+  if (isDismissed) return null;
 
   return (
     <>
       {/* Main Delivery Bar */}
       <div className={`${positionClasses} z-40 bg-gradient-to-r from-heritage via-copper to-heritage border-b border-copper/30 shadow-md`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-          <div className="flex items-center justify-between h-10 sm:h-11">
+          <div className="grid grid-cols-[1fr_auto_1fr] md:grid-cols-3 items-center h-10 sm:h-11 gap-2">
             {/* Left Section - Delivery Info */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 justify-start min-w-0">
               {/* Location Icon */}
               <div className="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-ivory/10 backdrop-blur-sm border border-ivory/20 flex items-center justify-center">
                 <MapPin size={14} className="text-ivory sm:w-4 sm:h-4" />
               </div>
 
               {/* Delivery Text */}
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 hidden sm:block">
                 {deliveryInfo ? (
                   <div className="flex items-center gap-1">
                     <p className="text-xs font-semibold text-ivory truncate">
@@ -200,28 +267,50 @@ export default function DeliveryBar({ variant = 'mobile' }) {
               </div>
             </div>
 
+            {/* Center Section - Announcement */}
+            <div className="flex items-center justify-center min-w-0 px-2 overflow-hidden">
+              {announcementItems.length > 0 && (
+                <div className="flex items-center gap-3">
+                  {announcementItems.length > 1 && (
+                    <button onClick={goToPrevAnnouncement} className="p-1 hover:bg-ivory/10 rounded-full transition-colors flex-shrink-0" aria-label="Previous">
+                      <ChevronLeft size={14} className="text-ivory/70" />
+                    </button>
+                  )}
+                  <p className={`text-[10px] sm:text-xs font-medium text-ivory text-center truncate transition-opacity duration-500 ease-in-out ${isAnnouncementVisible ? 'opacity-100' : 'opacity-0'}`}>
+                    {announcementItems[currentAnnouncement]?.text}
+                  </p>
+                  {announcementItems.length > 1 && (
+                    <button onClick={goToNextAnnouncement} className="p-1 hover:bg-ivory/10 rounded-full transition-colors flex-shrink-0" aria-label="Next">
+                      <ChevronRight size={14} className="text-ivory/70" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Right Section - Actions */}
-            <div className="flex items-center gap-1 sm:gap-2 ml-1">
+            <div className="flex items-center justify-end gap-1 sm:gap-4">
               {/* Change Button */}
               {deliveryInfo && (
                 <button
                   onClick={handleChange}
-                  className="text-xs font-medium text-ivory/80 hover:text-ivory transition-colors px-1.5 sm:px-2 py-0.5 rounded hover:bg-ivory/10"
+                  className="hidden sm:block text-xs font-medium text-ivory/80 hover:text-ivory transition-colors px-1.5 sm:px-2 py-0.5 rounded hover:bg-ivory/10"
                 >
                   Change
                 </button>
               )}
 
-              {/* Clear Button */}
-              {deliveryInfo && (
-                <button
-                  onClick={handleClear}
-                  className="p-1 sm:p-1.5 rounded-full hover:bg-ivory/10 transition-colors"
-                  aria-label="Clear"
-                >
-                  <X size={14} className="text-ivory sm:w-4 sm:h-4" />
-                </button>
-              )}
+              {/* Dismiss Button */}
+              <button
+                onClick={() => {
+                  setIsDismissed(true);
+                  localStorage.setItem('topBarDismissed', 'true');
+                }}
+                className="p-1 sm:p-1.5 rounded-full hover:bg-ivory/10 transition-colors"
+                aria-label="Close Banner"
+              >
+                <X size={14} className="text-ivory sm:w-4 sm:h-4" />
+              </button>
             </div>
           </div>
         </div>

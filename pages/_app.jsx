@@ -129,7 +129,8 @@ function MyApp({ Component, pageProps }) {
     );
   }
 
-  const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '390681375827-jt3d2qcr9bo0geboirt03ii5m0tqfiij.apps.googleusercontent.com';
+  const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  if (!GOOGLE_CLIENT_ID) console.error('NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set!');
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -148,7 +149,6 @@ function MyApp({ Component, pageProps }) {
         <NotificationPopup />
         <CartProvider>
           <WishlistProvider>
-            {isHomePage && <DeliveryBar variant="desktop" />}
 
             {/* Main Content with Transition */}
             <Component {...pageProps} />

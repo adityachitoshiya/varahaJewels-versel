@@ -39,13 +39,11 @@ const defaultSlides = [
 ];
 
 export default function HeroSection({ initialSlides }) {
-  // Initialize with passed props to ensure immediate render (Hyperspeed LCP)
   const [slides, setSlides] = useState(initialSlides || defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [loadedSlides, setLoadedSlides] = useState([0]); // Track which slides have been allowed to load
+  const [loadedSlides, setLoadedSlides] = useState([0]);
 
-  // Still fetch on mount to get updates if any (stale-while-revalidate strategy)
   useEffect(() => {
     if (!initialSlides) {
       fetchSlides();
@@ -64,30 +62,25 @@ export default function HeroSection({ initialSlides }) {
       }
     } catch (err) {
       console.error("Failed to fetch hero slides:", err);
-      // Keep existing slides
     }
   };
 
-  // Auto-advance slides every 4 seconds
   useEffect(() => {
     if (!isAutoPlaying || slides.length === 0) return;
 
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4000);
+    }, 6000); // Extended to 6 seconds for better Ken Burns visibility
 
     return () => clearInterval(timer);
   }, [isAutoPlaying, slides]);
 
-  // Progressive Loading Effect: Add current slide to loaded list
   useEffect(() => {
     if (!loadedSlides.includes(currentSlide)) {
       setLoadedSlides(prev => [...prev, currentSlide]);
     }
-    // Optional: Preload next slide for smoother auto-play transition
     const nextIndex = (currentSlide + 1) % slides.length;
     if (!loadedSlides.includes(nextIndex)) {
-      // Small delay to prioritize current slide render
       const timer = setTimeout(() => {
         setLoadedSlides(prev => {
           if (!prev.includes(nextIndex)) return [...prev, nextIndex];
@@ -101,97 +94,98 @@ export default function HeroSection({ initialSlides }) {
   const goToSlide = (index) => {
     setCurrentSlide(index);
     setIsAutoPlaying(false);
-    // Resume auto-play after 10 seconds
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+    setTimeout(() => setIsAutoPlaying(true), 15000);
   };
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
     setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+    setTimeout(() => setIsAutoPlaying(true), 15000);
   };
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
     setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+    setTimeout(() => setIsAutoPlaying(true), 15000);
   };
 
   return (
-    <section className="relative h-screen bg-warm-sand">
+    <section className="relative h-screen bg-prestige overflow-hidden">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 h-screen transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
-            } `}
+          className={`absolute inset-0 h-screen transition-opacity duration-[1500ms] ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
         >
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            {/* Only load content if this slide has been triggered */}
+          {/* Background Image with Ken Burns Effect */}
+          <div className={`absolute inset-0 ${index === currentSlide ? 'animate-kenBurns' : ''}`}>
             {loadedSlides.includes(index) && (
               <>
-                {/* Mobile Image */}
                 <div className="md:hidden w-full h-full">
                   <ShimmerImage
                     src={slide.mobile_image || slide.image}
                     alt={slide.title}
                     className="w-full h-full object-cover"
                     priority={index === 0}
-                    quality={60} // Reduced quality for mobile data saving
+                    quality={60}
                     sizes="100vw"
                   />
                 </div>
-
-                {/* Desktop Image */}
                 <div className="hidden md:block w-full h-full">
                   <ShimmerImage
                     src={slide.image}
                     alt={slide.title}
                     className="w-full h-full object-cover"
                     priority={index === 0}
-                    quality={75}
+                    quality={85}
                     sizes="100vw"
                   />
                 </div>
               </>
             )}
-            {/* Soft warm lighting overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-warm-sand/70 via-warm-sand/50 to-warm-sand/70"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-warm-sand/60 via-transparent to-warm-sand/60"></div>
+            {/* Dark immersive lighting overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-prestige/90 via-prestige/20 to-transparent"></div>
+            <div className="absolute inset-0 bg-black/20"></div>
           </div>
 
-          {/* Content */}
-          <div className="relative z-10 h-full flex items-center justify-center">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <div className="max-w-4xl mx-auto">
-                {/* Subtle accent line */}
-                <div className="w-24 h-px bg-copper mx-auto mb-8 animate-fadeIn"></div>
-
-                <h1 className="font-royal text-6xl md:text-8xl lg:text-9xl font-bold text-heritage mb-8 tracking-tight leading-none animate-fadeUp">
+          {/* Content - Glassmorphism Card */}
+          <div className="relative h-full flex flex-col justify-end md:justify-center items-start z-20 pb-24 md:pb-0">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 w-full flex justify-start">
+              {/* Content Card */}
+              <div 
+                className={`w-full md:max-w-2xl p-8 md:p-12 transition-all duration-1000 ease-out transform ${
+                  index === currentSlide 
+                    ? 'opacity-100 translate-x-0' 
+                    : 'opacity-0 translate-x-12'
+                }`}
+                style={{ transitionDelay: index === currentSlide ? '400ms' : '0ms' }}
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-px bg-copper"></div>
+                  <span className="font-sans text-copper uppercase tracking-widest text-xs font-semibold">Varaha Premium</span>
+                </div>
+                
+                <h1 className="font-royal text-5xl md:text-7xl font-bold text-white mb-6 leading-tight drop-shadow-md">
                   {slide.title}
                 </h1>
-
-                {/* Subtle line under title */}
-                <div className="w-32 h-px bg-copper/60 mx-auto mb-10 animate-fadeIn" style={{ animationDelay: '0.3s' }}></div>
-
-                <p className="font-playfair text-2xl md:text-3xl text-heritage/80 mb-16 max-w-3xl mx-auto leading-relaxed font-light tracking-wide animate-fadeUp" style={{ animationDelay: '0.4s' }}>
+                
+                <p className="font-playfair text-lg md:text-xl text-ivory-smoke/90 mb-10 max-w-lg leading-relaxed font-light drop-shadow-sm">
                   {slide.subtitle}
                 </p>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-scaleIn" style={{ animationDelay: '0.6s' }}>
+                <div className="flex flex-col sm:flex-row gap-5 items-start">
                   <Link
                     href={slide.link_url || "/collections/all"}
-                    className="group px-10 py-4 bg-copper border border-copper text-warm-sand font-medium rounded-sm hover:bg-heritage transition-all duration-300 flex items-center gap-3"
+                    className="group w-full sm:w-auto px-8 py-4 bg-copper text-white font-medium hover:bg-white hover:text-heritage transition-colors duration-300 flex items-center justify-center gap-3 rounded-sm shadow-lg shadow-copper/20"
                   >
                     {slide.link_text || "Explore Collections"}
-                    <ChevronRight className="group-hover:translate-x-2 transition-transform duration-300" size={24} />
+                    <ChevronRight className="group-hover:translate-x-1 transition-transform duration-300" size={20} />
                   </Link>
 
                   <Link
                     href={slide.secondary_link_url || "/heritage"}
-                    className="px-10 py-4 bg-transparent border border-copper text-heritage font-medium rounded-sm hover:bg-copper/5 transition-all duration-300"
+                    className="w-full sm:w-auto px-8 py-4 bg-transparent border border-white/40 text-white font-medium hover:bg-white/10 transition-colors duration-300 rounded-sm flex items-center justify-center"
                   >
                     {slide.secondary_link_text || "Our Heritage"}
                   </Link>
@@ -202,39 +196,37 @@ export default function HeroSection({ initialSlides }) {
         </div>
       ))}
 
-      {/* Navigation Arrows - Hidden on Mobile, Visible on Desktop */}
+      {/* Modern Navigation Arrows */}
       <button
         onClick={prevSlide}
-        className="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
+        className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 z-30 w-14 h-14 bg-transparent text-white border border-white/40 rounded-full hover:bg-white hover:text-heritage items-center justify-center transition-all duration-300 group"
         aria-label="Previous slide"
       >
-        <ChevronLeft size={28} />
+        <ChevronLeft size={24} className="group-hover:-translate-x-0.5 transition-transform" />
       </button>
       <button
         onClick={nextSlide}
-        className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
+        className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 z-30 w-14 h-14 bg-transparent text-white border border-white/40 rounded-full hover:bg-white hover:text-heritage items-center justify-center transition-all duration-300 group"
         aria-label="Next slide"
       >
-        <ChevronRight size={28} />
+        <ChevronRight size={24} className="group-hover:translate-x-0.5 transition-transform" />
       </button>
 
-      {/* Slide Indicators - Hidden for cleaner mobile UX */}
-      <div className="hidden">
+      {/* Slide Indicators - Minimal Dots */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`h - 1 rounded - full transition - all duration - 500 ${index === currentSlide
-              ? 'w-16 bg-copper'
-              : 'w-8 bg-heritage/30 hover:bg-heritage/50'
-              } `}
-            aria-label={`Go to slide ${index + 1} `}
+            className={`h-1.5 rounded-full transition-all duration-500 ${
+              index === currentSlide
+                ? 'w-10 bg-copper'
+                : 'w-2 bg-white/40 hover:bg-white/80'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>
-
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-warm-sand to-transparent z-5"></div>
     </section>
   );
 }

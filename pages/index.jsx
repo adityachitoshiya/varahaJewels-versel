@@ -283,7 +283,6 @@ export default function Home({ heroSlides, initialSettings }) {
       {(!isLoading || true) && !showFullPageCountdown && (
         <>
           <Header />
-          <DeliveryBar variant="mobile" />
 
           <main className="bg-warm-sand">
             {/* Pass SSG props to HeroSection */}

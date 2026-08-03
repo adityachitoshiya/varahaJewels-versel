@@ -57,6 +57,7 @@ module.exports = {
         'slideInRight': 'slideInRight 0.5s ease-out forwards',
         'scaleIn': 'scaleIn 0.4s ease-out forwards',
         'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'kenBurns': 'kenBurns 20s ease-out forwards',
       },
       keyframes: {
         gradientMove: {
@@ -103,6 +104,10 @@ module.exports = {
         pulse: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.7' },
+        },
+        kenBurns: {
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.15)' },
         },
       },
       backgroundSize: {
