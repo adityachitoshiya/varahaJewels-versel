@@ -12,7 +12,7 @@ const defaultSlides = [
     title: 'Timeless Elegance',
     subtitle: 'Heritage-inspired masterpieces crafted with tradition and artistry',
     link_text: 'Explore Collections',
-    link_url: '/collections/all',
+    link_url: '/collections',
     secondary_link_text: 'Our Heritage',
     secondary_link_url: '/heritage'
   },
@@ -22,7 +22,7 @@ const defaultSlides = [
     title: 'Royal Heritage',
     subtitle: 'Exquisite pieces that celebrate India\'s rich cultural legacy',
     link_text: 'Explore Collections',
-    link_url: '/collections/all',
+    link_url: '/collections',
     secondary_link_text: 'Our Heritage',
     secondary_link_url: '/heritage'
   },
@@ -32,7 +32,7 @@ const defaultSlides = [
     title: 'Artisan Excellence',
     subtitle: 'Every piece handcrafted by master artisans with devotion and precision',
     link_text: 'Explore Collections',
-    link_url: '/collections/all',
+    link_url: '/collections',
     secondary_link_text: 'Our Heritage',
     secondary_link_url: '/heritage'
   }
@@ -176,7 +176,7 @@ export default function HeroSection({ initialSlides }) {
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-5 items-start">
                   <Link
-                    href={slide.link_url || "/collections/all"}
+                    href={slide.link_url === '/collections/all' ? '/collections' : (slide.link_url || "/collections")}
                     className="group w-full sm:w-auto px-8 py-4 bg-copper text-white font-medium hover:bg-white hover:text-heritage transition-colors duration-300 flex items-center justify-center gap-3 rounded-sm shadow-lg shadow-copper/20"
                   >
                     {slide.link_text || "Explore Collections"}

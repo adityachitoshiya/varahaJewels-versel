@@ -25,7 +25,7 @@ export default function ContentManagement() {
     const [showCreatorForm, setShowCreatorForm] = useState(false);
 
     // New Item States
-    const [newSlide, setNewSlide] = useState({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections/all', secondary_link_text: 'Our Heritage', secondary_link_url: '/heritage' });
+    const [newSlide, setNewSlide] = useState({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections', secondary_link_text: 'Our Heritage', secondary_link_url: '/heritage' });
     const [newCreator, setNewCreator] = useState({ name: '', handle: '', platform: 'instagram', followers: '', video_file: null, product_name: '', is_verified: true });
 
     useEffect(() => {
@@ -130,7 +130,7 @@ export default function ContentManagement() {
             await uploadWithProgress(`${API_URL}/api/content/hero`, formData);
 
             setShowHeroForm(false);
-            setNewSlide({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections/all', secondary_link_text: 'Our Heritage', secondary_link_url: '/heritage' });
+            setNewSlide({ image_file: null, mobile_image_file: null, title: '', subtitle: '', link_text: 'Explore Collections', link_url: '/collections', secondary_link_text: 'Our Heritage', secondary_link_url: '/heritage' });
             fetchContent();
         } catch (error) {
             console.error("Add error:", error);
@@ -442,7 +442,7 @@ export default function ContentManagement() {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Button 1 Link</label>
-                                            <input className="w-full p-2 border rounded-lg text-sm" value={newSlide.link_url} onChange={e => setNewSlide({ ...newSlide, link_url: e.target.value })} placeholder="/collections/all" />
+                                            <input className="w-full p-2 border rounded-lg text-sm" value={newSlide.link_url} onChange={e => setNewSlide({ ...newSlide, link_url: e.target.value })} placeholder="/collections" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Button 2 Text</label>
