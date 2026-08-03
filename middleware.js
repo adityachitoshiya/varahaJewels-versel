@@ -109,15 +109,15 @@ export async function middleware(request) {
     let regionCode = normalizeCode(headerRegion || geo.region);
     let regionName = normalizeName(geo.regionName);
 
-    // Fallback: If Vercel geo is empty, use IP-based lookup
-    if (!country) {
+    // Fallback: If Vercel geo doesn't provide region data, use IP-based lookup
+    if (!regionCode && !regionName) {
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
             || request.headers.get('x-real-ip')
             || request.ip;
 
         const ipGeo = await getGeoFromIP(ip);
         if (ipGeo) {
-            country = ipGeo.country;
+            country = country || ipGeo.country;
             regionCode = ipGeo.regionCode;
             regionName = ipGeo.regionName;
         }
