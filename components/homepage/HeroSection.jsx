@@ -110,12 +110,12 @@ export default function HeroSection({ initialSlides }) {
   };
 
   return (
-    <section className="relative h-screen bg-prestige overflow-hidden">
+    <section className="relative h-[100dvh] bg-prestige overflow-hidden">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 h-screen transition-opacity duration-[1500ms] ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+          className={`absolute inset-0 h-[100dvh] transition-opacity duration-[1500ms] ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
         >
           {/* Background Image with Ken Burns Effect */}
           <div className={`absolute inset-0 ${index === currentSlide ? 'animate-kenBurns' : ''}`}>
@@ -127,7 +127,7 @@ export default function HeroSection({ initialSlides }) {
                     alt={slide.title}
                     className="w-full h-full object-cover"
                     priority={index === 0}
-                    quality={60}
+                    quality={70}
                     sizes="100vw"
                   />
                 </div>
@@ -144,48 +144,48 @@ export default function HeroSection({ initialSlides }) {
               </>
             )}
             {/* Dark immersive lighting overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-prestige/90 via-prestige/20 to-transparent"></div>
-            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-prestige/95 via-prestige/30 to-transparent md:from-prestige/90 md:via-prestige/20"></div>
+            <div className="absolute inset-0 bg-black/30 md:bg-black/20"></div>
           </div>
 
           {/* Content - Glassmorphism Card */}
-          <div className="relative h-full flex flex-col justify-end md:justify-center items-start z-20 pb-24 md:pb-0">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 w-full flex justify-start">
+          <div className="relative h-full flex flex-col justify-end md:justify-center items-start z-20 pb-28 sm:pb-32 md:pb-0">
+            <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-12 w-full flex justify-start">
               {/* Content Card */}
               <div 
-                className={`w-full md:max-w-2xl p-8 md:p-12 transition-all duration-1000 ease-out transform ${
+                className={`w-full md:max-w-2xl p-0 md:p-12 transition-all duration-1000 ease-out transform ${
                   index === currentSlide 
                     ? 'opacity-100 translate-x-0' 
-                    : 'opacity-0 translate-x-12'
+                    : 'opacity-0 translate-x-8 md:translate-x-12'
                 }`}
                 style={{ transitionDelay: index === currentSlide ? '400ms' : '0ms' }}
               >
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-px bg-copper"></div>
-                  <span className="font-sans text-copper uppercase tracking-widest text-xs font-semibold">Varaha Premium</span>
+                <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-6">
+                  <div className="w-8 md:w-12 h-px bg-copper"></div>
+                  <span className="font-sans text-copper uppercase tracking-widest text-[10px] md:text-xs font-semibold">Varaha Premium</span>
                 </div>
                 
-                <h1 className="font-royal text-5xl md:text-7xl font-bold text-white mb-6 leading-tight drop-shadow-md">
+                <h1 className="font-royal text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-3 md:mb-6 leading-[1.1] drop-shadow-md">
                   {slide.title}
                 </h1>
                 
-                <p className="font-playfair text-lg md:text-xl text-ivory-smoke/90 mb-10 max-w-lg leading-relaxed font-light drop-shadow-sm">
+                <p className="font-playfair text-base sm:text-lg md:text-xl text-ivory-smoke/90 mb-8 md:mb-10 max-w-[280px] sm:max-w-lg leading-relaxed font-light drop-shadow-sm">
                   {slide.subtitle}
                 </p>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-5 items-start">
+                <div className="flex flex-col sm:flex-row gap-3.5 md:gap-5 items-start w-full sm:w-auto">
                   <Link
                     href={slide.link_url === '/collections/all' ? '/collections' : (slide.link_url || "/collections")}
-                    className="group w-full sm:w-auto px-8 py-4 bg-copper text-white font-medium hover:bg-white hover:text-heritage transition-colors duration-300 flex items-center justify-center gap-3 rounded-sm shadow-lg shadow-copper/20"
+                    className="group w-full sm:w-auto px-6 py-3.5 md:px-8 md:py-4 bg-copper text-white font-medium hover:bg-white hover:text-heritage transition-colors duration-300 flex items-center justify-center gap-3 rounded-sm shadow-lg shadow-copper/20"
                   >
-                    {slide.link_text || "Explore Collections"}
-                    <ChevronRight className="group-hover:translate-x-1 transition-transform duration-300" size={20} />
+                    <span className="text-sm md:text-base">{slide.link_text || "Explore Collections"}</span>
+                    <ChevronRight className="group-hover:translate-x-1 transition-transform duration-300 w-4 h-4 md:w-5 md:h-5" />
                   </Link>
 
                   <Link
                     href={slide.secondary_link_url || "/heritage"}
-                    className="w-full sm:w-auto px-8 py-4 bg-transparent border border-white/40 text-white font-medium hover:bg-white/10 transition-colors duration-300 rounded-sm flex items-center justify-center"
+                    className="w-full sm:w-auto px-6 py-3.5 md:px-8 md:py-4 bg-transparent border border-white/40 text-white font-medium hover:bg-white/10 transition-colors duration-300 rounded-sm flex items-center justify-center text-sm md:text-base"
                   >
                     {slide.secondary_link_text || "Our Heritage"}
                   </Link>
@@ -213,14 +213,14 @@ export default function HeroSection({ initialSlides }) {
       </button>
 
       {/* Slide Indicators - Minimal Dots */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2 md:gap-3">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
             className={`h-1.5 rounded-full transition-all duration-500 ${
               index === currentSlide
-                ? 'w-10 bg-copper'
+                ? 'w-8 md:w-10 bg-copper'
                 : 'w-2 bg-white/40 hover:bg-white/80'
             }`}
             aria-label={`Go to slide ${index + 1}`}
