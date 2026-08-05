@@ -7,6 +7,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { CheckCircle, Package, Mail, Phone, Home, Download } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { trackPixelEvent, sendCapiEvent, generateEventId, getUserData } from '../lib/metaPixel';
 
 export default function PaymentSuccess() {
   const router = useRouter();
@@ -99,11 +100,65 @@ export default function PaymentSuccess() {
           productName: items.length > 0 ? (items.length > 1 ? `${items[0].productName} + ${items.length - 1} more` : items[0].productName) : 'Product',
           quantity: items.reduce((sum, item) => sum + (item.quantity || 1), 0),
           email: data.email,
+          phone: data.contact || data.phone || '',
           name: data.customer_name,
+          city: data.city || '',
+          state: data.state || '',
+          zip: data.pincode || '',
           isCod: data.payment_method === 'cod',
           taxAmount: (data.cgst_amount || 0) + (data.sgst_amount || 0) + (data.igst_amount || 0),
           items: items // Store full items
         });
+
+        // ── Fire Purchase Event (once per order) ──────────────────────────────
+        const purchaseKey = `meta_purchase_fired_${data.id}`;
+        const alreadyFired = typeof window !== 'undefined' && localStorage.getItem(purchaseKey);
+
+        if (!alreadyFired) {
+          // Mark as fired BEFORE calling to prevent race conditions
+          if (typeof window !== 'undefined') localStorage.setItem(purchaseKey, '1');
+
+          const nameParts = (data.customer_name || '').trim().split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+
+          const userData = {
+            ...getUserData(),          // picks up anything stored at checkout
+            email: data.email || '',
+            phone: data.contact || data.phone || '',
+            firstName,
+            lastName,
+            city: data.city || '',
+            state: data.state || '',
+            zip: data.pincode || '',
+            country: 'in',
+          };
+
+          const customData = {
+            content_ids: items.map(i => String(i.productId || i.id || i.product_id)),
+            content_type: 'product',
+            value: data.total_amount,
+            currency: 'INR',
+            num_items: items.reduce((sum, i) => sum + (i.quantity || 1), 0),
+            order_id: String(data.id),
+          };
+
+          // Generate a single event_id shared between browser pixel and CAPI
+          const eventId = generateEventId();
+
+          // 1. Browser pixel
+          trackPixelEvent('Purchase', customData, eventId);
+
+          // 2. CAPI mirror (server-side, same event_id = deduplication)
+          sendCapiEvent({
+            eventName: 'Purchase',
+            eventId,
+            userData,
+            customData,
+            eventSourceUrl: typeof window !== 'undefined' ? window.location.href : 'https://varahajewels.in/payment-success',
+          }).catch(() => {});
+        }
+        // ───────────────────────────────────────────────────────────────
 
       } else {
         console.error(`Failed to fetch order (Status: ${res.status})`);

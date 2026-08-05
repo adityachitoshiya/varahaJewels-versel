@@ -9,6 +9,7 @@ import Script from 'next/script'; // Import Script for Razorpay
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
+import { trackEvent, storeUserData } from '../lib/metaPixel';
 
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User, MapPin, Home, Briefcase, ChevronDown } from 'lucide-react';
 import { useMsg91OTP } from '../hooks/useMsg91OTP';
@@ -174,11 +175,46 @@ export default function Checkout() {
   }, [router.query]);
 
   // Always sync cart items from context (works across all steps)
+  const initiateCheckoutFired = useRef(false);
   useEffect(() => {
     if (contextCartItems && contextCartItems.length > 0) {
       setCartItems(contextCartItems);
     }
   }, [contextCartItems]);
+
+  // ── Fire InitiateCheckout once when cart items / order details are confirmed ──
+  useEffect(() => {
+    if (initiateCheckoutFired.current) return;
+
+    const items = cartItems.length > 0 ? cartItems : null;
+    const hasData = items || orderDetails;
+    if (!hasData) return;
+
+    initiateCheckoutFired.current = true;
+
+    const contentIds = items
+      ? items.map(i => String(i.productId || i.id))
+      : [String(orderDetails?.productId)];
+
+    const totalValue = items
+      ? items.reduce((sum, i) => sum + (i.variant.price * i.quantity), 0)
+      : (orderDetails?.amount || 0);
+
+    const numItems = items
+      ? items.reduce((sum, i) => sum + i.quantity, 0)
+      : (orderDetails?.quantity || 1);
+
+    trackEvent(
+      'InitiateCheckout',
+      {
+        content_ids: contentIds,
+        content_type: 'product',
+        value: totalValue,
+        currency: 'INR',
+        num_items: numItems,
+      }
+    ).catch(() => {});
+  }, [cartItems, orderDetails]);
 
   // New Effect: Redirect if no items found after a reasonable check
   useEffect(() => {
@@ -264,6 +300,18 @@ export default function Checkout() {
       ...prev,
       [name]: sanitizedValue
     }));
+
+    // Store user data for Advanced Matching on later pages (e.g., payment-success)
+    if (['email', 'contact', 'name', 'city', 'state', 'pincode'].includes(name)) {
+      storeUserData({
+        email: name === 'email' ? sanitizedValue : formData.email,
+        phone: name === 'contact' ? sanitizedValue : formData.contact,
+        name: name === 'name' ? sanitizedValue : formData.name,
+        city: name === 'city' ? sanitizedValue : formData.city,
+        state: name === 'state' ? sanitizedValue : formData.state,
+        zip: name === 'pincode' ? sanitizedValue : formData.pincode,
+      });
+    }
 
     // Auto-fetch city and state when pincode is entered (6 digits)
     if (name === 'pincode' && sanitizedValue.length === 6) {

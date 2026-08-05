@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Script from 'next/script';
 import { getApiUrl } from '../lib/config';
 import dynamic from 'next/dynamic';
 // Lazy load Firebase - only needed for Phone OTP (not critical path)
@@ -15,6 +16,7 @@ import { NotificationProvider } from '../context/NotificationContext';
 import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { WishlistProvider } from '../context/WishlistContext';
+import { PIXEL_ID, getUserData } from '../lib/metaPixel';
 
 const CookieConsent = dynamic(() => import('../components/CookieConsent'), { ssr: false });
 
@@ -52,6 +54,27 @@ function MyApp({ Component, pageProps }) {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  // ── Meta Pixel: re-fire PageView on every SPA route change ─────────────────
+  useEffect(() => {
+    const handlePixelPageView = () => {
+      if (typeof window === 'undefined' || typeof window.fbq !== 'function') return;
+      // Re-init with Advanced Matching on every page change (picks up logged-in user data)
+      const ud = getUserData();
+      if (ud.email || ud.phone) {
+        window.fbq('init', PIXEL_ID, {
+          em: ud.email,
+          ph: ud.phone,
+          fn: ud.firstName,
+          ln: ud.lastName,
+        });
+      }
+      window.fbq('track', 'PageView');
+    };
+
+    router.events.on('routeChangeComplete', handlePixelPageView);
+    return () => router.events.off('routeChangeComplete', handlePixelPageView);
+  }, [router.events]);
 
   useEffect(() => {
     const trackVisit = async () => {
@@ -129,11 +152,42 @@ function MyApp({ Component, pageProps }) {
     );
   }
 
+  // ── Meta Pixel inline script (outside admin) ───────────────────────────────
+  const metaPixelScript = `
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '${PIXEL_ID}');
+    fbq('track', 'PageView');
+  `;
+
   const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!GOOGLE_CLIENT_ID) console.error('NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set!');
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      {/* ── Meta Pixel Script (loads after page is interactive) ── */}
+      <Script
+        id="meta-pixel"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ __html: metaPixelScript }}
+      />
+      {/* Meta Pixel noscript fallback */}
+      <noscript>
+        <img
+          height="1"
+          width="1"
+          style={{ display: 'none' }}
+          src={`https://www.facebook.com/tr?id=${PIXEL_ID}&ev=PageView&noscript=1`}
+          alt=""
+        />
+      </noscript>
+
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

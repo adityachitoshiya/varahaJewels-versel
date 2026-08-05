@@ -11,6 +11,7 @@ import AddToCartModal from '../../components/AddToCartModal';
 import ReviewsSection from '../../components/ReviewsSection';
 import Footer from '../../components/Footer';
 import ProductDetailSkeleton from '../../components/ProductDetailSkeleton';
+import { trackEvent } from '../../lib/metaPixel';
 
 export default function ProductPage() {
   const router = useRouter();
@@ -158,6 +159,20 @@ export default function ProductPage() {
 
         setProduct(adaptedProduct);
 
+        // ── Fire ViewContent ────────────────────────────────────────────────
+        trackEvent(
+          'ViewContent',
+          {
+            content_ids: [String(data.id)],
+            content_type: 'product',
+            content_name: data.name,
+            content_category: data.category || '',
+            value: data.price,
+            currency: 'INR',
+          }
+        ).catch(() => {});
+        // ───────────────────────────────────────────────────────────────
+
         // Fetch actual reviews using real product ID
         try {
           const revRes = await fetch(`${API_URL}/api/reviews/${data.id}`);
@@ -208,6 +223,20 @@ export default function ProductPage() {
   const handleAddToCart = (variant, quantity) => {
     addToCart(product, variant, quantity, { silent: true });
     setIsCartModalOpen(true);
+
+    // ── Fire AddToCart ────────────────────────────────────────────────
+    trackEvent(
+      'AddToCart',
+      {
+        content_ids: [String(product.id)],
+        content_type: 'product',
+        content_name: product.name,
+        value: variant.price * quantity,
+        currency: 'INR',
+        num_items: quantity,
+      }
+    ).catch(() => {});
+    // ───────────────────────────────────────────────────────────────
   };
 
   // Update Cart Item Quantity
