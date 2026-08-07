@@ -9,7 +9,7 @@ export const config = {
          * - Geo-blocked page itself
          * - Admin pages
          */
-        '/((?!api|_next/static|_next/image|favicon.ico|varaha-assets|geo-blocked|admin).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|varaha-assets|geo-blocked|admin|.*\\..*).*)',
     ],
 };
 

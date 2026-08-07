@@ -9,13 +9,69 @@ export default function ComingSoon() {
   const [accessId, setAccessId] = useState('');
   const [dots, setDots] = useState('');
 
+  const [timeLeft, setTimeLeft] = useState({ days: '00', hours: '00', minutes: '00', seconds: '00' });
+  const [endTime, setEndTime] = useState(null);
+
   useEffect(() => {
-    // Basic countdown simulation
-    const interval = setInterval(() => {
+    // Basic countdown simulation for dots
+    const dotsInterval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 500);
-    return () => clearInterval(interval);
+
+    // Fetch maintenance end time
+    const fetchSettings = async () => {
+      try {
+        const { getApiUrl } = require('../lib/config');
+        const API_URL = getApiUrl();
+        const res = await fetch(`${API_URL}/api/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.maintenance_end_time) {
+            setEndTime(new Date(data.maintenance_end_time).getTime());
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings:", err);
+      }
+    };
+    
+    fetchSettings();
+
+    return () => clearInterval(dotsInterval);
   }, []);
+
+  useEffect(() => {
+    if (!endTime) return;
+
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const difference = endTime - now;
+
+      if (difference <= 0) {
+        return { days: '00', hours: '00', minutes: '00', seconds: '00' };
+      }
+
+      const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+      return {
+        days: d.toString().padStart(2, '0'),
+        hours: h.toString().padStart(2, '0'),
+        minutes: m.toString().padStart(2, '0'),
+        seconds: s.toString().padStart(2, '0')
+      };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [endTime]);
 
   const handleLogin = async () => {
     const validIds = ["DEV2024", "adi1", "adi2", "adi3"];
@@ -46,7 +102,7 @@ export default function ComingSoon() {
   return (
     <>
       <Head>
-        <title>Coming Soon - Varaha Jewels™</title>
+        <title>Under Maintenance - Varaha Jewels™</title>
         <meta name="description" content="This page is under construction. Check back soon!" />
       </Head>
 
@@ -83,7 +139,7 @@ export default function ComingSoon() {
 
           {/* Main Heading */}
           <h1 className="font-royal text-4xl sm:text-5xl md:text-7xl font-bold text-heritage mb-4 sm:mb-6 animate-fadeUp">
-            Under Construction
+            Under Maintenance
           </h1>
 
           {/* Animated Dots */}
@@ -109,8 +165,8 @@ export default function ComingSoon() {
 
             <div className="bg-white/50 backdrop-blur-sm p-5 sm:p-6 rounded-lg shadow-lg border border-copper/20 animate-fadeUp" style={{ animationDelay: '0.4s' }}>
               <Clock className="mx-auto mb-3 sm:mb-4 text-copper" size={28} />
-              <h3 className="font-semibold text-heritage mb-2 text-sm sm:text-base">Coming Soon</h3>
-              <p className="text-heritage/70 text-xs sm:text-sm">Worth the wait, we promise</p>
+              <h3 className="font-semibold text-heritage mb-2 text-sm sm:text-base">Under Maintenance</h3>
+              <p className="text-heritage/70 text-xs sm:text-sm">We will be back shortly</p>
             </div>
 
             <div className="bg-white/50 backdrop-blur-sm p-5 sm:p-6 rounded-lg shadow-lg border border-copper/20 animate-fadeUp" style={{ animationDelay: '0.5s' }}>
@@ -123,13 +179,13 @@ export default function ComingSoon() {
           {/* Countdown Timer */}
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-12 sm:mb-16">
             {[
-              { label: 'Days', value: '02' },
-              { label: 'Hours', value: '04' },
-              { label: 'Minutes', value: '15' },
-              { label: 'Seconds', value: '25' }
+              { label: 'Days', value: timeLeft.days },
+              { label: 'Hours', value: timeLeft.hours },
+              { label: 'Minutes', value: timeLeft.minutes },
+              { label: 'Seconds', value: timeLeft.seconds }
             ].map((item, i) => (
               <div key={i} className="flex flex-col items-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-copper to-heritage rounded-lg shadow-xl flex items-center justify-center mb-2 animate-bounce hover:scale-105 transition-transform" style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-copper to-heritage rounded-lg shadow-xl flex items-center justify-center mb-2 hover:scale-105 transition-transform">
                   <span className="text-2xl sm:text-3xl font-bold text-warm-sand font-mono">
                     {item.value}
                   </span>

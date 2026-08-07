@@ -5,12 +5,6 @@ const nextConfig = {
 
     // Optimize compilation and reduce recompilation
     reactStrictMode: false,
-    swcMinify: true,
-
-    // Skip ESLint during production build (linting runs separately)
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
 
     // Skip TypeScript errors during build
     typescript: {
@@ -28,11 +22,6 @@ const nextConfig = {
     },
 
     productionBrowserSourceMaps: false,
-
-    // Webpack config only applies to production builds (Turbopack handles dev)
-    ...(process.env.NODE_ENV === 'production' ? {
-        webpack: (config) => config,
-    } : {}),
 
     images: {
         unoptimized: false,
@@ -87,9 +76,6 @@ const nextConfig = {
 
     // Enable compression
     compress: true,
-
-    // Optimize fonts
-    optimizeFonts: true,
 
     // Power by header removal for security and slight performance
     poweredByHeader: false,

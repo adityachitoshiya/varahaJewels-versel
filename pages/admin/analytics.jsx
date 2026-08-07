@@ -2,13 +2,19 @@ import { useState, useEffect } from 'react';
 import { getApiUrl } from '../../lib/config';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
-import { Users, Activity, Calendar, TrendingUp, MapPin, Globe, Building2 } from 'lucide-react';
+import { Users, Activity, Calendar, TrendingUp, MapPin, Globe, Building2, MousePointerClick, MonitorSmartphone, Share2, ShoppingCart } from 'lucide-react';
 
 export default function Analytics() {
     const [stats, setStats] = useState({
         active_users: 0,
         daily_stats: [],
-        total_visits: 0
+        total_visits: 0,
+        conversion_rate: 0,
+        bounce_rate: 0,
+        device_split: [],
+        traffic_sources: [],
+        total_sessions: 0,
+        orders_count: 0
     });
     const [geo, setGeo] = useState({
         top_states: [],
@@ -57,7 +63,7 @@ export default function Analytics() {
             </div>
 
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
                     <div className="p-3 bg-green-100 text-green-600 rounded-lg">
                         <Activity size={24} />
@@ -84,13 +90,91 @@ export default function Analytics() {
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
                     <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
-                        <Globe size={24} />
+                        <ShoppingCart size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500 font-medium">Countries</p>
+                        <p className="text-sm text-gray-500 font-medium">Conversion Rate</p>
                         <h2 className="text-3xl font-bold text-gray-800">
-                            {geo.top_countries.length}
+                            {stats.conversion_rate}%
                         </h2>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div className="p-3 bg-orange-100 text-orange-600 rounded-lg">
+                        <TrendingUp size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500 font-medium">Bounce Rate</p>
+                        <h2 className="text-3xl font-bold text-gray-800">
+                            {stats.bounce_rate}%
+                        </h2>
+                    </div>
+                </div>
+            </div>
+
+            {/* Traffic & Devices */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Traffic Sources */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 flex items-center gap-2">
+                        <Share2 size={18} className="text-blue-500" />
+                        <h3 className="font-bold text-gray-800">Top Traffic Sources</h3>
+                    </div>
+                    <div className="p-4">
+                        {stats.traffic_sources?.length === 0 ? (
+                            <p className="text-center text-gray-400 py-8 text-sm">No traffic data</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {stats.traffic_sources?.map((item, idx) => (
+                                    <div key={item.source || idx} className="flex justify-between items-center">
+                                        <span className="text-sm font-medium text-gray-700 capitalize">
+                                            {item.source}
+                                        </span>
+                                        <div className="text-right">
+                                            <span className="text-sm font-bold text-gray-800">{item.count}</span>
+                                            <span className="text-xs text-gray-400 ml-1">sessions</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Device Split */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 flex items-center gap-2">
+                        <MonitorSmartphone size={18} className="text-green-500" />
+                        <h3 className="font-bold text-gray-800">Devices</h3>
+                    </div>
+                    <div className="p-4">
+                        {stats.device_split?.length === 0 ? (
+                            <p className="text-center text-gray-400 py-8 text-sm">No device data</p>
+                        ) : (
+                            <div className="space-y-4 mt-2">
+                                {stats.device_split?.map((item, idx) => {
+                                    const total = stats.device_split.reduce((a, b) => a + b.count, 0);
+                                    const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
+                                    return (
+                                        <div key={item.device || idx}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-sm font-medium text-gray-700 capitalize flex items-center gap-2">
+                                                    {item.device}
+                                                </span>
+                                                <span className="text-sm font-bold text-gray-800">{percentage}%</span>
+                                            </div>
+                                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-copper rounded-full"
+                                                    style={{ width: `${percentage}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

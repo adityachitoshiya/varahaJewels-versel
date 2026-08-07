@@ -66,6 +66,7 @@ export default function Checkout() {
 
   // Payment method state (managed by PaymentLayout mostly, but kept for logic)
   const [paymentMethod, setPaymentMethod] = useState('online');
+  const [isCodDisabled, setIsCodDisabled] = useState(false);
 
   // Cart items state (Local state used for checkout logic)
   const [cartItems, setCartItems] = useState([]);
@@ -452,6 +453,7 @@ export default function Checkout() {
     setCouponError('');
     setAppliedCoupon(null);
     setDiscount(0);
+    setIsCodDisabled(false); // Reset restriction when removing/re-applying
 
     if (couponCode.trim() === '') {
       setCouponError('Please enter a coupon code');
@@ -462,21 +464,21 @@ export default function Checkout() {
       const API_URL = getApiUrl();
       const res = await fetch(`${API_URL}/api/coupons/param/${couponCode}`);
 
-      if (res.ok) {
+        if (res.ok) {
         const data = await res.json();
         // Check payment method restriction
         const restriction = data.payment_method_restriction || 'none';
-        if (restriction === 'prepaid_only' && paymentMethod === 'cod') {
-          setCouponError('This coupon is valid only for prepaid/online payments');
-          return;
-        }
-        if (restriction === 'cod_only' && paymentMethod !== 'cod') {
-          setCouponError('This coupon is valid only for Cash on Delivery');
-          return;
-        }
-        if (restriction === 'upi_only' && paymentMethod === 'cod') {
-          setCouponError('This coupon is valid only for UPI payments');
-          return;
+        
+        if (['prepaid_only', 'upi_only'].includes(restriction)) {
+          setPaymentMethod('online');
+          setIsCodDisabled(true);
+          setCouponError(''); // Clear error if any, it's successful
+        } else if (restriction === 'cod_only') {
+          setPaymentMethod('cod');
+          setIsCodDisabled(false);
+          setCouponError('');
+        } else {
+          setIsCodDisabled(false);
         }
         // Check minimum order amount
         const minOrder = data.min_order_amount;
@@ -685,7 +687,8 @@ export default function Checkout() {
           pincode: formData.pincode,
           isCartCheckout: true,
           paymentMethod: 'cod',
-          couponCode: appliedCoupon?.code || ''
+          couponCode: appliedCoupon?.code || '',
+          session_id: localStorage.getItem('vj_session_id') || undefined
         }
         : {
           productId: orderDetails.productId,
@@ -700,7 +703,8 @@ export default function Checkout() {
           state: formData.state,
           pincode: formData.pincode,
           paymentMethod: 'cod',
-          couponCode: appliedCoupon?.code || ''
+          couponCode: appliedCoupon?.code || '',
+          session_id: localStorage.getItem('vj_session_id') || undefined
         };
 
       const response = await fetch(`${API_URL}/api/create-cod-order`, {
@@ -754,7 +758,8 @@ export default function Checkout() {
           pincode: formData.pincode,
           isCartCheckout: true,
           paymentMethod: 'online',
-          couponCode: appliedCoupon?.code || ''
+          couponCode: appliedCoupon?.code || '',
+          session_id: localStorage.getItem('vj_session_id') || undefined
         }
         : {
           productId: orderDetails.productId,
@@ -769,7 +774,8 @@ export default function Checkout() {
           state: formData.state,
           pincode: formData.pincode,
           paymentMethod: 'online',
-          couponCode: appliedCoupon?.code || ''
+          couponCode: appliedCoupon?.code || '',
+          session_id: localStorage.getItem('vj_session_id') || undefined
         };
 
 

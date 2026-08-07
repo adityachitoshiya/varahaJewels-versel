@@ -86,11 +86,16 @@ function MyApp({ Component, pageProps }) {
         return;
       }
       try {
+        const { initTracking } = await import('../utils/analytics');
+        const trackingData = initTracking();
         const API_URL = getApiUrl();
         await fetch(`${API_URL}/api/track-visit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: router.asPath })
+          body: JSON.stringify({ 
+            path: router.asPath,
+            ...trackingData 
+          })
         });
       } catch (err) {
         console.error('Tracking error:', err);

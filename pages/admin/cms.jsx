@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getApiUrl } from '../../lib/config';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
-import { Trash2, Plus, Image as ImageIcon, Video, ExternalLink, TrendingUp, DollarSign, Save } from 'lucide-react';
+import { Trash2, Plus, Image as ImageIcon, Video, ExternalLink, TrendingUp, DollarSign, Save, Calendar, Clock } from 'lucide-react';
 import ImageUpload from '../../components/admin/ImageUpload';
 import { useAdminToast } from '../../components/admin/AdminToast';
 
@@ -992,20 +992,49 @@ export default function ContentManagement() {
                         </div>
 
                         {/* Maintenance Mode Toggle */}
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div>
-                                <h3 className="font-bold text-gray-800">Maintenance Mode</h3>
-                                <p className="text-sm text-gray-500">Redirect all homepage visitors to "Coming Soon" page.</p>
+                        <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="font-bold text-gray-800">Maintenance Mode</h3>
+                                    <p className="text-sm text-gray-500">Redirect all homepage visitors to "Coming Soon" page.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={settings.is_maintenance_mode}
+                                        onChange={(e) => {
+                                            if (e.target.checked && !settings.maintenance_end_time) {
+                                                alert("Please set a Maintenance End Time before enabling Maintenance Mode.");
+                                                return;
+                                            }
+                                            handleSettingsUpdate({ is_maintenance_mode: e.target.checked });
+                                        }}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                                </label>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="sr-only peer"
-                                    checked={settings.is_maintenance_mode}
-                                    onChange={(e) => handleSettingsUpdate({ is_maintenance_mode: e.target.checked })}
-                                />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
-                            </label>
+                            
+                            <div className="border-t border-gray-200 pt-6 mt-4">
+                                <label className="block text-sm font-semibold text-gray-800 mb-3">
+                                    Target Launch Date & Time <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative w-full max-w-sm group">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-copper group-hover:text-copper/80 transition-colors">
+                                        <Calendar size={18} />
+                                    </div>
+                                    <input
+                                        type="datetime-local"
+                                        className="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-copper/50 focus:border-copper transition-all duration-300 text-gray-700 shadow-sm hover:border-copper/50 cursor-pointer outline-none"
+                                        value={settings.maintenance_end_time || ''}
+                                        onChange={(e) => handleSettingsUpdate({ maintenance_end_time: e.target.value })}
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                    <Clock size={12} className="text-gray-400" />
+                                    Required to activate Maintenance Mode.
+                                </p>
+                            </div>
                         </div>
 
                     </div>
