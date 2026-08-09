@@ -6,11 +6,11 @@ import Head from 'next/head';
 import Header from '../../components/Header';
 import ProductCarousel from '../../components/ProductCarousel';
 import ProductInfo from '../../components/ProductInfo';
-import StickyBuyBar from '../../components/StickyBuyBar';
 import AddToCartModal from '../../components/AddToCartModal';
 import ReviewsSection from '../../components/ReviewsSection';
 import Footer from '../../components/Footer';
 import ProductDetailSkeleton from '../../components/ProductDetailSkeleton';
+import VarahaMobileProductPage from '../../components/VarahaMobileProductPage';
 import { trackEvent } from '../../lib/metaPixel';
 
 export default function ProductPage() {
@@ -25,6 +25,35 @@ export default function ProductPage() {
 
   const { addToCart, updateQuantity, removeFromCart, cartItems } = useCart();
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    if (product?.id) {
+      const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+      setIsWishlisted(wishlist.some(item => item.id === product.id));
+    }
+  }, [product?.id]);
+
+  const toggleWishlist = (productId) => {
+    let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    if (wishlist.some(item => item.id === productId)) {
+      wishlist = wishlist.filter(item => item.id !== productId);
+      setIsWishlisted(false);
+    } else {
+      if (product) {
+        wishlist.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.images?.[0]?.url,
+          slug: slug
+        });
+      }
+      setIsWishlisted(true);
+    }
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    window.dispatchEvent(new Event('wishlistUpdated'));
+  };
 
   useEffect(() => {
     if (slug) {
@@ -249,6 +278,22 @@ export default function ProductPage() {
     removeFromCart(null, sku);
   };
 
+  const checkPincodeApi = async (pincode) => {
+    try {
+      const res = await fetch(`${getApiUrl()}/api/serviceability`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pincode, weight: 0.5, value: product.price || 1000 })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return { available: false };
+  };
+
   // Buy Now Handler
   const handleBuyNow = (variant, quantity) => {
     router.push({
@@ -333,7 +378,22 @@ export default function ProductPage() {
 
         {/* Main Content - Myntra Style Layout */}
         <main className="flex-1">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Mobile Layout */}
+          <div className="lg:hidden">
+            <VarahaMobileProductPage
+              product={product}
+              offers={[]}
+              similarProducts={suggestedProducts}
+              settings={settings}
+              onAddToCart={handleAddToCart}
+              onBuyNow={handleBuyNow}
+              onCheckPincode={checkPincodeApi}
+              isWishlisted={isWishlisted}
+              onWishlistToggle={toggleWishlist}
+            />
+          </div>
+
+          <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Desktop Layout: Image Grid Left, Info Right (Sticky) */}
             <div className="lg:grid lg:grid-cols-12 lg:gap-8">
 
@@ -404,14 +464,6 @@ export default function ProductPage() {
             )}
           </div>
         </main>
-
-        {/* Sticky Mobile Buy Bar */}
-        <StickyBuyBar
-          variant={product.variants[0]}
-          onAddToCart={handleAddToCart}
-          onBuyNow={handleBuyNow}
-          hidden={isCartModalOpen}
-        />
 
         {/* Footer */}
         <Footer />
