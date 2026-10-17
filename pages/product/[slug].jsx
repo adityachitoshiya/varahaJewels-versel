@@ -139,9 +139,10 @@ export default function ProductPage() {
           mrp: data.mrp,
           images: allImages,
           category: data.category,
-          rating: 4.8,
-          reviewCount: 124,
-          averageRating: 4.8,
+          // Real values only - filled in below from /api/reviews (no made-up ratings)
+          rating: data.average_rating || 0,
+          reviewCount: data.total_reviews || 0,
+          averageRating: data.average_rating || 0,
 
           // Variants
           variants: [
@@ -150,12 +151,13 @@ export default function ProductPage() {
               name: "Standard",
               price: data.price,
               sku: `${data.id}-default`,
-              inStock: data.stock > 0  // Check real stock
+              // stock null/undefined = unlimited stock (was wrongly shown as Sold Out)
+              inStock: data.stock === null || data.stock === undefined || data.stock > 0
             }
           ],
 
           // Stock info
-          stock: data.stock || 0,
+          stock: (data.stock === null || data.stock === undefined) ? undefined : data.stock,
           is_mega_deal: data.is_mega_deal || false,
 
           // Tech specs
@@ -165,23 +167,7 @@ export default function ProductPage() {
           stones: data.stones,
           colour: data.colour,
 
-          // Mock Reviews
-          reviews: [
-            {
-              id: 1,
-              user: "Priya S.",
-              rating: 5,
-              comment: "Absolutely stunning piece! The craftsmanship is unmatched.",
-              date: "2 days ago"
-            },
-            {
-              id: 2,
-              user: "Rahul M.",
-              rating: 5,
-              comment: "Looks even better in person. Packaging was premium too.",
-              date: "1 week ago"
-            }
-          ],
+          reviews: [],
 
           recommendations: []
         };
@@ -321,17 +307,25 @@ export default function ProductPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-warm-sand flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-heritage text-xl mb-4">Product not found.</p>
-          <button
-            onClick={() => router.push('/shop')}
-            className="px-6 py-2 bg-copper text-white rounded-md hover:bg-heritage transition"
-          >
-            Browse Products
-          </button>
+      <>
+        <Head>
+          <title>Product not found | Varaha Jewels™</title>
+          <meta name="robots" content="noindex" />
+        </Head>
+        <Header cartCount={cartCount} />
+        <div className="min-h-[70vh] bg-warm-sand flex items-center justify-center px-6">
+          <div className="text-center max-w-md">
+            <p className="font-royal text-3xl font-bold text-heritage mb-3">This piece isn't available</p>
+            <p className="text-matte-brown mb-8">It may have been removed or the link is incorrect. Explore our other handcrafted designs.</p>
+            <button
+              onClick={() => router.push('/collections')}
+              className="px-8 py-3 bg-copper text-white rounded-full font-semibold hover:bg-heritage transition"
+            >
+              Browse Collections
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -362,11 +356,13 @@ export default function ProductPage() {
                 "availability": product.variants?.[0]?.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
                 "itemCondition": "https://schema.org/NewCondition"
               },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": product.averageRating || "4.8",
-                "reviewCount": product.reviewCount || "12"
-              }
+              ...(product.reviewCount > 0 && {
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": product.averageRating,
+                  "reviewCount": product.reviewCount
+                }
+              })
             })
           }}
         />
@@ -421,7 +417,7 @@ export default function ProductPage() {
             </div>
 
             {/* Reviews Section */}
-            <div className="mt-12 border-t border-gray-200 pt-8">
+            <div className="mt-12">
               <ReviewsSection
                 reviews={product.reviews}
                 averageRating={product.averageRating}

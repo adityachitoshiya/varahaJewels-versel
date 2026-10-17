@@ -83,8 +83,15 @@ export function CartProvider({ children }) {
                 // Optional: Set user data in local storage if not already there
                 localStorage.setItem('customer_token', session.access_token);
             } else {
-                // User Logged Out
-                setToken(null);
+                // No Supabase session. Most users now log in with Google OAuth /
+                // phone OTP (local JWT in localStorage), so do NOT wipe the token
+                // here unless it was an explicit Supabase sign-out.
+                const localToken = localStorage.getItem('customer_token');
+                if (event === 'SIGNED_OUT' || !localToken) {
+                    setToken(null);
+                } else {
+                    setToken(localToken);
+                }
                 setLoading(false); // Stop loading if no user
             }
         });

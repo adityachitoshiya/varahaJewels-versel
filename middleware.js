@@ -33,7 +33,8 @@ function normalizeName(value) {
 async function getBlockedRegions() {
     const now = Date.now();
 
-    if (cachedBlockedRegions.length > 0 && (now - cacheTime) < CACHE_DURATION) {
+    // Cache even an empty list (otherwise every page view re-fetched it)
+    if (cacheTime > 0 && (now - cacheTime) < CACHE_DURATION) {
         return cachedBlockedRegions;
     }
 
@@ -101,6 +102,12 @@ async function getGeoFromIP(ip) {
 }
 
 export async function middleware(request) {
+    // Fast path: when no region is blocked there is nothing to look up
+    const blockedRegions = await getBlockedRegions();
+    if (!blockedRegions || blockedRegions.length === 0) {
+        return NextResponse.next();
+    }
+
     const geo = request.geo || {};
     const headerCountry = request.headers.get('x-vercel-ip-country');
     const headerRegion = request.headers.get('x-vercel-ip-country-region');
@@ -123,8 +130,6 @@ export async function middleware(request) {
         }
     }
 
-    // Get blocked regions
-    const blockedRegions = await getBlockedRegions();
     const blockedCodes = new Set(blockedRegions.map((r) => r.code).filter(Boolean));
     const blockedNames = new Set(blockedRegions.map((r) => r.name).filter(Boolean));
 

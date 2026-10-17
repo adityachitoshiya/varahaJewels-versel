@@ -3,6 +3,8 @@ import PaymentSidebar from './PaymentSidebar';
 import PriceDetails from './PriceDetails';
 import { ShieldCheck, Truck, Lock, CreditCard } from 'lucide-react';
 import { getApiUrl } from '../../lib/config';
+import { calcCouponDiscount, toPriceItems } from '../../lib/couponCalc';
+import { codChargeFor, FREE_DELIVERY_MIN } from '../../lib/deliveryFees';
 
 const PaymentLayout = ({
     cartItems,
@@ -61,28 +63,24 @@ const PaymentLayout = ({
         : (orderDetails ? orderDetails.amount : 0);
 
     // Recalculate discount
-    let discountAmount = 0;
-    if (appliedCoupon) {
-        if (appliedCoupon.discount_type === 'percentage') {
-            discountAmount = (totalAmount * appliedCoupon.discount_value) / 100;
-        } else if (appliedCoupon.discount_type === 'fixed') {
-            discountAmount = appliedCoupon.discount_value;
-        } else if (appliedCoupon.discount_type === 'flat_price') {
-            discountAmount = totalAmount - appliedCoupon.discount_value;
-        }
-        // Apply max_discount cap
-        if (appliedCoupon.max_discount && discountAmount > appliedCoupon.max_discount) {
-            discountAmount = appliedCoupon.max_discount;
-        }
-        if (discountAmount > totalAmount) discountAmount = totalAmount;
-        if (discountAmount < 0) discountAmount = 0;
-    }
-    let finalAmount = totalAmount + shippingCharge - discountAmount;
+    // Same formula as the server (incl. BOGO + max cap)
+    const discountAmount = appliedCoupon
+        ? calcCouponDiscount(appliedCoupon, toPriceItems(cartItems, orderDetails), totalAmount)
+        : 0;
+    // Order value after coupon: the delivery-fee rule and prepaid discount use this (not shipping)
+    const afterCoupon = Math.max(0, totalAmount - discountAmount);
+    let finalAmount = afterCoupon + shippingCharge;
     if (finalAmount < 0) finalAmount = 0;
 
-    // Add COD charges visually to final amount if COD selected?
-    // Usually platforms show COD charge in PriceDetails or as a line item.
-    // We'll keep PriceDetails consistent and maybe add it if COD is selected.
+    // Prepaid discount is applied by the server on online payments (same formula)
+    const prepaidDiscount = prepaidSettings.enabled
+        ? Math.round(((afterCoupon * prepaidSettings.percent) / 100) * 100) / 100
+        : 0;
+    const onlineAmount = Math.max(1, Math.round((finalAmount - prepaidDiscount) * 100) / 100);
+
+    // COD fee: free from ₹499, ₹99 below that (online payment is always free)
+    const codCharge = codChargeFor(afterCoupon);
+    const codAmount = Math.max(1, finalAmount) + codCharge;
 
     const renderContent = () => {
         switch (activeTab) {
@@ -100,7 +98,13 @@ const PaymentLayout = ({
                                     <p className="text-xs text-gray-600 mt-1">
                                         You can pay via Cash or UPI when the delivery agent arrives.
                                         <br />
-                                        <span className="font-bold text-gray-800 mt-1 inline-block">Additional ₹59 handling fee applies.</span>
+                                        {codCharge > 0 ? (
+                                            <span className="font-bold text-gray-800 mt-1 inline-block">
+                                                ₹{codCharge} COD charge on orders below ₹{FREE_DELIVERY_MIN}. Pay online for free delivery.
+                                            </span>
+                                        ) : (
+                                            <span className="font-bold text-green-700 mt-1 inline-block">No COD charge on this order.</span>
+                                        )}
                                     </p>
                                 </div>
                             </div>
@@ -111,7 +115,7 @@ const PaymentLayout = ({
                             disabled={isLoading}
                             className="w-full bg-heritage text-white py-4 rounded-lg font-bold uppercase tracking-wider hover:bg-heritage/90 shadow transition-all flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Processing...' : `Place COD Order • ₹${(finalAmount + 59).toLocaleString()}`}
+                            {isLoading ? 'Processing...' : `Place COD Order • ₹${codAmount.toLocaleString()}`}
                         </button>
                     </div>
                 );
@@ -147,7 +151,7 @@ const PaymentLayout = ({
                                 {prepaidSettings.enabled && (
                                     <div className="mt-3 pl-14">
                                         <p className="text-[10px] text-green-600 font-bold bg-green-50 inline-block px-2 py-1 rounded">
-                                            {prepaidSettings.percent}% Cashback on Prepaid Orders
+                                            {prepaidSettings.percent}% OFF on Prepaid Orders (−₹{prepaidDiscount.toLocaleString()})
                                         </p>
                                     </div>
                                 )}
@@ -164,12 +168,18 @@ const PaymentLayout = ({
                             </div>
                         )}
 
+                        {codCharge > 0 && (
+                            <p className="mb-3 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+                                Free delivery with online payment · saves ₹{codCharge} vs Cash on Delivery
+                            </p>
+                        )}
+
                         <button
                             onClick={handleRazorpayPayment}
                             disabled={isLoading}
                             className="w-full bg-heritage text-white py-4 rounded-lg font-bold uppercase tracking-wider hover:bg-heritage/90 shadow transition-all flex items-center justify-center gap-2"
                         >
-                            {isLoading ? 'Processing...' : `Pay Now • ₹${finalAmount.toLocaleString()}`}
+                            {isLoading ? 'Processing...' : `Pay Now • ₹${onlineAmount.toLocaleString()}`}
                         </button>
 
                         <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
@@ -217,7 +227,10 @@ const PaymentLayout = ({
                     orderDetails={orderDetails}
                     totalAmount={totalAmount}
                     discountAmount={discountAmount}
-                    finalAmount={finalAmount} // Note: This doesn't include COD charge logic yet, passed as raw
+                    finalAmount={finalAmount}
+                    // Match the amount on the pay button for the selected mode
+                    codCharge={activeTab === 'cod' ? codCharge : 0}
+                    prepaidDiscount={activeTab !== 'cod' ? prepaidDiscount : 0}
                     couponCode={couponCode}
                     setCouponCode={setCouponCode}
                     handleApplyCoupon={handleApplyCoupon}

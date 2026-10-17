@@ -15,10 +15,11 @@ import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, Che
 import { useMsg91OTP } from '../hooks/useMsg91OTP';
 
 import { useCart } from '../context/CartContext';
+import { calcCouponDiscount, toPriceItems } from '../lib/couponCalc';
 
 export default function Checkout() {
   const router = useRouter();
-  const { cartItems: contextCartItems } = useCart(); // Get items from Context
+  const { cartItems: contextCartItems, clearCart } = useCart(); // Get items from Context
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState(null);
@@ -153,9 +154,7 @@ export default function Checkout() {
     }
   }, []);
 
-  // Guest Verification Success Handler
-  // REMOVED: handleGuestVerificationSuccess
-  // Guest checkout is disabled. Users ONLY proceed if logged in.
+  // Guest checkout is allowed (COD + online). Logged-in users get saved addresses.
 
   useEffect(() => {
     const { productId, variantId, quantity, amount, productName, fromCart } = router.query;
@@ -217,6 +216,11 @@ export default function Checkout() {
     ).catch(() => {});
   }, [cartItems, orderDetails]);
 
+  // Latest cart values for the delayed check below (the timeout callback
+  // would otherwise only see the empty cart from the first render)
+  const latestItemsRef = useRef({ cartItems, contextCartItems });
+  latestItemsRef.current = { cartItems, contextCartItems };
+
   // New Effect: Redirect if no items found after a reasonable check
   useEffect(() => {
     if (!router.isReady) return;
@@ -224,10 +228,11 @@ export default function Checkout() {
     // Longer delay to allow context + server cart to fully load
     const timeout = setTimeout(() => {
       const { productId, fromCart } = router.query;
+      const { cartItems: latestCart, contextCartItems: latestContext } = latestItemsRef.current;
 
       // Check multiple sources for items
-      const hasItems = cartItems.length > 0 ||
-        (contextCartItems && contextCartItems.length > 0) ||
+      const hasItems = latestCart.length > 0 ||
+        (latestContext && latestContext.length > 0) ||
         productId || // Direct buy presence
         fromCart; // Coming from cart page (data may still be loading)
 
@@ -284,7 +289,8 @@ export default function Checkout() {
 
     // Validate based on field type
     if (name === 'name') {
-      sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
+      // Allow letters of any language (e.g. Hindi), spaces, dots and apostrophes
+      sanitizedValue = value.replace(/[^\p{L}\p{M}\s.']/gu, '');
     } else if (name === 'contact') {
       if (value.startsWith('+')) {
         sanitizedValue = '+' + value.slice(1).replace(/[^0-9]/g, '');
@@ -294,7 +300,7 @@ export default function Checkout() {
     } else if (name === 'pincode') {
       sanitizedValue = value.replace(/[^0-9]/g, '');
     } else if (name === 'city' || name === 'state') {
-      sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
+      sanitizedValue = value.replace(/[^\p{L}\p{M}\s.\-]/gu, '');
     }
 
     setFormData(prev => ({
@@ -354,12 +360,18 @@ export default function Checkout() {
 
   // Handle selecting a locality from suggestions
   const handleSelectLocality = (postOffice) => {
-    setFormData(prev => ({
-      ...prev,
-      address: postOffice.Name,
-      city: postOffice.District,
-      state: postOffice.State
-    }));
+    setFormData(prev => {
+      // Add the locality to what the shopper typed instead of replacing it
+      // (it used to wipe out house no. / street)
+      const typed = (prev.address || '').trim();
+      const alreadyHas = typed.toLowerCase().includes(postOffice.Name.toLowerCase());
+      return {
+        ...prev,
+        address: !typed ? postOffice.Name : alreadyHas ? typed : `${typed}, ${postOffice.Name}`,
+        city: postOffice.District,
+        state: postOffice.State
+      };
+    });
     setShowPincodeSuggestions(false);
   };
 
@@ -462,7 +474,11 @@ export default function Checkout() {
 
     try {
       const API_URL = getApiUrl();
-      const res = await fetch(`${API_URL}/api/coupons/param/${couponCode}`);
+      // email/phone let the server check the per-customer usage limit
+      const qs = new URLSearchParams();
+      if (formData.email) qs.set('email', formData.email);
+      if (formData.contact) qs.set('phone', formData.contact);
+      const res = await fetch(`${API_URL}/api/coupons/param/${encodeURIComponent(couponCode.trim())}?${qs.toString()}`);
 
         if (res.ok) {
         const data = await res.json();
@@ -506,26 +522,24 @@ export default function Checkout() {
   };
 
   const totalAmount = calculateTotal();
-  const COD_CHARGE = 59; // Cash on delivery charges
+
+  // Items for the order summary on the shipping step (cart or direct "Buy Now")
+  const summaryItems = cartItems.length > 0
+    ? cartItems.map(item => ({
+        name: item.productName || item.name || 'Product',
+        image: item.image || item.variant?.image,
+        quantity: item.quantity,
+        price: item.variant?.price || 0
+      }))
+    : orderDetails
+      ? [{ name: orderDetails.productName, image: orderDetails.image, quantity: orderDetails.quantity, price: orderDetails.amount / (orderDetails.quantity || 1) }]
+      : [];
 
   // Calculate discounted amount
-  let discountAmount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.discount_type === 'percentage') {
-      discountAmount = (totalAmount * appliedCoupon.discount_value) / 100;
-    } else if (appliedCoupon.discount_type === 'fixed') {
-      discountAmount = appliedCoupon.discount_value;
-    } else if (appliedCoupon.discount_type === 'flat_price') {
-      discountAmount = totalAmount - appliedCoupon.discount_value;
-    }
-    // Apply max_discount cap
-    if (appliedCoupon.max_discount && discountAmount > appliedCoupon.max_discount) {
-      discountAmount = appliedCoupon.max_discount;
-    }
-    // Never discount more than total
-    if (discountAmount > totalAmount) discountAmount = totalAmount;
-    if (discountAmount < 0) discountAmount = 0;
-  }
+  // Same formula as the server (incl. BOGO + max cap)
+  const discountAmount = appliedCoupon
+    ? calcCouponDiscount(appliedCoupon, toPriceItems(cartItems, orderDetails), totalAmount)
+    : 0;
 
   // Calculate final amount
   let finalAmount = totalAmount + shippingCharge - discountAmount;
@@ -537,44 +551,7 @@ export default function Checkout() {
       console.log("Payment success, validating...", response);
       const API_URL = getApiUrl();
 
-      // Reconstruct order data
-      const orderData = cartItems.length > 0
-        ? {
-          items: cartItems.map(item => ({
-            productId: item.productId || item.id,
-            productName: item.productName || item.name,
-            variantId: item.variant.id,
-            variantName: item.variant.name,
-            quantity: item.quantity,
-            price: item.variant.price,
-          })),
-          amount: Math.round(finalAmount),
-          name: formData.name,
-          email: formData.email,
-          contact: formData.contact,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-          isCartCheckout: true,
-          paymentMethod: 'online',
-          couponCode: appliedCoupon?.code || ''
-        }
-        : {
-          productId: orderDetails.productId,
-          variantId: orderDetails.variantId,
-          quantity: orderDetails.quantity,
-          amount: Math.round(finalAmount),
-          name: formData.name,
-          email: formData.email,
-          contact: formData.contact,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-          paymentMethod: 'online',
-          couponCode: appliedCoupon?.code || ''
-        };
+      // Order details are taken from the server-side checkout snapshot
 
       // Explicitly verify and create order in backend
       const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
@@ -587,8 +564,7 @@ export default function Checkout() {
         body: JSON.stringify({
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_order_id: response.razorpay_order_id,
-          razorpay_signature: response.razorpay_signature,
-          order_data: orderData
+          razorpay_signature: response.razorpay_signature
         })
       });
 
@@ -599,18 +575,23 @@ export default function Checkout() {
       }
 
       // Success
-      if (cartItems.length > 0) localStorage.removeItem('cart');
+      if (cartItems.length > 0) {
+        localStorage.removeItem('cart');
+        // Also clear the server-side cart for logged-in users
+        try { await clearCart(); } catch (e) { /* ignore */ }
+      }
       setIsSuccess(true);
 
       setTimeout(() => {
         router.push({
           pathname: '/payment-success',
           query: {
-            orderId: response.razorpay_order_id,
+            orderId: verifyData.orderId,          // real order id (ORD-...), not the Razorpay id
+            key: verifyData.accessKey,            // lets guests view their own order
             paymentId: response.razorpay_payment_id,
-            amount: finalAmount,
-            email: formData.email,
-            name: formData.name
+            amount: verifyData.amount
+            // no email/name here: personal data in URLs ends up in history, logs and analytics;
+            // payment-success loads them from the order instead
           }
         });
       }, 800);
@@ -711,19 +692,23 @@ export default function Checkout() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ ...orderData, codCharges: COD_CHARGE })
+        body: JSON.stringify(orderData) // COD charge is added by the server
       });
 
       const data = await response.json();
       if (response.ok) {
-        if (cartItems.length > 0) localStorage.removeItem('cart');
+        if (cartItems.length > 0) {
+        localStorage.removeItem('cart');
+        // Also clear the server-side cart for logged-in users
+        try { await clearCart(); } catch (e) { /* ignore */ }
+      }
         setIsSuccess(true);
         setTimeout(() => {
           router.push({
             pathname: '/payment-success',
-            query: { orderId: data.orderId, amount: finalAmount + COD_CHARGE, codMode: 'true', email: formData.email, name: formData.name }
+            query: { orderId: data.orderId, key: data.accessKey, amount: data.amount, codMode: 'true' }
           });
         }, 800);
       } else {
@@ -783,13 +768,13 @@ export default function Checkout() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify(orderData)
       });
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.detail || 'Failed to initiate payment');
+      if (!response.ok) throw new Error((typeof data.detail === 'string' && data.detail) || 'Failed to initiate payment');
 
       // Handle different payment providers
       if (data.provider === 'phonepe' && data.redirectUrl) {
@@ -895,9 +880,35 @@ export default function Checkout() {
 
 
           {/* STEP 1: ADDRESS FORM (Guest + Logged In) */}
+          {/* Step indicator */}
+          <div className="max-w-6xl mx-auto px-4 sm:px-0 pt-5 lg:pt-0 mb-6">
+            <ol className="flex items-center gap-3 text-xs sm:text-sm font-medium">
+              {['Shipping', 'Payment'].map((label, i) => {
+                const n = i + 1;
+                const done = currentStep > n;
+                const active = currentStep === n;
+                return (
+                  <li key={label} className="flex items-center gap-3">
+                    {i > 0 && <span className={`h-px w-8 sm:w-16 ${currentStep >= n ? 'bg-copper' : 'bg-heritage/20'}`} />}
+                    <span className={`flex items-center gap-2 ${active || done ? 'text-heritage' : 'text-heritage/40'}`}>
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${done ? 'bg-copper text-white' : active ? 'bg-heritage text-white' : 'bg-heritage/10 text-heritage/50'}`}>
+                        {done ? <Check size={13} /> : n}
+                      </span>
+                      {label}
+                    </span>
+                  </li>
+                );
+              })}
+              <li className="ml-auto hidden sm:flex items-center gap-1.5 text-xs text-gray-500">
+                <Lock size={13} className="text-emerald-600" /> Secure checkout
+              </li>
+            </ol>
+          </div>
+
           {currentStep === 1 && (
-              <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm p-6 lg:p-10 animate-fadeIn">
-                <div className="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
+            <div className="max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+              <div className="lg:col-span-7 bg-white rounded-2xl shadow-sm p-6 lg:p-10 animate-fadeIn">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-8 border-b border-gray-100 pb-4">
                   <h2 className="text-2xl font-bold text-heritage font-royal">Shipping Details</h2>
                   {isLoggedIn ? (
                     <div className="text-sm text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 font-medium">
@@ -1038,6 +1049,34 @@ export default function Checkout() {
                   </button>
                 </form>
               </div>
+
+              {/* Order summary - so shoppers see what they're paying for while filling the address */}
+              <aside className="lg:col-span-5 mt-6 lg:mt-0 lg:sticky lg:top-28 bg-white rounded-2xl shadow-sm p-6 animate-fadeIn">
+                <h3 className="font-royal text-xl font-bold text-heritage mb-4">Order Summary</h3>
+                <ul className="divide-y divide-gray-100">
+                  {summaryItems.map((item, idx) => (
+                    <li key={idx} className="flex gap-3 py-3 first:pt-0">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-warm-sand flex-shrink-0">
+                        {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
+                        <span className="absolute -top-0 -right-0 min-w-[20px] h-5 px-1 rounded-bl-lg bg-heritage text-white text-[11px] font-bold flex items-center justify-center">{item.quantity}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-heritage line-clamp-2">{item.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Qty {item.quantity}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-heritage whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 pt-4 border-t border-gray-100 space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>₹{totalAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">Shipping, coupons and prepaid offers are applied on the next step.</p>
+                </div>
+              </aside>
+            </div>
           )}
 
           {/* STEP 2: PAYMENT LAYOUT */}

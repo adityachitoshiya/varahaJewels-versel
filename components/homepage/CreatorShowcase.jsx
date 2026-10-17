@@ -313,11 +313,11 @@ export default function CreatorShowcase() {
         {/* Desktop View - Horizontal Scroll */}
         <div className="hidden lg:block">
           <div className="relative -mx-4">
-            <div className="flex gap-4 xl:gap-6 overflow-x-auto scrollbar-hide pb-8 px-4 justify-start xl:justify-center snap-x snap-mandatory">
+            <div className={`flex gap-4 xl:gap-6 overflow-x-auto scrollbar-hide pb-8 px-4 ${creators.length <= 3 ? 'justify-center' : 'justify-start xl:justify-center'} snap-x snap-mandatory`}>
               {creators.map((creator, index) => (
                 <div
                   key={creator.id}
-                  className={`flex-shrink-0 snap-center transition-all duration-700 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
+                  className={`flex-shrink-0 w-[280px] xl:w-[300px] snap-center transition-all duration-700 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
                     }`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >

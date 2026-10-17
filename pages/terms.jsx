@@ -102,7 +102,7 @@ export default function Terms() {
                                     <li>Credit/Debit Cards</li>
                                     <li>Net Banking</li>
                                     <li>UPI</li>
-                                    <li>Cash on Delivery (COD) - Subject to ₹59 COD charges</li>
+                                    <li>Cash on Delivery (COD) - free on orders of ₹499 and above; ₹99 COD charge on orders below ₹499</li>
                                 </ul>
                                 <p>All online payments are processed securely through Razorpay, a PCI DSS compliant payment gateway.</p>
                             </div>

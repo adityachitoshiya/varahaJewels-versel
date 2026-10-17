@@ -51,6 +51,48 @@ const emptyForm = {
     sort_order: 0,
 };
 
+// datetime-local <-> UTC ISO helpers for coupon dates
+const pad2 = (n) => String(n).padStart(2, '0');
+function toLocalInput(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function fromLocalInput(value) {
+    if (!value) return null;
+    const d = new Date(value); // interpreted in the admin's local time (IST)
+    return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function CouponRuleBadges({ coupon, block = false }) {
+    const cls = `${block ? 'block ' : ''}text-xs`;
+    const now = Date.now();
+    const expired = coupon.expires_at && new Date(coupon.expires_at).getTime() < now;
+    const notStarted = coupon.starts_at && new Date(coupon.starts_at).getTime() > now;
+    const usedUp = coupon.usage_limit && (coupon.used_count || 0) >= coupon.usage_limit;
+    return (
+        <>
+            {coupon.expires_at && (
+                <span className={`${cls} ${expired ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                    {expired ? 'Expired' : 'Expires'} {new Date(coupon.expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                </span>
+            )}
+            {notStarted && (
+                <span className={`${cls} text-amber-600`}>Starts {new Date(coupon.starts_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+            )}
+            {(coupon.usage_limit || coupon.used_count > 0) && (
+                <span className={`${cls} ${usedUp ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                    Used {coupon.used_count || 0}{coupon.usage_limit ? ` / ${coupon.usage_limit}` : ''}
+                </span>
+            )}
+            {coupon.per_customer_limit && (
+                <span className={`${cls} text-gray-500`}>{coupon.per_customer_limit}× per customer</span>
+            )}
+        </>
+    );
+}
+
 export default function OffersPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('offers');
@@ -68,7 +110,7 @@ export default function OffersPage() {
     const [couponsLoading, setCouponsLoading] = useState(true);
     const [showCouponForm, setShowCouponForm] = useState(false);
     const [editingCouponId, setEditingCouponId] = useState(null);
-    const [couponForm, setCouponForm] = useState({ code: '', discount_type: 'percentage', discount_value: '', min_order_amount: '', max_discount: '', payment_method_restriction: 'none', is_active: true });
+    const [couponForm, setCouponForm] = useState({ code: '', discount_type: 'percentage', discount_value: '', min_order_amount: '', max_discount: '', payment_method_restriction: 'none', is_active: true, starts_at: '', expires_at: '', usage_limit: '', per_customer_limit: '' });
 
     const toast = useAdminToast();
     const API_URL = getApiUrl();
@@ -223,7 +265,7 @@ export default function OffersPage() {
 
     const openCouponCreate = () => {
         setEditingCouponId(null);
-        setCouponForm({ code: '', discount_type: 'percentage', discount_value: '', min_order_amount: '', max_discount: '', payment_method_restriction: 'none', is_active: true, usage_limit: '', per_user_limit: '' });
+        setCouponForm({ code: '', discount_type: 'percentage', discount_value: '', min_order_amount: '', max_discount: '', payment_method_restriction: 'none', is_active: true, starts_at: '', expires_at: '', usage_limit: '', per_customer_limit: '' });
         setShowCouponForm(true);
     };
 
@@ -241,9 +283,10 @@ export default function OffersPage() {
             max_discount: coupon.max_discount || '',
             payment_method_restriction: coupon.payment_method_restriction || 'none',
             is_active: coupon.is_active !== false,
-            // Fix #14 — Usage limit fields
-            usage_limit: coupon.usage_limit ?? '',
-            per_user_limit: coupon.per_user_limit || '',
+            starts_at: toLocalInput(coupon.starts_at),
+            expires_at: toLocalInput(coupon.expires_at),
+            usage_limit: coupon.usage_limit || '',
+            per_customer_limit: coupon.per_customer_limit || '',
         });
         setShowCouponForm(true);
     };
@@ -259,9 +302,11 @@ export default function OffersPage() {
                 max_discount: parseFloat(couponForm.max_discount) || null,
                 payment_method_restriction: couponForm.payment_method_restriction || 'none',
                 is_active: couponForm.is_active,
-                // Fix #14 — Usage limits
-                usage_limit: couponForm.usage_limit !== '' ? parseInt(couponForm.usage_limit) : null,
-                per_user_limit: parseInt(couponForm.per_user_limit) || 0,
+                // Empty = no limit / no expiry. Dates are sent as UTC ISO strings.
+                starts_at: fromLocalInput(couponForm.starts_at),
+                expires_at: fromLocalInput(couponForm.expires_at),
+                usage_limit: parseInt(couponForm.usage_limit, 10) || null,
+                per_customer_limit: parseInt(couponForm.per_customer_limit, 10) || null,
             };
 
             const url = editingCouponId
@@ -797,7 +842,7 @@ export default function OffersPage() {
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="font-mono font-bold text-copper text-sm">{coupon.code}</span>
                                                     <span className="font-bold text-gray-800 text-sm">
-                                                        {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}
+                                                        {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : coupon.discount_type === 'bogo' ? 'BOGO' : `₹${coupon.discount_value}`}
                                                     </span>
                                                     <span className="text-xs text-gray-500 capitalize">{(coupon.discount_type || '').replace('_', ' ')}</span>
                                                     {coupon.linked_offer ? (
@@ -809,6 +854,7 @@ export default function OffersPage() {
                                                 <div className="flex flex-wrap gap-x-3 mt-1">
                                                     {coupon.min_order_amount > 0 && <span className="text-xs text-gray-500">Min ₹{coupon.min_order_amount}</span>}
                                                     {coupon.max_discount > 0 && <span className="text-xs text-gray-500">Max ₹{coupon.max_discount}</span>}
+                                                    <CouponRuleBadges coupon={coupon} />
                                                     {coupon.payment_method_restriction && coupon.payment_method_restriction !== 'none' && (
                                                         <span className="text-xs text-blue-600 font-medium">
                                                             {PAYMENT_RESTRICTIONS.find(p => p.value === coupon.payment_method_restriction)?.label || coupon.payment_method_restriction}
@@ -858,7 +904,7 @@ export default function OffersPage() {
                                                 <td className="px-4 py-3 font-mono font-bold text-copper">{coupon.code}</td>
                                                 <td className="px-4 py-3 text-gray-600 capitalize">{(coupon.discount_type || '').replace('_', ' ')}</td>
                                                 <td className="px-4 py-3 font-bold text-gray-800">
-                                                    {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}
+                                                    {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : coupon.discount_type === 'bogo' ? 'BOGO' : `₹${coupon.discount_value}`}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="space-y-1">
@@ -868,12 +914,13 @@ export default function OffersPage() {
                                                         {coupon.max_discount > 0 && (
                                                             <span className="block text-xs text-gray-500">Max ₹{coupon.max_discount}</span>
                                                         )}
+                                                        <CouponRuleBadges coupon={coupon} block />
                                                         {coupon.payment_method_restriction && coupon.payment_method_restriction !== 'none' && (
                                                             <span className="block text-xs text-blue-600 font-medium">
                                                                 {PAYMENT_RESTRICTIONS.find(p => p.value === coupon.payment_method_restriction)?.label || coupon.payment_method_restriction}
                                                             </span>
                                                         )}
-                                                        {!coupon.min_order_amount && !coupon.max_discount && (!coupon.payment_method_restriction || coupon.payment_method_restriction === 'none') && (
+                                                        {!coupon.min_order_amount && !coupon.max_discount && !coupon.expires_at && !coupon.starts_at && !coupon.usage_limit && !coupon.per_customer_limit && (!coupon.payment_method_restriction || coupon.payment_method_restriction === 'none') && (
                                                             <span className="text-xs text-gray-300">None</span>
                                                         )}
                                                     </div>
@@ -951,6 +998,7 @@ export default function OffersPage() {
                                             <option value="percentage">Percentage (%)</option>
                                             <option value="fixed">Fixed Amount (₹ Off)</option>
                                             <option value="flat_price">Set Price To (₹)</option>
+                                            <option value="bogo">Buy 1 Get 1 Free (BOGO)</option>
                                         </select>
                                     </div>
                                     <div>
@@ -959,11 +1007,12 @@ export default function OffersPage() {
                                             type="number"
                                             value={couponForm.discount_value}
                                             onChange={e => setCouponForm({ ...couponForm, discount_value: e.target.value })}
-                                            placeholder={couponForm.discount_type === 'percentage' ? '10' : '500'}
-                                            className="w-full p-2.5 border rounded-lg text-sm"
+                                            placeholder={couponForm.discount_type === 'percentage' ? '10' : couponForm.discount_type === 'bogo' ? 'Not needed' : '500'}
+                                            className="w-full p-2.5 border rounded-lg text-sm disabled:bg-gray-50"
                                             min="0"
                                             step="any"
-                                            required
+                                            disabled={couponForm.discount_type === 'bogo'}
+                                            required={couponForm.discount_type !== 'bogo'}
                                         />
                                     </div>
                                 </div>
@@ -988,6 +1037,52 @@ export default function OffersPage() {
                                             placeholder="No cap"
                                             className="w-full p-2.5 border rounded-lg text-sm"
                                             min="0"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Starts On</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={couponForm.starts_at}
+                                            onChange={e => setCouponForm({ ...couponForm, starts_at: e.target.value })}
+                                            className="w-full p-2.5 border rounded-lg text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Expires On</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={couponForm.expires_at}
+                                            onChange={e => setCouponForm({ ...couponForm, expires_at: e.target.value })}
+                                            className="w-full p-2.5 border rounded-lg text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Total Usage Limit</label>
+                                        <input
+                                            type="number"
+                                            value={couponForm.usage_limit}
+                                            onChange={e => setCouponForm({ ...couponForm, usage_limit: e.target.value })}
+                                            placeholder="Unlimited"
+                                            className="w-full p-2.5 border rounded-lg text-sm"
+                                            min="0"
+                                            step="1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Uses Per Customer</label>
+                                        <input
+                                            type="number"
+                                            value={couponForm.per_customer_limit}
+                                            onChange={e => setCouponForm({ ...couponForm, per_customer_limit: e.target.value })}
+                                            placeholder="Unlimited"
+                                            className="w-full p-2.5 border rounded-lg text-sm"
+                                            min="0"
+                                            step="1"
                                         />
                                     </div>
                                 </div>

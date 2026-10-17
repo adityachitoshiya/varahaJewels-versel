@@ -16,10 +16,11 @@ import {
     Image as ImageIcon,
     TrendingUp,
     Sparkles,
-    FileText
+    FileText,
+    RotateCcw
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
-import { getApiUrl } from '../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import { AdminToastProvider } from './AdminToast';
 
 export default function AdminLayout({ children }) {
@@ -36,7 +37,7 @@ export default function AdminLayout({ children }) {
 
     const fetchNotifications = async () => {
         try {
-            const res = await fetch(`${getApiUrl()}/api/notifications`);
+            const res = await fetch(`${getApiUrl()}/api/notifications`, { headers: getAdminHeaders(false) });
             if (res.ok) {
                 const data = await res.json();
                 setNotifications(data);
@@ -72,7 +73,7 @@ export default function AdminLayout({ children }) {
 
     const markAsRead = async (id) => {
         try {
-            await fetch(`${getApiUrl()}/api/notifications/${id}/read`, { method: 'POST' });
+            await fetch(`${getApiUrl()}/api/notifications/${id}/read`, { method: 'PUT', headers: getAdminHeaders(false) });
             // Update local state
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
         } catch (error) {
@@ -142,6 +143,7 @@ export default function AdminLayout({ children }) {
         { name: 'Products', href: '/admin/products', icon: Package },
         { name: 'Offers', href: '/admin/offers', icon: Sparkles },
         { name: 'Customers', href: '/admin/customers', icon: Users },
+        { name: 'Returns', href: '/admin/returns', icon: RotateCcw },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
 

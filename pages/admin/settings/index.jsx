@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getApiUrl } from '../../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import VideoUpload from '../../../components/admin/VideoUpload';
 import MediaUpload from '../../../components/admin/MediaUpload';
@@ -86,10 +86,11 @@ export default function Settings() {
             const API_URL = getApiUrl();
             const res = await fetch(`${API_URL}/api/settings`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAdminHeaders(),
                 body: JSON.stringify(settings)
             });
             if (res.ok) toast.success('Store settings saved!');
+            else toast.error(res.status === 401 || res.status === 403 ? 'Session expired - please login again' : 'Failed to save settings');
         } catch (e) {
             console.error(e);
             toast.error('Failed to save settings');
@@ -686,7 +687,7 @@ export default function Settings() {
                                 const API_URL = getApiUrl();
                                 const res = await fetch(`${API_URL}/api/settings/flash-pincodes`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: getAdminHeaders(),
                                     body: JSON.stringify(newPincode)
                                 });
                                 if (res.ok) {
@@ -733,7 +734,7 @@ export default function Settings() {
                                             if (!ok) return;
                                             try {
                                                 const API_URL = getApiUrl();
-                                                await fetch(`${API_URL}/api/settings/flash-pincodes/${pin.pincode}`, { method: 'DELETE' });
+                                                await fetch(`${API_URL}/api/settings/flash-pincodes/${pin.pincode}`, { method: 'DELETE', headers: getAdminHeaders(false) });
                                                 fetchData();
                                             } catch (err) { toast.error('Error deleting pincode'); }
                                         }}
@@ -791,7 +792,8 @@ export default function Settings() {
                                             try {
                                                 const API_URL = getApiUrl();
                                                 const res = await fetch(`${API_URL}/api/settings/blocked-regions/${region.region_code}`, {
-                                                    method: 'PUT'
+                                                    method: 'PUT',
+                                                    headers: getAdminHeaders(false)
                                                 });
                                                 if (res.ok) fetchData();
                                             } catch (err) { toast.error('Error toggling region'); }

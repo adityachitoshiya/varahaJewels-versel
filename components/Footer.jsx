@@ -159,7 +159,7 @@ export default function Footer() {
         {/* Premium Trust Badges - Top Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16 animate-fadeIn">
           {[
-            { icon: <ShoppingBag />, title: 'Free Shipping', desc: 'On orders above ₹5000' },
+            { icon: <ShoppingBag />, title: 'Free Delivery', desc: 'On orders above ₹499' },
             { icon: <Heart />, title: '7 Day Returns', desc: 'Easy return policy' },
             { icon: <Crown />, title: 'Lifetime Warranty', desc: 'Certified jewellery' },
             { icon: <Sparkles />, title: '100% Authentic', desc: 'Guaranteed purity' }
@@ -259,11 +259,17 @@ export default function Footer() {
                 Collections
               </h4>
               <ul className="space-y-3 text-sm text-warm-sand/80">
-                {['Heritage', 'Bridal', 'Exclusive', 'New Arrivals', 'Best Sellers'].map((item) => (
-                  <li key={item}>
-                    <Link href="/shop" prefetch={false} className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
+                {[
+                  { label: 'Heritage', href: '/heritage' },
+                  { label: 'Bridal', href: '/women/bridal-jewellery' },
+                  { label: 'Exclusive', href: '/collections' },
+                  { label: 'New Arrivals', href: '/new-arrivals' },
+                  { label: 'Best Sellers', href: '/collections' },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} prefetch={false} className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-1">→</span>
-                      {item}
+                      {item.label}
                     </Link>
                   </li>
                 ))}

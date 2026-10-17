@@ -39,7 +39,7 @@ export default function FAQ() {
         {
             category: 'ordering',
             question: 'What is Cash on Delivery (COD)?',
-            answer: 'COD allows you to pay for your order when it\'s delivered to your doorstep. A nominal COD charge of ₹59 applies. You can pay in cash or via card/UPI to the delivery partner.'
+            answer: 'COD allows you to pay for your order when it\'s delivered to your doorstep. COD is free on orders of ₹499 and above; below ₹499 a ₹99 COD charge applies. You can pay in cash or via card/UPI to the delivery partner.'
         },
         {
             category: 'ordering',
@@ -56,7 +56,7 @@ export default function FAQ() {
         {
             category: 'shipping',
             question: 'What are the shipping charges?',
-            answer: 'We offer FREE shipping on all orders above ₹5,000. For orders below ₹5,000, a flat shipping charge of ₹99 applies.'
+            answer: 'Delivery is FREE on all orders of ₹499 and above. Below ₹499, delivery is free with online payment, and a ₹99 charge applies only if you choose Cash on Delivery.'
         },
         {
             category: 'shipping',

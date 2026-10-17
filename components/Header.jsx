@@ -153,7 +153,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
+            <nav className="hidden lg:flex items-center space-x-5 xl:space-x-8 whitespace-nowrap">
               {/* Collections Mega Menu */}
               <div className="relative group">
                 <button className="flex items-center gap-1 text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">

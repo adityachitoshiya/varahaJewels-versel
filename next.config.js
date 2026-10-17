@@ -74,6 +74,15 @@ const nextConfig = {
         ];
     },
 
+    // Old/linked URLs that have no page of their own
+    // (hero slides saved in the CMS still point to /collections/all)
+    async redirects() {
+        return [
+            { source: '/collections/all', destination: '/collections', permanent: false },
+            { source: '/cookie-policy', destination: '/privacy-policy', permanent: false },
+        ];
+    },
+
     // Enable compression
     compress: true,
 

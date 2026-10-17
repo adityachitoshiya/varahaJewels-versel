@@ -7,6 +7,8 @@ const PriceDetails = ({
     totalAmount,
     discountAmount,
     finalAmount,
+    codCharge = 0,
+    prepaidDiscount = 0,
     couponCode,
     setCouponCode,
     handleApplyCoupon,
@@ -125,11 +127,25 @@ const PriceDetails = ({
                         {shippingCharge > 0 ? `₹${Math.round(shippingCharge).toLocaleString()}` : 'FREE'}
                     </span>
                 </div>
+
+                {prepaidDiscount > 0 && (
+                    <div className="flex justify-between items-center text-gray-700">
+                        <span>Prepaid Discount</span>
+                        <span className="text-green-500">-₹{Math.round(prepaidDiscount).toLocaleString()}</span>
+                    </div>
+                )}
+
+                {codCharge > 0 && (
+                    <div className="flex justify-between items-center text-gray-700">
+                        <span>COD Handling Fee</span>
+                        <span>₹{codCharge.toLocaleString()}</span>
+                    </div>
+                )}
             </div>
 
             <div className="flex justify-between items-center font-bold text-gray-900 text-base mb-6">
                 <span>Total Amount</span>
-                <span>₹{Math.round(finalAmount).toLocaleString()}</span>
+                <span>₹{Math.round(Math.max(1, finalAmount - prepaidDiscount) + codCharge).toLocaleString()}</span>
             </div>
 
             {/* Coupon Section directly embedded or separate? Keeping it simple here or re-using validation logic passed as props */}
@@ -144,11 +160,11 @@ const PriceDetails = ({
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
                             placeholder="Enter Code"
-                            className="flex-1 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-copper uppercase"
+                            className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded text-sm outline-none focus:border-copper uppercase"
                         />
                         <button
                             onClick={handleApplyCoupon}
-                            className="bg-heritage text-white px-4 py-2 rounded text-xs font-bold uppercase tracking-wider hover:bg-heritage/90"
+                            className="flex-shrink-0 bg-heritage text-white px-4 py-2 rounded text-xs font-bold uppercase tracking-wider hover:bg-heritage/90"
                         >
                             Apply
                         </button>

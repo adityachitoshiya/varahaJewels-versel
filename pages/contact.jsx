@@ -300,7 +300,7 @@ export default function Contact() {
               <div className="border-l-4 border-copper pl-4">
                 <h3 className="font-semibold text-heritage mb-2">What are your shipping options?</h3>
                 <p className="text-sm text-heritage/70">
-                  We offer free shipping on all orders. Standard delivery takes 5-7 business days, and express delivery is available within 2-3 days.
+                  Delivery is free on orders of ₹499 and above, and on every order paid online. Cash on Delivery below ₹499 has a ₹99 charge. Standard delivery takes 5-7 business days, and express delivery is available within 2-3 days.
                 </p>
               </div>
 

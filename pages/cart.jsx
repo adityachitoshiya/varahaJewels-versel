@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { calcCouponDiscount, toPriceItems } from '../lib/couponCalc';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -6,6 +7,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { ShoppingBag, ArrowLeft, Plus, Minus, Trash2, Heart, Tag, ArrowRight, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { FREE_DELIVERY_MIN, COD_CHARGE } from '../lib/deliveryFees';
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, cartCount } = useCart();
@@ -97,16 +99,8 @@ export default function Cart() {
     const savedCoupon = typeof window !== 'undefined' ? JSON.parse(window.localStorage.getItem('temp_coupon') || '{}') : {};
 
     if (savedCoupon.code === appliedCoupon) {
-      if (savedCoupon.discount_type === 'percentage') {
-        discountAmount = (subtotal * savedCoupon.discount_value) / 100;
-      } else if (savedCoupon.discount_type === 'fixed') {
-        discountAmount = savedCoupon.discount_value;
-      } else if (savedCoupon.discount_type === 'flat_price') {
-        discountAmount = subtotal - savedCoupon.discount_value;
-      }
-    } else if (appliedCoupon === 'TESTADI') {
-      // Legacy fallback (should ideally remove)
-      discountAmount = subtotal - 1;
+      // Same formula as the server (incl. BOGO + max cap)
+      discountAmount = calcCouponDiscount(savedCoupon, toPriceItems(cartItems), subtotal);
     }
   }
 
@@ -358,15 +352,13 @@ export default function Cart() {
                     )}
 
                     <div className="flex justify-between text-heritage/70">
-                      <span>Shipping</span>
-                      <span className="font-semibold text-green-600">
-                        {subtotal >= 5000 ? 'FREE' : '₹99'}
-                      </span>
+                      <span>Delivery</span>
+                      <span className="font-semibold text-green-600">FREE</span>
                     </div>
 
-                    {subtotal < 5000 && (
-                      <p className="text-xs text-heritage/60 bg-copper/10 p-2 rounded-sm">
-                        Add ₹{(5000 - subtotal).toLocaleString('en-IN')} more for FREE shipping!
+                    {total < FREE_DELIVERY_MIN && (
+                      <p className="text-xs text-heritage/70 bg-copper/10 p-2 rounded-sm">
+                        Free delivery with online payment. Cash on Delivery has a ₹{COD_CHARGE} charge on orders below ₹{FREE_DELIVERY_MIN} — add ₹{Math.ceil(FREE_DELIVERY_MIN - total).toLocaleString('en-IN')} more to avoid it.
                       </p>
                     )}
                   </div>
@@ -376,7 +368,7 @@ export default function Cart() {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-heritage">Total</span>
                       <span className="text-3xl font-bold text-heritage">
-                        ₹{Math.round(total + (subtotal >= 5000 ? 0 : 99)).toLocaleString('en-IN')}
+                        ₹{Math.round(total).toLocaleString('en-IN')}
                       </span>
                     </div>
                     <p className="text-xs text-heritage/60 mt-1">Inclusive of all taxes</p>

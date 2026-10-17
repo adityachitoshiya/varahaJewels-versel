@@ -138,7 +138,7 @@ export default function ProductDeliveryWidget({ productId }) {
               <div className="space-y-2 text-xs sm:text-sm">
                 <div className="flex items-start gap-2 text-gray-700">
                   <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-heritage flex-shrink-0" />
-                  <span>Free shipping on orders above ₹5,000</span>
+                  <span>Free delivery on orders above ₹499</span>
                 </div>
                 <div className="flex items-start gap-2 text-gray-700">
                   <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 text-heritage flex-shrink-0" />
@@ -173,7 +173,7 @@ export default function ProductDeliveryWidget({ productId }) {
             </p>
             <p className="flex items-center gap-2">
               <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-heritage flex-shrink-0" />
-              <span>Free shipping on orders above ₹5,000</span>
+              <span>Free delivery on orders above ₹499</span>
             </p>
           </div>
         )}

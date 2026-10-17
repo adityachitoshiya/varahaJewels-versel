@@ -274,10 +274,15 @@ export default function VarahaMobileProductPage({
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">{(product.brand || 'Varaha Jewels')}</p>
         <h1 className="mt-1 font-serif text-xl font-semibold leading-snug text-stone-900">{(product.title || product.name)}</h1>
 
-        <div className="mt-2 flex items-center gap-2">
-          <StarRow rating={product.averageRating} />
-          <span className="text-xs text-stone-500">{product.averageRating} · {product.reviewCount} ratings</span>
-        </div>
+        {/* Only show a rating when there are real reviews */}
+        {product.reviewCount > 0 && (
+          <div className="mt-2 flex items-center gap-2">
+            <StarRow rating={product.averageRating} />
+            <span className="text-xs text-stone-500">
+              {Number(product.averageRating).toFixed(1)} · {product.reviewCount} {product.reviewCount === 1 ? 'rating' : 'ratings'}
+            </span>
+          </div>
+        )}
 
         <div className="mt-4 flex items-baseline gap-2">
           <span className="font-serif text-3xl font-semibold text-stone-900">

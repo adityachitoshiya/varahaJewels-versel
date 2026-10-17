@@ -95,7 +95,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
   const sizeOptions = product.variants?.length > 1
     ? product.variants.map(v => ({
       ...v,
-      stockLeft: Math.floor(Math.random() * 10),
+      stockLeft: typeof product.stock === 'number' ? product.stock : 99, // real stock (was random)
       disabled: !v.inStock
     }))
     : null;
@@ -104,21 +104,25 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
     <div className="space-y-4 px-4 lg:px-0 pb-24 lg:pb-0">
       {/* Brand & Title */}
       <div className="border-b border-copper/20 pb-4">
-        <h1 className="text-lg md:text-2xl font-royal font-bold text-heritage tracking-wide">
+        <p className="text-xs uppercase tracking-[0.2em] text-copper font-semibold">
           Varaha Jewels
+        </p>
+        <h1 className="mt-1.5 text-2xl md:text-3xl font-royal font-bold text-heritage leading-snug">
+          {product.title}
         </h1>
-        <p className="text-base text-matte-brown mt-1">{product.title}</p>
 
-        {/* Rating - Hidden on mobile (shown on carousel) */}
-        <div className="hidden lg:flex items-center mt-3 space-x-2">
-          <div className="flex items-center bg-royal-orange text-white px-2 py-0.5 rounded text-sm font-semibold">
-            <span>{product.averageRating || 4.5}</span>
-            <Star size={12} className="ml-1 fill-white text-white" />
+        {/* Rating - only when real reviews exist; hidden on mobile (shown on carousel) */}
+        {product.reviewCount > 0 && (
+          <div className="hidden lg:flex items-center mt-3 space-x-2">
+            <div className="flex items-center bg-royal-orange text-white px-2 py-0.5 rounded text-sm font-semibold">
+              <span>{Number(product.averageRating).toFixed(1)}</span>
+              <Star size={12} className="ml-1 fill-white text-white" />
+            </div>
+            <span className="text-matte-brown text-sm border-b border-copper/40 cursor-pointer hover:text-heritage">
+              {product.reviewCount} {product.reviewCount === 1 ? 'Rating' : 'Ratings'}
+            </span>
           </div>
-          <span className="text-matte-brown text-sm border-b border-copper/40 cursor-pointer hover:text-heritage">
-            {product.reviewCount || 124} Ratings
-          </span>
-        </div>
+        )}
       </div>
 
       {/* Price Section */}
@@ -225,7 +229,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
         <button
           onClick={handleAddToCart}
           disabled={product.stock !== undefined && product.stock <= 0}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-copper hover:bg-heritage text-white font-bold text-base rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          className="flex-[3] flex items-center justify-center gap-2 px-5 py-3.5 bg-copper hover:bg-heritage text-white font-semibold text-sm tracking-wider whitespace-nowrap rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed shadow-lg shadow-copper/20"
         >
           <ShoppingBag size={20} />
           {product.stock !== undefined && product.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO BAG'}
@@ -240,7 +244,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
             title: product.title
           }}
           size="lg"
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 border-2 border-copper/50 hover:border-copper text-heritage font-bold text-base rounded-md transition-colors"
+          className="flex-[2] flex items-center justify-center gap-2 px-4 py-3.5 border border-copper/50 hover:border-copper hover:bg-copper/5 text-heritage font-semibold text-sm tracking-wider whitespace-nowrap rounded-lg transition-colors"
           showText={true}
         />
       </div>
@@ -458,7 +462,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
         </div>
         <div className="text-center">
           <Truck size={24} className="mx-auto text-copper mb-1" />
-          <p className="text-xs text-heritage">Free Shipping</p>
+          <p className="text-xs text-heritage">Free Delivery ₹499+</p>
         </div>
       </div>
     </div>

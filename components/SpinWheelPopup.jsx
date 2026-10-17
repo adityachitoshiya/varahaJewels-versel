@@ -33,12 +33,22 @@ export default function SpinWheelPopup({ isHomepage = false }) {
     // Don't show if already played or dismissed 2+ times
     if (hasPlayed || dismissCount >= 2) return;
 
-    // Show popup after 12 seconds
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 12000);
+    // Show popup after 12 seconds, but never on top of the cookie banner:
+    // if consent isn't given yet, wait for it and show a few seconds later
+    let timer;
+    const onConsent = () => {
+      timer = setTimeout(() => setIsVisible(true), 4000);
+    };
+    if (localStorage.getItem('cookieConsent')) {
+      timer = setTimeout(() => setIsVisible(true), 12000);
+    } else {
+      window.addEventListener('cookie-consent-saved', onConsent, { once: true });
+    }
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('cookie-consent-saved', onConsent);
+    };
   }, [isHomepage]);
 
   const handleClose = () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,8 +16,9 @@ export default function Shop() {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Default to Women initially (server-safe)
+    // Default to Women (most of the catalogue); restored/overridden below
     const [selectedGender, setSelectedGender] = useState('Women');
+    const genderChosenRef = useRef(false); // true once the shopper (or URL/session) picked a tab
 
     // Restore selected gender from session storage on mount
     useEffect(() => {
@@ -25,6 +26,7 @@ export default function Shop() {
             const saved = sessionStorage.getItem('shop_selected_gender');
             if (saved) {
                 setSelectedGender(saved);
+                genderChosenRef.current = true;
             }
         }
     }, []);
@@ -37,6 +39,7 @@ export default function Shop() {
 
     // Save gender to sessionStorage whenever it changes
     const handleGenderChange = (gender) => {
+        genderChosenRef.current = true;
         setSelectedGender(gender);
         sessionStorage.setItem('shop_selected_gender', gender);
     };
@@ -75,6 +78,17 @@ export default function Shop() {
             setIsLoading(false);
         }
     };
+
+    // If nobody picked a tab yet and the default one has nothing in stock,
+    // open the other tab instead of showing "No products found"
+    useEffect(() => {
+        if (isLoading || genderChosenRef.current || products.length === 0) return;
+        const inStock = (g) => products.some(p => p.stock !== 0 && p.gender === g);
+        if (!inStock(selectedGender)) {
+            const other = selectedGender === 'Women' ? 'Men' : 'Women';
+            if (inStock(other)) setSelectedGender(other);
+        }
+    }, [isLoading, products]);
 
     // Scroll Restoration: Restore position after products load
     useEffect(() => {
@@ -131,9 +145,7 @@ export default function Shop() {
             if (!matcheSearch) return false;
         }
 
-        // Strict match for Men/Women. 
-        // Note: Backend might use "Men", "Women".
-        // Also allowing "Unisex" to show in both if needed, but for now strict.
+        // Strict match for Men/Women (products without a gender need one set in admin)
         return p.gender === selectedGender;
     });
 
