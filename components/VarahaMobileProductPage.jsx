@@ -313,7 +313,7 @@ export default function VarahaMobileProductPage({
         </div>
 
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">{(product.brand || 'Varaha Jewels')}</p>
-        <h1 className="mt-1 font-serif text-xl font-semibold leading-snug text-stone-900">{(product.title || product.name)}</h1>
+        <h2 className="mt-1 font-serif text-xl font-semibold leading-snug text-stone-900">{(product.title || product.name)}</h2>
 
         <div className="mt-2 flex items-center gap-2">
           <StarRow rating={product.averageRating} />

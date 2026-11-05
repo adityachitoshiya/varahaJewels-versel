@@ -341,8 +341,14 @@ export default function Header({ cartCount = 0, onCartClick }) {
                   type="text"
                   placeholder="Search for jewelry..."
                   className="w-full px-4 py-3 pl-12 pr-4 border-2 border-copper/30 rounded-lg focus:outline-none focus:border-copper bg-white text-heritage"
+                  aria-label="Search for jewellery"
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setIsSearchOpen(false);
+                    const q = e.currentTarget.value.trim();
+                    if (e.key === 'Enter' && q) {
+                      setIsSearchOpen(false);
+                      router.push(`/collections?search=${encodeURIComponent(q)}`);
+                    }
                   }}
                 />
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-copper" size={20} />

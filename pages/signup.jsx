@@ -176,9 +176,9 @@ export default function Signup() {
                         onError={(e) => { e.target.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
                     />
                 </Link>
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 font-serif">
+                <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900 font-serif">
                     Join the Royal Family
-                </h2>
+                </h1>
                 <p className="mt-2 text-center text-sm text-gray-600">
                     Create an account to unlock exclusive privileges
                 </p>
