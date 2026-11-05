@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { Heart, X, ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import MarketCard from '../components/MarketCard';
 import { getApiUrl } from '../lib/config';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -188,14 +189,9 @@ export default function Wishlist() {
           ) : (
             <>
               {/* Wishlist Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-6 md:gap-y-10">
                 {enrichedWishlist.map((item) => (
-                  <WishlistCard
-                    key={item.id}
-                    item={item}
-                    onRemove={removeFromWishlist}
-                    onAddToCart={handleAddToCart}
-                  />
+                  <MarketCard key={item.id} product={{ ...item, name: item.name || item.title, image: item.image || item.images?.[0] }} />
                 ))}
               </div>
 

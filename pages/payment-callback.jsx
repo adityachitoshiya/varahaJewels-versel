@@ -61,7 +61,12 @@ export default function PaymentCallback() {
                     })
                 });
 
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseErr) {
+                    throw new Error('Server returned an invalid response');
+                }
                 console.log('Order Confirmation Response:', data);
 
                 if (data.ok) {
@@ -104,7 +109,12 @@ export default function PaymentCallback() {
             try {
                 const API_URL = getApiUrl();
                 const response = await fetch(`${API_URL}/api/phonepe/status/${transactionId}`);
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseErr) {
+                    throw new Error('Failed to parse payment status');
+                }
 
                 console.log('Payment Status:', data);
 

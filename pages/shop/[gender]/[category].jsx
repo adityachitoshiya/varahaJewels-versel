@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
+import MarketCard from '../../../components/MarketCard';
+import { collapseColours } from '../../../lib/products';
 import { getApiUrl, getAuthHeaders } from '../../../lib/config';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useCart } from '../../../context/CartContext';
@@ -39,7 +41,7 @@ export default function CategoryPage() {
                     const matchesCategory = p.category?.toLowerCase() === category.toLowerCase().replace('-', ' ');
                     return matchesGender && matchesCategory;
                 });
-                setProducts(filtered);
+                setProducts(collapseColours(filtered));
             }
         } catch (error) {
             console.error("Failed to fetch products", error);
@@ -124,84 +126,9 @@ export default function CategoryPage() {
                     ) : (
                         <>
                             <p className="text-heritage/70 mb-6">{products.length} products found</p>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-6 md:gap-y-10">
                                 {products.map((product) => (
-                                    <div
-                                        key={product.id}
-                                        className="group bg-white border border-copper/20 rounded-sm overflow-hidden hover:shadow-lg transition-all duration-300"
-                                    >
-                                        {/* Image */}
-                                        <div className="relative aspect-square overflow-hidden">
-                                            <Link href={`/product/${product.slug || product.id}`}>
-                                                <Image
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    width={400}
-                                                    height={400}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                                    onError={(e) => { e.target.srcset = ''; e.target.src = '/varaha-assets/logo.png'; }}
-                                                />
-                                            </Link>
-                                            {product.tag && (
-                                                <span className="absolute top-2 left-2 px-2 py-1 bg-copper text-warm-sand text-[10px] font-bold rounded-full uppercase tracking-wider">
-                                                    {product.tag}
-                                                </span>
-                                            )}
-                                            <button
-                                                onClick={() => toggleWishlist(product.id, product.name)}
-                                                className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors z-10"
-                                            >
-                                                <Heart
-                                                    size={16}
-                                                    className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'}
-                                                />
-                                            </button>
-                                            {product.stock !== undefined && product.stock <= 0 && (
-                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-[5]">
-                                                    <span className="bg-red-600 text-white px-3 py-1.5 text-xs font-bold rounded-full">Out of Stock</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Details */}
-                                        <div className="p-3 md:p-4">
-                                            <Link href={`/product/${product.slug || product.id}`}>
-                                                <h3 className="text-sm md:text-base font-royal font-bold text-heritage mb-1 line-clamp-2 group-hover:text-copper transition-colors">
-                                                    {product.name}
-                                                </h3>
-                                            </Link>
-
-                                            <div className="flex items-center justify-between mt-2">
-                                                {product.price ? (
-                                                    <p className="text-sm md:text-lg font-bold text-heritage">
-                                                        ₹{product.price.toLocaleString('en-IN')}
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-xs font-semibold text-copper">Price on Request</p>
-                                                )}
-                                            </div>
-
-                                            {product.price ? (
-                                                <button
-                                                    onClick={() => handleAddToCart(product)}
-                                                    disabled={product.stock !== undefined && product.stock <= 0}
-                                                    className={`mt-3 w-full py-2 text-xs md:text-sm font-semibold rounded-sm flex items-center justify-center gap-2 transition-colors ${product.stock !== undefined && product.stock <= 0
-                                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                        : 'bg-heritage text-warm-sand hover:bg-copper'
-                                                        }`}
-                                                >
-                                                    {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add'} <ShoppingBag size={14} />
-                                                </button>
-                                            ) : (
-                                                <Link
-                                                    href={`/product/${product.slug || product.id}`}
-                                                    className="mt-3 block w-full py-2 bg-copper text-warm-sand text-xs md:text-sm font-semibold rounded-sm hover:bg-heritage transition-colors text-center"
-                                                >
-                                                    View
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </div>
+                                    <MarketCard key={product.id} product={product} />
                                 ))}
                             </div>
                         </>

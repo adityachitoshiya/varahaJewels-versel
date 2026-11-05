@@ -83,22 +83,31 @@ export default function PaymentSuccess() {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (res.ok) {
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch (parseErr) {
+          console.error('Failed to parse order response:', parseErr);
+          if (attempt < 5) {
+            setTimeout(() => fetchOrder(id, attempt + 1, accessKey), 2000);
+          }
+          return;
+        }
 
         // Parse items
         let items = [];
-        try { items = JSON.parse(data.items_json); } catch (e) { console.error(e); }
+        try { items = JSON.parse(data.items_json || '[]'); } catch (e) { console.error(e); }
 
         setFullOrderData(data); // Store raw for invoice
 
         setOrderDetails({
           orderId: data.order_id, // Same order number as in emails / My Orders
           displayId: `Order #${data.order_id}`,
-          amount: data.total_amount,
-          originalAmount: data.original_amount || data.total_amount,
+          amount: data.total_amount || 0,
+          originalAmount: data.original_amount || data.total_amount || 0,
           discountAmount: data.discount_amount || 0,
-          paymentId: data.payment_method === 'online' ? id : 'COD', // Use Razorpay ID as ref if needed? Or check history.
-          productName: items.length > 0 ? (items.length > 1 ? `${items[0].productName} + ${items.length - 1} more` : items[0].productName) : 'Product',
+          paymentId: data.payment_method === 'online' ? id : 'COD',
+          productName: items.length > 0 ? (items.length > 1 ? `${items[0].productName || items[0].name || 'Product'} + ${items.length - 1} more` : (items[0].productName || items[0].name || 'Product')) : 'Product',
           quantity: items.reduce((sum, item) => sum + (item.quantity || 1), 0),
           email: data.email,
           phone: data.contact || data.phone || '',
@@ -169,12 +178,47 @@ export default function PaymentSuccess() {
           console.log(`Order not found yet, retrying in 2s...`);
           setTimeout(() => fetchOrder(id, attempt + 1, accessKey), 2000);
         } else if (attempt >= 5) {
-          alert("Order processing is taking longer than expected. Please check your email for confirmation.");
-          // Fallback to basic display if needed, or let user wait
+          // Show basic success with whatever info we have from URL params
+          const { amount, email, name, codMode } = router.query;
+          setOrderDetails({
+            orderId: id,
+            displayId: `Order #${id}`,
+            amount: parseFloat(amount) || 0,
+            originalAmount: parseFloat(amount) || 0,
+            discountAmount: 0,
+            paymentId: 'N/A',
+            productName: 'Your Order',
+            quantity: 1,
+            email: email || '',
+            name: name || 'Customer',
+            isCod: codMode === 'true',
+            items: []
+          });
         }
       }
     } catch (err) {
       console.error("Error fetching order:", err);
+      // On network error, retry up to 5 times
+      if (attempt < 5) {
+        setTimeout(() => fetchOrder(id, attempt + 1, accessKey), 2000);
+      } else {
+        // Fallback: show basic success page with URL params
+        const { amount, email, name, codMode } = router.query;
+        setOrderDetails({
+          orderId: id,
+          displayId: `Order #${id}`,
+          amount: parseFloat(amount) || 0,
+          originalAmount: parseFloat(amount) || 0,
+          discountAmount: 0,
+          paymentId: 'N/A',
+          productName: 'Your Order',
+          quantity: 1,
+          email: email || '',
+          name: name || 'Customer',
+          isCod: codMode === 'true',
+          items: []
+        });
+      }
     }
   };
 

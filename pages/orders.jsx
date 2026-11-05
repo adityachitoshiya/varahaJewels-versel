@@ -33,13 +33,27 @@ export default function Orders() {
         }
       });
       if (response.ok) {
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          console.error("Failed to parse orders response");
+          setOrders([]);
+          return;
+        }
+
+        if (!Array.isArray(data)) {
+          console.error("Orders response is not an array");
+          setOrders([]);
+          return;
+        }
+
         // Backend returns list of orders with flat structure and items_json string
         // We need to adapt it for the UI
         const adaptedOrders = data.map(order => {
           let products = [];
           try {
-            products = JSON.parse(order.items_json);
+            products = JSON.parse(order.items_json || '[]');
           } catch (e) {
             console.error("Error parsing items_json for order", order.id);
           }
@@ -49,20 +63,20 @@ export default function Orders() {
 
           return {
             id: order.order_id || order.id,
-            status: order.status.toLowerCase(),
+            status: (order.status || 'pending').toLowerCase(),
             createdAt: order.created_at,
-            amount: order.total_amount,
+            amount: order.total_amount || 0,
             paymentId: order.payment_method === 'online' ? 'Paid Online' : 'Cash on Delivery',
             customer: {
-              name: order.customer_name,
-              email: order.email,
-              contact: order.phone,
-              address: order.address
+              name: order.customer_name || '',
+              email: order.email || '',
+              contact: order.phone || '',
+              address: order.address || ''
             },
             discount: { couponCode: null, discountAmount: order.discount_amount || 0 },
             product: {
-              productName: mainProduct.productName || mainProduct.name,
-              quantity: mainProduct.quantity,
+              productName: mainProduct.productName || mainProduct.name || 'Product',
+              quantity: mainProduct.quantity || 1,
               variantId: mainProduct.variantName || mainProduct.variant || 'Standard'
             },
             itemCount: products.length
@@ -80,11 +94,13 @@ export default function Orders() {
         localStorage.removeItem('customer_user');
         router.push('/login');
       } else {
-        console.error("Failed to fetch orders");
+        console.error("Failed to fetch orders:", response.status);
         setOrders([]);
       }
     } catch (error) {
       console.error('Failed to fetch orders:', error);
+      setOrders([]);
+      setFilteredOrders([]);
     } finally {
       setLoading(false);
     }

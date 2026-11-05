@@ -5,14 +5,15 @@ import Head from 'next/head';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductCard from '../components/collections/ProductCard';
+import { collapseColours } from '../lib/products';
 import QuickLookModal from '../components/collections/QuickLookModal';
 import { SlidersHorizontal, Grid3x3, LayoutGrid, X, Search } from 'lucide-react';
 
 export default function Collections({ initialProducts = [] }) {
   const router = useRouter();
   // Initialize with SSG data
-  const [products, setProducts] = useState(initialProducts);
-  const [filteredProducts, setFilteredProducts] = useState(initialProducts);
+  const [products, setProducts] = useState(() => collapseColours(initialProducts || []));
+  const [filteredProducts, setFilteredProducts] = useState(() => collapseColours(initialProducts || []));
   const [selectedQuickLook, setSelectedQuickLook] = useState(null);
   const [isQuickLookOpen, setIsQuickLookOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +52,7 @@ export default function Collections({ initialProducts = [] }) {
       const res = await fetch(`${API_URL}/api/products`);
       if (res.ok) {
         const data = await res.json();
-        setProducts(data);
+        setProducts(collapseColours(data));
         // Note: filteredProducts will be updated by the other useEffect
       } else {
         console.error("Failed to fetch products");

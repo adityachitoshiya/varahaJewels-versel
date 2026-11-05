@@ -42,9 +42,9 @@ const PaymentLayout = ({
             .catch(() => {});
     }, []);
 
-    const totalAmount = cartItems.length > 0
-        ? cartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0)
-        : (orderDetails ? orderDetails.amount : 0);
+    const totalAmount = cartItems && cartItems.length > 0
+        ? cartItems.reduce((sum, item) => sum + ((item.variant?.price || 0) * (item.quantity || 1)), 0)
+        : (orderDetails ? (orderDetails.amount || 0) : 0);
 
     // Same formula as the server (incl. BOGO + max cap)
     const discountAmount = appliedCoupon

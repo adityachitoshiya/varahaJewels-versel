@@ -11,6 +11,7 @@ import { ChevronRight, Heart, ShoppingBag, Grid, List, SlidersHorizontal, Search
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import ProductSkeleton from '../../components/ProductSkeleton';
+import MarketCard from '../../components/MarketCard';
 
 // Category and Collection mappings
 const CATEGORY_MAP = {
@@ -240,77 +241,9 @@ export default function WomenCategory() {
                             </Link>
                         </div>
                     ) : (
-                        <div className={viewMode === 'grid'
-                            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                            : 'space-y-6'
-                        }>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-6 md:gap-y-10">
                             {sortedProducts.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className={`group bg-white border border-copper/30 rounded-sm overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col ${viewMode === 'list' ? 'sm:flex-row' : 'h-full'}`}
-                                >
-                                    {/* Product Image */}
-                                    <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 h-48 sm:h-auto flex-shrink-0' : 'aspect-square'}`}>
-                                        <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer">
-                                            <Image
-                                                src={product.image}
-                                                alt={product.name}
-                                                width={400}
-                                                height={400}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                onError={(e) => { e.target.srcset = ''; e.target.src = '/varaha-assets/logo.png'; }}
-                                            />
-                                        </Link>
-                                        {product.tag && (
-                                            <span className="absolute top-3 left-3 px-3 py-1 bg-copper text-warm-sand text-xs font-bold rounded-full">
-                                                {product.tag}
-                                            </span>
-                                        )}
-                                        <button
-                                            onClick={() => toggleWishlist(product.id)}
-                                            className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-300 z-10 flex items-center justify-center shadow-sm"
-                                        >
-                                            <Heart
-                                                size={18}
-                                                className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage/70'}
-                                            />
-                                        </button>
-                                    </div>
-
-                                    {/* Product Details */}
-                                    <div className="p-4 flex flex-col flex-1">
-                                        <Link href={`/product/${product.slug || product.id}`}>
-                                            <h3 className="text-lg font-royal font-bold text-heritage mb-1 line-clamp-2 hover:text-copper transition-colors">
-                                                {product.name}
-                                            </h3>
-                                        </Link>
-                                        <p className="text-sm text-heritage/60 mb-2">{product.category} • {product.metal}</p>
-                                        <div className="mt-auto">
-                                            {product.price ? (
-                                                <p className="text-xl font-bold text-heritage mb-3">
-                                                    ₹{product.price.toLocaleString('en-IN')}
-                                                </p>
-                                            ) : (
-                                                <p className="text-lg font-semibold text-copper mb-3">Price on Request</p>
-                                            )}
-                                            {product.price ? (
-                                                <button
-                                                    onClick={() => handleAddToCart(product)}
-                                                    className="w-full px-4 py-2.5 bg-heritage text-warm-sand font-semibold rounded-sm hover:bg-copper transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    Add to Cart <ShoppingBag size={16} />
-                                                </button>
-                                            ) : (
-                                                <Link
-                                                    href={`/product/${product.slug || product.id}`}
-                                                    className="block w-full px-4 py-2.5 bg-copper text-warm-sand font-semibold rounded-sm hover:bg-heritage transition-all text-center"
-                                                >
-                                                    View Details
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                <MarketCard key={product.id} product={product} />
                             ))}
                         </div>
                     )}

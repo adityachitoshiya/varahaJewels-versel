@@ -20,6 +20,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import ColourPicker from './ColourPicker';
+import MarketCard from './MarketCard';
+import { collapseColours } from '../lib/products';
 import {
   ChevronLeft, ChevronRight, Share2, Heart, Star, Truck, RotateCcw, ShieldCheck,
   ChevronDown, ChevronUp, MapPin, Check, Percent, Sparkles,
@@ -538,19 +540,10 @@ export default function VarahaMobileProductPage({
         {/* Similar products */}
         <div>
           <p className="mb-3 text-sm font-medium text-stone-900">You may also love</p>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {similarProducts.map((p, i) => (
-              <div key={p.id} className="w-28 shrink-0">
-                <div className="aspect-square overflow-hidden rounded-xl">
-                  <img src={p.image || p.url || "/varaha-assets/og.jpg"} alt={p.name} className="w-full h-full object-cover" />
-                </div>
-                <p
-                  className="mt-1.5 text-xs text-stone-700"
-                  style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                >
-                  {p.name}
-                </p>
-                <p className="text-xs font-semibold text-stone-900">₹{p.price.toLocaleString('en-IN')}</p>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+            {collapseColours(similarProducts.filter((p) => p.stock !== 0)).slice(0, 10).map((p) => (
+              <div key={p.id} className="w-[46%] shrink-0 flex">
+                <MarketCard product={p} />
               </div>
             ))}
           </div>

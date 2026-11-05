@@ -19,14 +19,14 @@ const PriceDetails = ({
 }) => {
 
     // Calculate total MRP (before discount)
-    const sellingPriceTotal = cartItems.length > 0
-        ? cartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0)
-        : (orderDetails ? orderDetails.amount : 0);
+    const sellingPriceTotal = cartItems && cartItems.length > 0
+        ? cartItems.reduce((sum, item) => sum + ((item.variant?.price || 0) * (item.quantity || 1)), 0)
+        : (orderDetails ? (orderDetails.amount || 0) : 0);
 
-    const totalMRP = cartItems.length > 0
+    const totalMRP = cartItems && cartItems.length > 0
         ? cartItems.reduce((sum, item) => {
             const mrp = item.product?.mrp || item.variant?.compareAt || item.variant?.price || 0;
-            return sum + (mrp * item.quantity);
+            return sum + (mrp * (item.quantity || 1));
         }, 0)
         : sellingPriceTotal;
 

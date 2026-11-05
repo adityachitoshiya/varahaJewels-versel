@@ -634,7 +634,12 @@ export default function Checkout() {
         body: JSON.stringify(orderData) // COD charge is added by the server
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        throw new Error('Server returned an invalid response. Please try again.');
+      }
       if (response.ok) {
         if (cartItems.length > 0) {
         localStorage.removeItem('cart');
@@ -709,7 +714,12 @@ export default function Checkout() {
         },
         body: JSON.stringify(orderData)
       });
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        throw new Error('Server returned an invalid response. Please try again.');
+      }
 
       if (!response.ok) throw new Error((typeof data.detail === 'string' && data.detail) || 'Failed to initiate payment');
 

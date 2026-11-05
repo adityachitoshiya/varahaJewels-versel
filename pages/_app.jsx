@@ -9,6 +9,7 @@ if (typeof window !== 'undefined') {
 }
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GOOGLE_CLIENT_ID } from '../lib/googleAuth';
+import ErrorBoundary from '../components/ErrorBoundary';
 import '../styles/globals.css';
 import DeliveryBar from '../components/DeliveryBar';
 import { useRouter } from 'next/router';
@@ -147,13 +148,13 @@ function MyApp({ Component, pageProps }) {
 
   if (isAdmin) {
     return (
-      <>
+      <ErrorBoundary>
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
           <link rel="icon" href={faviconUrl} />
         </Head>
         <Component {...pageProps} />
-      </>
+      </ErrorBoundary>
     );
   }
 
@@ -173,6 +174,7 @@ function MyApp({ Component, pageProps }) {
 
 
   return (
+    <ErrorBoundary>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       {/* ── Meta Pixel Script (loads after page is interactive) ── */}
       <Script
@@ -220,6 +222,7 @@ function MyApp({ Component, pageProps }) {
         </CartProvider>
       </NotificationProvider>
     </GoogleOAuthProvider>
+    </ErrorBoundary>
   );
 }
 

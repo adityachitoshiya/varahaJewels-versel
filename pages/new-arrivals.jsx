@@ -5,12 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import MarketCard from '../components/MarketCard';
+import { collapseColours } from '../lib/products';
 import { Search, SlidersHorizontal, Grid, List, Heart, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export default function NewArrivals({ initialProducts = [] }) {
     // Initialize products with SSG data
-    const [products, setProducts] = useState(initialProducts);
+    const [products, setProducts] = useState(() => collapseColours(initialProducts || []));
     const [isLoading, setIsLoading] = useState(false); // No loading state needed initially
     const [filteredProducts, setFilteredProducts] = useState(initialProducts);
     const [viewMode, setViewMode] = useState('grid');
@@ -48,7 +50,8 @@ export default function NewArrivals({ initialProducts = [] }) {
     // Derived unique values for filters
     const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
     const metals = [...new Set(products.map(p => p.metal))].filter(Boolean);
-    const styles = [...new Set(products.map(p => p.style))].filter(Boolean);
+    // style holds colour-group codes (e.g. CZN198) for some products; those are not style names
+    const styles = [...new Set(products.map(p => p.style))].filter((x) => x && !/^[A-Z]+\d+$/.test(x));
     const tags = [...new Set(products.map(p => p.tag))].filter(Boolean);
 
     // Apply filters
@@ -366,44 +369,9 @@ export default function NewArrivals({ initialProducts = [] }) {
                                     <button onClick={clearAllFilters} className="px-6 py-3 bg-copper text-warm-sand font-semibold rounded-sm">Clear All Filters</button>
                                 </div>
                             ) : (
-                                <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-6 md:gap-y-10">
                                     {filteredProducts.map((product) => (
-                                        <div key={product.id} className={`group bg-white border border-copper/30 rounded-sm overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col ${viewMode === 'list' ? 'sm:flex-row' : 'h-full'}`}>
-                                            <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 h-48 sm:h-auto flex-shrink-0' : 'aspect-square'}`}>
-                                                <Link href={`/product/${product.slug || product.id}`} className="block h-full cursor-pointer">
-                                                    <Image
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        width={400}
-                                                        height={400}
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                        onError={(e) => { e.target.srcset = ''; e.target.src = '/varaha-assets/logo.png'; }}
-                                                    />
-                                                </Link>
-                                                {product.tag && <span className="absolute top-3 left-3 px-3 py-1 bg-copper text-warm-sand text-xs font-bold rounded-full">{product.tag}</span>}
-                                                <button onClick={() => toggleWishlist(product.id, product.name)} className="absolute top-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white transition-colors z-10">
-                                                    <Heart size={20} className={isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-heritage'} />
-                                                </button>
-                                                {product.stock !== undefined && product.stock <= 0 && (
-                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-[5]">
-                                                        <span className="bg-red-600 text-white px-4 py-2 text-sm font-bold rounded-full">Out of Stock</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="p-6 flex flex-col flex-1">
-                                                <div className="flex-grow">
-                                                    <Link href={`/product/${product.slug || product.id}`} className="block group-hover:text-copper transition-colors">
-                                                        <h3 className="text-lg font-royal font-bold text-heritage mb-1 line-clamp-2">{product.name}</h3>
-                                                    </Link>
-                                                    <p className="text-sm text-heritage/60">{product.category} • {product.metal}</p>
-                                                    <div className="mt-4 mb-4">
-                                                        {product.price ? <p className="text-2xl font-bold text-heritage">₹{product.price.toLocaleString('en-IN')}</p> : <p className="text-lg font-semibold text-copper">Price on Request</p>}
-                                                    </div>
-                                                </div>
-                                                {renderCartButton(product)}
-
-                                            </div>
-                                        </div>
+                                        <MarketCard key={product.id} product={product} />
                                     ))}
                                 </div>
                             )}
