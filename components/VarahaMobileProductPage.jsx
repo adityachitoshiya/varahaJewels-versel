@@ -324,10 +324,12 @@ export default function VarahaMobileProductPage({
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">{(product.brand || 'Varaha Jewels')}</p>
         <h2 className="mt-1 font-serif text-xl font-semibold leading-snug text-stone-900">{(product.title || product.name)}</h2>
 
-        <div className="mt-2 flex items-center gap-2">
-          <StarRow rating={product.averageRating} />
-          <span className="text-xs text-stone-500">{product.averageRating} · {product.reviewCount} ratings</span>
-        </div>
+        {product.reviewCount > 0 && (
+          <div className="mt-2 flex items-center gap-2">
+            <StarRow rating={product.averageRating} />
+            <span className="text-xs text-stone-500">{Number(product.averageRating).toFixed(1)} · {product.reviewCount} ratings</span>
+          </div>
+        )}
 
         <div className="mt-4 flex items-baseline gap-2">
           <span className="font-serif text-3xl font-semibold text-stone-900">
@@ -524,7 +526,9 @@ export default function VarahaMobileProductPage({
 
         <OrnamentDivider className="my-6" />
 
-        {/* Reviews */}
+        {/* Reviews: shown only when real reviews exist */}
+        {product.reviewCount > 0 && (
+          <>
         <div>
           <div className="flex items-center gap-4">
             <span className="font-serif text-3xl font-semibold text-stone-900">{product.averageRating}</span>
@@ -547,6 +551,8 @@ export default function VarahaMobileProductPage({
         </div>
 
         <OrnamentDivider className="my-6" />
+          </>
+        )}
 
         {/* Similar products */}
         <div>
