@@ -3,6 +3,7 @@ import ProductCard from './collections/ProductCard';
 import QuickLookModal from './collections/QuickLookModal';
 import ProductSkeleton from './ProductSkeleton';
 import { getApiUrl } from '../lib/config';
+import { collapseColours } from '../lib/products';
 
 // Product grid for one category (Heritage, Silver, Divine...).
 // Shows `fallback` when the category has no in-stock products.
@@ -15,7 +16,7 @@ export default function SectionGrid({ category, title, subtitle, fallback = null
       .then((r) => (r.ok ? r.json() : []))
       .then((data) =>
         setProducts(
-          data
+          collapseColours(data)
             .filter((p) => p.stock !== 0)
             .map((p) => ({ ...p, stones: parseList(p.stones) }))
         )

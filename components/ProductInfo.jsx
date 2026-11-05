@@ -3,6 +3,7 @@ import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, Chevro
 import { formatCurrency } from '../lib/productData';
 import WishlistButton from './WishlistButton';
 import { parseSpecs } from '../lib/productSpecs';
+import ColourPicker from './ColourPicker';
 
 import { getApiUrl } from '../lib/config';
 
@@ -181,6 +182,9 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
           </div>
         )}
       </div>
+
+      {/* Colour options (same design in other colours) */}
+      <ColourPicker product={product} />
 
       {/* Bank Offer Banner - Myntra Style (Dynamic from Admin, per-product) */}
       {megaDealEnabled && product.is_mega_deal && (

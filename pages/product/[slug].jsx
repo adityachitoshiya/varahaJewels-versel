@@ -167,6 +167,8 @@ export default function ProductPage() {
           polish: data.polish,
           stones: data.stones,
           colour: data.colour,
+          style: data.style,
+          slug: data.slug,
 
           reviews: [],
 

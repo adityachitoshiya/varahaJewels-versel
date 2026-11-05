@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
+import { collapseColours } from '../../lib/products';
 import { ChevronRight, Heart, ShoppingBag, Grid, List, SlidersHorizontal, Search, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -83,7 +84,7 @@ export default function WomenCategory() {
                     }
                 }
 
-                setProducts(data);
+                setProducts(collapseColours(data));
             }
         } catch (error) {
             console.error("Failed to fetch products", error);

@@ -8,6 +8,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
 import MarketCard, { CardSkeleton } from '../components/MarketCard';
+import { collapseColours } from '../lib/products';
 
 // Marketplace: every in-stock piece, filtered by section (chips), who it's for,
 // search and price sort. "All" shows each section as a short shelf.
@@ -42,7 +43,7 @@ export default function Shop() {
   useEffect(() => {
     fetch(`${getApiUrl()}/api/products`, { headers: getAuthHeaders() })
       .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setProducts(data.filter((p) => p.stock !== 0)))
+      .then((data) => setProducts(collapseColours(data.filter((p) => p.stock !== 0))))
       .catch(() => setProducts([]));
   }, []);
 

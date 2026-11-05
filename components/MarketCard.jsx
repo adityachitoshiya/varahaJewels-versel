@@ -47,6 +47,9 @@ export default function MarketCard({ product }) {
       <Link href={href} prefetch={false} className="mt-3 font-royal font-semibold text-[17px] md:text-lg leading-snug text-heritage line-clamp-2 hover:text-copper">
         {product.name}
       </Link>
+      {product.colourCount > 1 && (
+        <p className="mt-1 text-xs text-heritage/55">{product.colourCount} colours</p>
+      )}
 
       <div className="mt-1.5 flex items-baseline flex-wrap gap-x-2">
         <span className="font-semibold text-heritage tabular-nums">{product.price ? formatINR(product.price) : 'Price on request'}</span>

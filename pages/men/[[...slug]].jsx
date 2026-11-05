@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
+import { collapseColours } from '../../lib/products';
 import { ChevronRight, Heart, ShoppingBag, Grid, List, Search } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import ProductSkeleton from '../../components/ProductSkeleton';
@@ -76,7 +77,7 @@ export default function MenCategory() {
                     );
                 }
 
-                setProducts(data);
+                setProducts(collapseColours(data));
             }
         } catch (error) {
             console.error("Failed to fetch products", error);

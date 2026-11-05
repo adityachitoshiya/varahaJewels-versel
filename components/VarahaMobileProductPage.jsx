@@ -19,6 +19,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import ColourPicker from './ColourPicker';
 import {
   ChevronLeft, ChevronRight, Share2, Heart, Star, Truck, RotateCcw, ShieldCheck,
   ChevronDown, ChevronUp, MapPin, Check, Percent, Sparkles,
@@ -331,7 +332,11 @@ export default function VarahaMobileProductPage({
           <span className={`text-xs font-semibold ${stockCopy.text}`}>{stockCopy.label}</span>
         </div>
 
-        {/* Variant selector */}
+        {/* Colour options (same design in other colours) */}
+        <div className="mt-6"><ColourPicker product={product} compact /></div>
+
+        {/* Variant selector (hidden when the only option is "Standard") */}
+        {product.variants?.length > 1 && (
         <div className="mt-6">
           <p className="mb-2 text-sm font-medium text-stone-900">Select variant</p>
           <div className="flex flex-wrap gap-2">
@@ -353,6 +358,7 @@ export default function VarahaMobileProductPage({
             ))}
           </div>
         </div>
+        )}
 
         <OrnamentDivider className="my-6" />
 

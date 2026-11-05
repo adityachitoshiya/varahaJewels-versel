@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import MarketCard, { CardSkeleton } from '../MarketCard';
 import { MENU } from '../CollectionsMenu';
-import { loadProducts, isInStock } from '../../lib/products';
+import { loadProducts, isInStock, collapseColours } from '../../lib/products';
 
 // Product-first homepage blocks. All share one cached /api/products request.
 
@@ -12,7 +12,7 @@ export function useHomeProducts() {
   const [products, setProducts] = useState(null);
   useEffect(() => {
     let alive = true;
-    loadProducts().then((all) => alive && setProducts(all.filter(isInStock)));
+    loadProducts().then((all) => alive && setProducts(collapseColours(all.filter(isInStock))));
     return () => { alive = false; };
   }, []);
   return products;
