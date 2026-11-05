@@ -22,6 +22,7 @@ import { useRouter } from 'next/router';
 import ColourPicker from './ColourPicker';
 import MarketCard from './MarketCard';
 import { collapseColours } from '../lib/products';
+import { parseSpecs } from '../lib/productSpecs';
 import {
   ChevronLeft, ChevronRight, Share2, Heart, Star, Truck, RotateCcw, ShieldCheck,
   ChevronDown, ChevronUp, MapPin, Check, Percent, Sparkles,
@@ -118,7 +119,15 @@ export default function VarahaMobileProductPage({
   useEffect(() => { if (product?.variants?.length) setSelectedVariant(product.variants[0]); }, [product]);
   
   const [showOffers, setShowOffers] = useState(true);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(true);
+  const parsed = parseSpecs(product?.description || '');
+  const detailText = parsed.text;
+  const detailRows = [
+    ...parsed.specs.map((x) => [x.label, x.value]),
+    product?.metal && !parsed.specs.some((x) => x.label === 'Material') ? ['Material', product.metal] : null,
+    product?.colour && !parsed.specs.some((x) => x.label === 'Colour') ? ['Colour', product.colour] : null,
+    product?.category ? ['Collection', product.category] : null,
+  ].filter(Boolean);
   const [pincode, setPincode] = useState('');
   const [deliveryInfo, setDeliveryInfo] = useState(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
@@ -498,15 +507,17 @@ export default function VarahaMobileProductPage({
           </button>
           {showDetails && (
             <div className="mt-3 space-y-4">
-              <p className="text-sm leading-relaxed text-stone-600">{product.description}</p>
-              <div className="grid grid-cols-2 gap-y-2 text-sm">
-                {product.specs.map(([label, value]) => (
-                  <React.Fragment key={label}>
-                    <div className="text-stone-400">{label}</div>
-                    <div className="text-stone-800">{value}</div>
-                  </React.Fragment>
-                ))}
-              </div>
+              {detailText && <p className="text-sm leading-relaxed text-stone-600 whitespace-pre-line">{detailText}</p>}
+              {detailRows.length > 0 && (
+                <div className="grid grid-cols-2 gap-y-2 text-sm">
+                  {detailRows.map(([label, value], i) => (
+                    <React.Fragment key={`${label}-${i}`}>
+                      <div className="text-stone-400">{label}</div>
+                      <div className="text-stone-800">{value}</div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -523,7 +534,7 @@ export default function VarahaMobileProductPage({
             </div>
           </div>
           <div className="mt-4 space-y-3">
-            {product.reviews.map((r) => (
+            {(product.reviews || []).map((r) => (
               <div key={r.id} className="rounded-xl bg-stone-50 p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-stone-900">{r.name}</span>
