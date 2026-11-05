@@ -8,7 +8,8 @@ import Image from 'next/image';
 import Script from 'next/script'; // Import Script for Razorpay
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import PaymentLayout from '../components/checkout/PaymentLayout'; // NEW COMPONENT
+import PaymentLayout from '../components/checkout/PaymentLayout';
+import OrderSummary from '../components/checkout/OrderSummary';
 import { trackEvent, storeUserData } from '../lib/metaPixel';
 
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User, MapPin, Home, Briefcase, ChevronDown } from 'lucide-react';
@@ -777,6 +778,9 @@ export default function Checkout() {
     }
   };
 
+  const field = 'w-full h-12 px-4 rounded-xl border border-heritage/15 bg-white text-heritage placeholder:text-heritage/35 focus:outline-none focus:border-copper focus:ring-2 focus:ring-copper/20 transition-colors';
+  const label = 'block text-sm font-medium text-heritage/80 mb-1.5';
+
   return (
     <>
       <Head>
@@ -784,91 +788,90 @@ export default function Checkout() {
       </Head>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 
-      {/* Simplified Mobile Header */}
-      <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between shadow-sm">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/varaha-assets/logo.png" alt="Varaha" width={100} height={30} className="h-6 w-auto" onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
-        </Link>
-        <div className="flex items-center gap-2">
-          {currentStep > 1 && (
-            <button onClick={() => setCurrentStep(currentStep - 1)} className="text-sm text-heritage font-medium flex items-center gap-1">
-              ← Back
-            </button>
+      {/* Focused checkout header (all screen sizes) */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-heritage/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+          {currentStep > 1 ? (
+            <button onClick={() => setCurrentStep(currentStep - 1)} className="text-sm font-semibold text-heritage hover:text-copper whitespace-nowrap">← Back</button>
+          ) : (
+            <Link href="/cart" className="text-sm font-semibold text-heritage hover:text-copper whitespace-nowrap">← Cart</Link>
           )}
+          <Link href="/" className="mx-auto sm:mx-0 flex-shrink-0" aria-label="Varaha Jewels home">
+            <Image src="/varaha-assets/logo.png" alt="Varaha Jewels" width={110} height={32} className="h-7 w-auto" onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
+          </Link>
+          <ol className="hidden sm:flex items-center gap-2 ml-auto text-sm font-medium" aria-label="Checkout steps">
+            {['Shipping', 'Payment'].map((labelText, i) => {
+              const n = i + 1;
+              const done = currentStep > n;
+              const active = currentStep === n;
+              return (
+                <li key={labelText} className="flex items-center gap-2">
+                  {i > 0 && <span className={`h-px w-10 ${currentStep >= n ? 'bg-copper' : 'bg-heritage/20'}`} />}
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${done ? 'bg-copper text-white' : active ? 'bg-heritage text-white' : 'bg-heritage/10 text-heritage/50'}`} aria-current={active ? 'step' : undefined}>
+                    {done ? <Check size={13} /> : n}
+                  </span>
+                  <span className={active || done ? 'text-heritage' : 'text-heritage/40'}>{labelText}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <span className="hidden md:flex items-center gap-1.5 text-xs text-heritage/55 ml-4 whitespace-nowrap">
+            <Lock size={13} className="text-emerald-600" /> Secure checkout
+          </span>
         </div>
-      </div>
+        {/* Phone step bar */}
+        <div className="sm:hidden h-1 bg-heritage/10"><div className={`h-full bg-copper transition-all ${currentStep === 1 ? 'w-1/2' : 'w-full'}`} /></div>
+      </header>
 
-      <div className="hidden lg:block">
-        <Header />
-      </div>
-
-      <main className="min-h-screen bg-warm-sand/30 pb-24 lg:pb-16 lg:pt-12">
-        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
-
-          {error && <div className="max-w-2xl mx-auto bg-red-50 text-red-600 p-4 mb-6 rounded-lg text-sm border border-red-100 flex items-center gap-2">
-            <div className="w-1 h-1 rounded-full bg-red-500" /> {error}
-          </div>}
-
-
-          {/* STEP 1: ADDRESS FORM (Guest + Logged In) */}
-          {/* Step indicator */}
-          <div className="max-w-6xl mx-auto px-4 sm:px-0 pt-5 lg:pt-0 mb-6">
-            <ol className="flex items-center gap-3 text-xs sm:text-sm font-medium">
-              {['Shipping', 'Payment'].map((label, i) => {
-                const n = i + 1;
-                const done = currentStep > n;
-                const active = currentStep === n;
-                return (
-                  <li key={label} className="flex items-center gap-3">
-                    {i > 0 && <span className={`h-px w-8 sm:w-16 ${currentStep >= n ? 'bg-copper' : 'bg-heritage/20'}`} />}
-                    <span className={`flex items-center gap-2 ${active || done ? 'text-heritage' : 'text-heritage/40'}`}>
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${done ? 'bg-copper text-white' : active ? 'bg-heritage text-white' : 'bg-heritage/10 text-heritage/50'}`}>
-                        {done ? <Check size={13} /> : n}
-                      </span>
-                      {label}
-                    </span>
-                  </li>
-                );
-              })}
-              <li className="ml-auto hidden sm:flex items-center gap-1.5 text-xs text-gray-500">
-                <Lock size={13} className="text-emerald-600" /> Secure checkout
-              </li>
-            </ol>
-          </div>
+      <main className="min-h-screen bg-warm-sand/40 pt-5 lg:pt-8 pb-28 lg:pb-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          {error && (
+            <p role="alert" className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</p>
+          )}
 
           {currentStep === 1 && (
-            <div className="max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-8 items-start">
-              <div className="lg:col-span-7 bg-white rounded-2xl shadow-sm p-6 lg:p-10 animate-fadeIn">
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-8 border-b border-gray-100 pb-4">
-                  <h2 className="text-2xl font-bold text-heritage font-royal">Shipping Details</h2>
-                  {isLoggedIn ? (
-                    <div className="text-sm text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 font-medium">
-                      <CheckCircle size={14} /> Logged In
-                    </div>
-                  ) : (
-                    <Link href="/login?redirect=/checkout" className="text-sm text-heritage hover:text-heritage/80 font-medium underline underline-offset-2">
-                      Login for faster checkout
-                    </Link>
-                  )}
-                </div>
+            <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+              {/* Phone: summary folds into a bar above the form */}
+              <div className="lg:hidden mb-4">
+                <OrderSummary items={summaryItems} subtotal={totalAmount} collapsible />
+              </div>
 
-                {/* ── Saved Addresses quick-select ── */}
-                {savedAddresses.length > 0 && (
-                  <div className="mb-6">
-                    <div
-                      className="flex items-center justify-between cursor-pointer select-none"
-                      onClick={() => setShowSavedAddrs(p => !p)}
-                    >
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <MapPin size={13} className="text-copper" /> Saved Addresses
-                        <span className="ml-1 px-1.5 py-0.5 bg-copper/10 text-copper rounded text-[10px] font-bold">{savedAddresses.length}</span>
-                      </p>
-                      <ChevronDown size={15} className={`text-gray-400 transition-transform duration-200 ${showSavedAddrs ? 'rotate-180' : ''}`} />
+              <form id="shipping-form" onSubmit={(e) => { e.preventDefault(); handleContinueToStep2(); }} className="lg:col-span-7 space-y-5">
+                {/* Contact */}
+                <section className="rounded-2xl bg-white border border-heritage/10 p-5 sm:p-6">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+                    <h2 className="font-royal font-bold text-2xl text-heritage">Contact</h2>
+                    {isLoggedIn ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"><CheckCircle size={14} /> Signed in</span>
+                    ) : (
+                      <Link href="/login?redirect=/checkout" className="text-sm font-semibold text-copper hover:text-heritage underline underline-offset-4">Sign in for faster checkout</Link>
+                    )}
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <label htmlFor="co-email" className={label}>Email</label>
+                      <input id="co-email" name="email" type="email" autoComplete="email" placeholder="you@example.com" value={formData.email} onChange={handleInputChange} className={field} required />
                     </div>
+                    <div>
+                      <label htmlFor="co-name" className={label}>Full name</label>
+                      <input id="co-name" name="name" autoComplete="name" value={formData.name} onChange={handleInputChange} className={field} required />
+                    </div>
+                    <div>
+                      <label htmlFor="co-phone" className={label}>Mobile number</label>
+                      <input id="co-phone" name="contact" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile" value={formData.contact} onChange={handleInputChange} className={field} required />
+                    </div>
+                  </div>
+                </section>
 
-                    {showSavedAddrs && (
-                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {savedAddresses.map(addr => {
+                {/* Address */}
+                <section className="rounded-2xl bg-white border border-heritage/10 p-5 sm:p-6">
+                  <h2 className="font-royal font-bold text-2xl text-heritage mb-4">Delivery address</h2>
+
+                  {savedAddresses.length > 0 && (
+                    <div className="mb-5">
+                      <p className="text-sm font-medium text-heritage/80 mb-2">Your saved addresses</p>
+                      <div className="grid sm:grid-cols-2 gap-2.5">
+                        {savedAddresses.map((addr) => {
                           const LabelIcon = addr.label === 'Home' ? Home : addr.label === 'Office' ? Briefcase : MapPin;
                           const isFilled = formData.address === [addr.address_line1, addr.address_line2].filter(Boolean).join(', ')
                             && formData.city === addr.city && formData.pincode === addr.pincode;
@@ -876,141 +879,103 @@ export default function Checkout() {
                             <button
                               key={addr.id}
                               type="button"
+                              aria-pressed={isFilled}
                               onClick={() => {
-                                setFormData(prev => ({
+                                setFormData((prev) => ({
                                   ...prev,
                                   name: addr.full_name || prev.name,
                                   contact: addr.phone || prev.contact,
                                   address: [addr.address_line1, addr.address_line2].filter(Boolean).join(', '),
                                   city: addr.city,
                                   state: addr.state,
-                                  pincode: addr.pincode
+                                  pincode: addr.pincode,
                                 }));
-                                setShowSavedAddrs(false);
                               }}
-                              className={`text-left p-3 rounded-xl border transition-all flex gap-2.5 items-start ${isFilled ? 'border-copper bg-copper/5 ring-1 ring-copper/40' : 'border-gray-200 hover:border-copper/50 bg-white hover:bg-copper/3'}`}
+                              className={`text-left p-3.5 rounded-xl border-2 flex gap-3 items-start transition-colors ${isFilled ? 'border-heritage bg-[#FBF3EA]' : 'border-heritage/10 hover:border-heritage/30'}`}
                             >
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isFilled ? 'bg-copper text-white' : 'bg-gray-100 text-gray-400'}`}>
-                                <LabelIcon size={13} />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                                  {addr.label}
-                                  {addr.is_default && <span className="text-[9px] text-copper font-bold">· Default</span>}
-                                </p>
-                                <p className="text-xs text-gray-500 leading-snug truncate mt-0.5">
-                                  {addr.address_line1}, {addr.city} – {addr.pincode}
-                                </p>
-                              </div>
+                              <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isFilled ? 'bg-heritage text-white' : 'bg-heritage/5 text-heritage/60'}`}>
+                                {isFilled ? <Check size={14} /> : <LabelIcon size={14} />}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-sm font-semibold text-heritage">{addr.label}{addr.is_default ? ', default' : ''}</span>
+                                <span className="block text-xs text-heritage/60 leading-snug mt-0.5 line-clamp-2">{addr.address_line1}, {addr.city} {addr.pincode}</span>
+                              </span>
                             </button>
                           );
                         })}
                       </div>
-                    )}
-                    <div className="mt-3 border-b border-gray-100" />
-                  </div>
-                )}
-
-                <form onSubmit={(e) => { e.preventDefault(); handleContinueToStep2(); }} className="space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className='lg:col-span-2'>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Contact Info</label>
-                      <input name="email" type="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} readOnly={false} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                      <p className="mt-3 text-xs text-heritage/50">Or enter a new address below.</p>
                     </div>
+                  )}
 
-                    <div>
-                      <input name="name" placeholder="Full Name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                    </div>
-                    <div>
-                      <input name="contact" type="tel" placeholder="Mobile Number" value={formData.contact} onChange={handleInputChange} readOnly={false} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                    </div>
-
-                    <div className='lg:col-span-2'>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Address</label>
-                      <input name="address" placeholder="Address (House No, Building, Street)" value={formData.address} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2">
+                      <label htmlFor="co-address" className={label}>House no., building, street, area</label>
+                      <input id="co-address" name="address" autoComplete="street-address" value={formData.address} onChange={handleInputChange} className={field} required />
                     </div>
 
                     <div className="relative" ref={pincodeDropdownRef}>
-                      <input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
-                      {isFlashDelivery && (
-                        <p className="text-xs font-bold text-green-600 mt-1 flex items-center gap-1 animate-pulse">
-                          {serviceabilityMsg}
-                        </p>
+                      <label htmlFor="co-pincode" className={label}>Pincode</label>
+                      <input id="co-pincode" name="pincode" inputMode="numeric" autoComplete="postal-code" placeholder="6 digits" value={formData.pincode} onChange={handleInputChange} className={field} required />
+                      {isFlashDelivery && serviceabilityMsg && (
+                        <p className="mt-1.5 text-xs font-semibold text-emerald-700">{serviceabilityMsg}</p>
                       )}
-
-                      {/* Shopify-style locality suggestions dropdown */}
                       {showPincodeSuggestions && pincodeSuggestions.length > 0 && (
-                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 rounded-t-xl">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Select your locality</p>
-                          </div>
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-heritage/15 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                          <p className="px-3 py-2 text-xs text-heritage/50 border-b border-heritage/10">Choose your locality</p>
                           {pincodeSuggestions.map((po, idx) => (
                             <button
                               key={idx}
                               type="button"
                               onClick={() => handleSelectLocality(po)}
-                              className="w-full px-3 py-2.5 text-left hover:bg-copper/5 transition-colors flex items-start gap-2 border-b border-gray-50 last:border-0"
+                              className="w-full px-3 py-2.5 text-left hover:bg-[#FBF3EA] flex items-start gap-2 border-b border-heritage/5 last:border-0"
                             >
                               <MapPin size={14} className="text-copper mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="text-sm font-medium text-heritage">{po.Name}</p>
-                                <p className="text-[11px] text-gray-400">{po.District}, {po.State}</p>
-                              </div>
+                              <span>
+                                <span className="block text-sm font-medium text-heritage">{po.Name}</span>
+                                <span className="block text-[11px] text-heritage/50">{po.District}, {po.State}</span>
+                              </span>
                             </button>
                           ))}
                         </div>
                       )}
                     </div>
                     <div>
-                      <input name="city" placeholder="City" value={formData.city} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                      <label htmlFor="co-city" className={label}>City</label>
+                      <input id="co-city" name="city" autoComplete="address-level2" value={formData.city} onChange={handleInputChange} className={field} required />
                     </div>
-                    <div>
-                      <input name="state" placeholder="State" value={formData.state} onChange={handleInputChange} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-copper focus:ring-1 focus:ring-copper outline-none transition-all" required />
+                    <div className="sm:col-span-2">
+                      <label htmlFor="co-state" className={label}>State</label>
+                      <input id="co-state" name="state" autoComplete="address-level1" value={formData.state} onChange={handleInputChange} className={field} required />
                     </div>
                   </div>
+                </section>
 
-                  <button
-                    type="submit"
-                    className="w-full py-4 rounded-lg font-bold uppercase tracking-wider shadow-lg mt-8 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 bg-heritage text-white hover:bg-heritage/90"
-                  >
-                    <>
-                      <CheckCircle size={18} />
-                      Continue to Payment
-                    </>
-                  </button>
-                </form>
-              </div>
+                {/* Desktop continue button (phones use the sticky bar) */}
+                <button type="submit" className="hidden lg:flex w-full h-14 items-center justify-center gap-2 rounded-full bg-heritage text-white font-bold text-base hover:bg-copper transition-colors">
+                  Continue to payment
+                </button>
+              </form>
 
-              {/* Order summary - so shoppers see what they're paying for while filling the address */}
-              <aside className="lg:col-span-5 mt-6 lg:mt-0 lg:sticky lg:top-28 bg-white rounded-2xl shadow-sm p-6 animate-fadeIn">
-                <h3 className="font-royal text-xl font-bold text-heritage mb-4">Order Summary</h3>
-                <ul className="divide-y divide-gray-100">
-                  {summaryItems.map((item, idx) => (
-                    <li key={idx} className="flex gap-3 py-3 first:pt-0">
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-warm-sand flex-shrink-0">
-                        {item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}
-                        <span className="absolute -top-0 -right-0 min-w-[20px] h-5 px-1 rounded-bl-lg bg-heritage text-white text-[11px] font-bold flex items-center justify-center">{item.quantity}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-heritage line-clamp-2">{item.name}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Qty {item.quantity}</p>
-                      </div>
-                      <p className="text-sm font-semibold text-heritage whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 pt-4 border-t border-gray-100 space-y-2 text-sm">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
-                    <span>₹{totalAmount.toLocaleString('en-IN')}</span>
-                  </div>
-                  <p className="text-xs text-gray-500">Shipping, coupons and prepaid offers are applied on the next step.</p>
-                </div>
+              <aside className="hidden lg:block lg:col-span-5 lg:sticky lg:top-24">
+                <OrderSummary items={summaryItems} subtotal={totalAmount} />
               </aside>
+
+              {/* Sticky continue bar on phones */}
+              <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-white border-t border-heritage/10 px-4 py-3 shadow-[0_-8px_24px_-12px_rgba(42,21,12,0.25)]">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-xs text-heritage/55">Subtotal</p>
+                    <p className="font-bold text-lg text-heritage tabular-nums leading-tight">₹{totalAmount.toLocaleString('en-IN')}</p>
+                  </div>
+                  <button type="submit" form="shipping-form" className="flex-1 h-12 rounded-full bg-heritage text-white font-bold hover:bg-copper">
+                    Continue to payment
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* STEP 2: PAYMENT LAYOUT */}
           {currentStep === 2 && (
             <PaymentLayout
               cartItems={cartItems}
@@ -1030,14 +995,11 @@ export default function Checkout() {
               edd={edd}
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
+              onEditAddress={() => { setCurrentStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             />
           )}
-
         </div>
       </main>
-      <div className="hidden lg:block">
-        <Footer />
-      </div>
     </>
   );
 }

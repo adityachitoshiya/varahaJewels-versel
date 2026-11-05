@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import PaymentSidebar from './PaymentSidebar';
 import PriceDetails from './PriceDetails';
-import { ShieldCheck, Truck, Lock, CreditCard } from 'lucide-react';
+import { ShieldCheck, Truck, CreditCard, MapPin, Check } from 'lucide-react';
 import { getApiUrl } from '../../lib/config';
 import { calcCouponDiscount, toPriceItems } from '../../lib/couponCalc';
 import { codChargeFor, FREE_DELIVERY_MIN } from '../../lib/deliveryFees';
 
+// Payment step: delivery recap, two payment choices (online / COD) and the
+// price breakdown with coupon. Amounts use the same formulas as the server.
 const PaymentLayout = ({
     cartItems,
     orderDetails,
@@ -23,50 +24,33 @@ const PaymentLayout = ({
     isFlashDelivery,
     edd,
     paymentMethod,
-    setPaymentMethod
+    setPaymentMethod,
+    onEditAddress,
 }) => {
-    const [activeTab, setActiveTab] = useState('recommended');
+    const [mode, setMode] = useState(paymentMethod === 'cod' ? 'cod' : 'online');
 
-    // Sync activeTab with parent's paymentMethod for coupon restriction checks
+    // Keep the parent's payment method in sync (coupon restrictions depend on it)
     useEffect(() => {
-        if (setPaymentMethod) {
-            // Map tab to payment method: 'cod' stays 'cod', everything else is 'online'
-            setPaymentMethod(activeTab === 'cod' ? 'cod' : 'online');
-        }
-    }, [activeTab, setPaymentMethod]);
+        if (setPaymentMethod) setPaymentMethod(mode === 'cod' ? 'cod' : 'online');
+    }, [mode, setPaymentMethod]);
+
     const [prepaidSettings, setPrepaidSettings] = useState({ enabled: false, percent: 5 });
-
-    // Fetch prepaid discount settings
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const API_URL = getApiUrl();
-                const response = await fetch(`${API_URL}/api/settings`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setPrepaidSettings({
-                        enabled: data.prepaid_discount_enabled || false,
-                        percent: data.prepaid_discount_percent || 5
-                    });
-                }
-            } catch (error) {
-                console.error('Failed to fetch prepaid settings:', error);
-            }
-        };
-        fetchSettings();
+        fetch(`${getApiUrl()}/api/settings`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => data && setPrepaidSettings({ enabled: data.prepaid_discount_enabled || false, percent: data.prepaid_discount_percent || 5 }))
+            .catch(() => {});
     }, []);
 
     const totalAmount = cartItems.length > 0
         ? cartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0)
         : (orderDetails ? orderDetails.amount : 0);
 
-    // Recalculate discount
     // Same formula as the server (incl. BOGO + max cap)
     const discountAmount = appliedCoupon
         ? calcCouponDiscount(appliedCoupon, toPriceItems(cartItems, orderDetails), totalAmount)
         : 0;
-    let finalAmount = totalAmount - discountAmount;
-    if (finalAmount < 0) finalAmount = 0;
+    const finalAmount = Math.max(0, totalAmount - discountAmount);
 
     // Prepaid discount is applied by the server on online payments (same formula)
     const prepaidDiscount = prepaidSettings.enabled
@@ -78,146 +62,101 @@ const PaymentLayout = ({
     const codCharge = codChargeFor(finalAmount);
     const codAmount = Math.max(1, finalAmount) + codCharge;
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'cod':
-                return (
-                    <div className="p-6 animate-fadeIn">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">Cash On Delivery</h3>
-                        <div className="bg-yellow-50 border border-yellow-100 p-4 rounded-lg mb-6">
-                            <div className="flex gap-3">
-                                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 text-yellow-700">
-                                    <Truck size={20} />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-800">Pay at your doorstep</p>
-                                    <p className="text-xs text-gray-600 mt-1">
-                                        You can pay via Cash or UPI when the delivery agent arrives.
-                                        <br />
-                                        {codCharge > 0 ? (
-                                            <span className="font-bold text-gray-800 mt-1 inline-block">
-                                                ₹{codCharge} COD charge on orders below ₹{FREE_DELIVERY_MIN}. Pay online for free delivery.
-                                            </span>
-                                        ) : (
-                                            <span className="font-bold text-green-700 mt-1 inline-block">No COD charge on this order.</span>
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+    const payAmount = mode === 'cod' ? codAmount : onlineAmount;
+    const pay = mode === 'cod' ? handleCODPayment : handleRazorpayPayment;
+    const payLabel = isLoading ? 'Processing…' : mode === 'cod' ? `Place order · ₹${codAmount.toLocaleString('en-IN')}` : `Pay ₹${onlineAmount.toLocaleString('en-IN')}`;
 
-                        <button
-                            onClick={handleCODPayment}
-                            disabled={isLoading}
-                            className="w-full bg-heritage text-white py-4 rounded-lg font-bold uppercase tracking-wider hover:bg-heritage/90 shadow transition-all flex items-center justify-center gap-2"
-                        >
-                            {isLoading ? 'Processing...' : `Place COD Order • ₹${codAmount.toLocaleString()}`}
-                        </button>
-                    </div>
-                );
+    const address = [formData?.address, formData?.city, formData?.state, formData?.pincode].filter(Boolean).join(', ');
 
-            case 'card':
-            case 'upi':
-            case 'netbanking':
-            case 'recommended':
-            default:
-                // Default View (Online Payment Trigger)
-                // We can show "Recommended" content or just the Online Payment UI
-                return (
-                    <div className="p-6 animate-fadeIn">
-                        <h3 className="text-lg font-bold text-gray-800 mb-6">
-                            {activeTab === 'recommended' ? 'Recommended Options' :
-                                activeTab === 'card' ? 'Credit / Debit Card' :
-                                    activeTab === 'upi' ? 'Pay via UPI' : 'Online Payment'}
-                        </h3>
-
-                        {/* Static Card Visual for "Card" or "Recommended" */}
-                        <div className="mb-6">
-                            <div className="border border-gray-200 rounded-lg p-4 hover:border-copper transition-colors cursor-pointer" onClick={handleRazorpayPayment}>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600">
-                                        <CreditCard size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-semibold text-gray-800">Pay Online</p>
-                                        <p className="text-xs text-gray-500">GooglePay, PhonePe, Cards, Netbanking & More</p>
-                                    </div>
-                                    <div className="w-4 h-4 rounded-full border border-gray-300"></div>
-                                </div>
-                                {prepaidSettings.enabled && (
-                                    <div className="mt-3 pl-14">
-                                        <p className="text-[10px] text-green-600 font-bold bg-green-50 inline-block px-2 py-1 rounded">
-                                            {prepaidSettings.percent}% OFF on Prepaid Orders (−₹{prepaidDiscount.toLocaleString()})
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* More static offers to look like Myntra */}
-                        {(activeTab === 'recommended' || activeTab === 'card') && (
-                            <div className="mb-6 space-y-3">
-                                <div className="flex items-start gap-3 p-3 bg-blue-50/50 rounded border border-blue-100 border-dashed">
-                                    <span className="text-blue-600 text-xs font-bold whitespace-nowrap">HDFC Bank</span>
-                                    <p className="text-xs text-gray-600">10% Instant Discount on HDFC Credit Cards on min spend ₹3000. TCA</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {codCharge > 0 && (
-                            <p className="mb-3 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
-                                Free delivery with online payment · saves ₹{codCharge} vs Cash on Delivery
-                            </p>
-                        )}
-
-                        <button
-                            onClick={handleRazorpayPayment}
-                            disabled={isLoading}
-                            className="w-full bg-heritage text-white py-4 rounded-lg font-bold uppercase tracking-wider hover:bg-heritage/90 shadow transition-all flex items-center justify-center gap-2"
-                        >
-                            {isLoading ? 'Processing...' : `Pay Now • ₹${onlineAmount.toLocaleString()}`}
-                        </button>
-
-                        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
-                            <ShieldCheck size={14} /> 100% Safe & Secure Payments
-                        </div>
-                    </div>
-                );
-        }
+    const Option = ({ value, icon: Icon, title, note, badge }) => {
+        const active = mode === value;
+        return (
+            <button
+                type="button"
+                onClick={() => setMode(value)}
+                aria-pressed={active}
+                className={`w-full text-left rounded-2xl border-2 p-4 sm:p-5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-copper ${active ? 'border-heritage bg-[#FBF3EA]' : 'border-heritage/10 bg-white hover:border-heritage/30'}`}
+            >
+                <span className="flex items-start gap-3.5">
+                    <span className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${active ? 'border-heritage bg-heritage' : 'border-heritage/30'}`}>
+                        {active && <Check size={12} className="text-white" strokeWidth={3} />}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                        <span className="flex flex-wrap items-center gap-2">
+                            <Icon size={18} className="text-copper" />
+                            <span className="font-semibold text-heritage">{title}</span>
+                            {badge && <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">{badge}</span>}
+                        </span>
+                        <span className="block mt-1 text-sm text-heritage/65">{note}</span>
+                    </span>
+                    <span className="font-semibold text-heritage tabular-nums">₹{(value === 'cod' ? codAmount : onlineAmount).toLocaleString('en-IN')}</span>
+                </span>
+            </button>
+        );
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-
-            {/* LEFT BLOCK: Payments */}
-            <div className="lg:col-span-8 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-                {/* Header */}
-                <div className="p-4 border-b border-gray-100 bg-gray-50/50">
-                    <h2 className="text-base font-bold text-heritage flex items-center gap-2">
-                        <Lock size={16} /> Choose Payment Mode
-                    </h2>
-                    {isFlashDelivery && (
-                        <div className="mt-2 bg-green-50 text-green-700 px-3 py-2 text-xs font-bold rounded flex items-center gap-2 animate-pulse border border-green-200">
-                            <span className="text-sm">⚡</span> Flash Delivery Active: Get it within 2-4 Hours!
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-start pb-24 lg:pb-0">
+            <div className="lg:col-span-7 space-y-5">
+                {/* Delivery recap */}
+                <section className="rounded-2xl bg-white border border-heritage/10 p-5">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex gap-3 min-w-0">
+                            <MapPin size={18} className="text-copper flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-heritage">Delivering to {formData?.name || 'you'}</p>
+                                <p className="text-sm text-heritage/65 mt-0.5 break-words">{address}</p>
+                                {formData?.contact && <p className="text-xs text-heritage/50 mt-1">{formData.contact}</p>}
+                            </div>
                         </div>
+                        {onEditAddress && (
+                            <button type="button" onClick={onEditAddress} className="text-sm font-semibold text-copper hover:text-heritage underline underline-offset-4 flex-shrink-0">Change</button>
+                        )}
+                    </div>
+                    {(isFlashDelivery || edd) && (
+                        <p className="mt-3 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-800">
+                            {isFlashDelivery ? 'Flash delivery: arrives within a few hours' : `Expected delivery: ${edd}`}
+                        </p>
                     )}
-                </div>
+                </section>
 
-                <div className="flex flex-col lg:flex-row min-h-[400px]">
-                    {/* Sidebar */}
-                    <div className="lg:w-1/3 border-r border-gray-100">
-                        <PaymentSidebar selectedMode={activeTab} onSelectMode={setActiveTab} />
+                {/* Payment choice */}
+                <section className="rounded-2xl bg-white border border-heritage/10 p-5">
+                    <h2 className="font-royal font-bold text-2xl text-heritage mb-4">How would you like to pay?</h2>
+                    <div className="space-y-3">
+                        <Option
+                            value="online"
+                            icon={CreditCard}
+                            title="Pay online"
+                            note={`UPI, Google Pay, PhonePe, cards or net banking.${codCharge > 0 ? ' Free delivery.' : ''}`}
+                            badge={prepaidSettings.enabled && prepaidDiscount > 0 ? `Save ₹${Math.round(prepaidDiscount).toLocaleString('en-IN')}` : null}
+                        />
+                        <Option
+                            value="cod"
+                            icon={Truck}
+                            title="Cash on delivery"
+                            note={codCharge > 0
+                                ? `Pay cash or UPI to the delivery agent. ₹${codCharge} COD fee on orders under ₹${FREE_DELIVERY_MIN}.`
+                                : 'Pay cash or UPI to the delivery agent. No COD fee on this order.'}
+                        />
                     </div>
 
-                    {/* Content Area */}
-                    <div className="lg:w-2/3">
-                        {renderContent()}
-                    </div>
-                </div>
+                    {/* Desktop pay button (phones use the sticky bar) */}
+                    <button
+                        onClick={pay}
+                        disabled={isLoading}
+                        className="hidden lg:flex mt-5 w-full h-14 items-center justify-center rounded-full bg-heritage text-white font-bold text-base hover:bg-copper disabled:opacity-70 transition-colors"
+                    >
+                        {payLabel}
+                    </button>
+                    <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-heritage/50">
+                        <ShieldCheck size={14} className="text-emerald-600" /> Payments are processed securely by Razorpay
+                    </p>
+                </section>
             </div>
 
-            {/* RIGHT BLOCK: Price Details */}
-            <div className="lg:col-span-4">
+            {/* Price breakdown + coupon */}
+            <div className="lg:col-span-5 lg:sticky lg:top-24">
                 <PriceDetails
                     cartItems={cartItems}
                     orderDetails={orderDetails}
@@ -225,8 +164,8 @@ const PaymentLayout = ({
                     discountAmount={discountAmount}
                     finalAmount={finalAmount}
                     // Match the amount on the pay button for the selected mode
-                    codCharge={activeTab === 'cod' ? codCharge : 0}
-                    prepaidDiscount={activeTab !== 'cod' ? prepaidDiscount : 0}
+                    codCharge={mode === 'cod' ? codCharge : 0}
+                    prepaidDiscount={mode !== 'cod' ? prepaidDiscount : 0}
                     couponCode={couponCode}
                     setCouponCode={setCouponCode}
                     handleApplyCoupon={handleApplyCoupon}
@@ -237,6 +176,18 @@ const PaymentLayout = ({
                 />
             </div>
 
+            {/* Sticky pay bar on phones */}
+            <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-white border-t border-heritage/10 px-4 py-3 shadow-[0_-8px_24px_-12px_rgba(42,21,12,0.25)]">
+                <div className="flex items-center gap-3">
+                    <div className="min-w-0">
+                        <p className="text-xs text-heritage/55">{mode === 'cod' ? 'Cash on delivery' : 'Pay online'}</p>
+                        <p className="font-bold text-lg text-heritage tabular-nums leading-tight">₹{payAmount.toLocaleString('en-IN')}</p>
+                    </div>
+                    <button onClick={pay} disabled={isLoading} className="flex-1 h-12 rounded-full bg-heritage text-white font-bold hover:bg-copper disabled:opacity-70">
+                        {isLoading ? 'Processing…' : mode === 'cod' ? 'Place order' : 'Pay now'}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
