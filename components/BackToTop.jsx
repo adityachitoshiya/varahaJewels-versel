@@ -31,7 +31,7 @@ export default function BackToTop() {
       {isVisible && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-40 group"
+          className="hidden md:block fixed bottom-8 right-8 z-40 group"
           aria-label="Back to top"
         >
           {/* Outer rotating ring */}
