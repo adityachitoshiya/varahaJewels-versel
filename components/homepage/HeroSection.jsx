@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingBag, Check } from 'lucide-react';
+import { ShoppingBag, Check, Copy } from 'lucide-react';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
 import ShimmerImage from '../ShimmerImage';
 import { MENU } from '../CollectionsMenu';
 import { useHomeProducts } from './ProductHome';
 import { useCart } from '../../context/CartContext';
 import { formatINR, parseList } from '../../lib/products';
+import { activeOffer, lastDayLabel, OFFER_TERMS } from '../../lib/offers';
 
 // Product-first hero: the CMS banner slides (Admin > CMS) on the left, and two
 // live product tiles on the right: the best real deal (Add to cart right
@@ -87,6 +88,7 @@ export default function HeroSection({ initialSlides }) {
 
   return (
     <section className="hero bg-warm-sand pt-3 md:pt-6" aria-label="Featured">
+      <OfferBand />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 grid lg:grid-cols-3 gap-3 md:gap-5">
         {/* Banner slideshow */}
         <div
@@ -229,5 +231,64 @@ function NewCollectionTile({ index = 0 }) {
         <span className="block mt-1.5 text-xs sm:text-sm text-[#F4E6D8]/85">{t.items.length} pieces{t.from ? `, from ${formatINR(t.from)}` : ''}</span>
       </span>
     </Link>
+  );
+}
+
+// Festival offer band (dates in lib/offers.js). Rendered after mount so the
+// date check uses the visitor's clock, not the time the page was built.
+function OfferBand() {
+  const [offer, setOffer] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+
+  useEffect(() => {
+    const tick = () => setOffer(activeOffer());
+    tick();
+    const t = setInterval(tick, 60 * 1000); // switches over at midnight without a reload
+    return () => clearInterval(t);
+  }, []);
+
+  if (!offer) return null;
+  const { percent, minOrder, maxOff } = OFFER_TERMS;
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(offer.code); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mb-3 md:mb-5">
+      <div className="relative overflow-hidden rounded-3xl bg-[#2a150c] text-[#FBF3EA] px-5 py-5 sm:px-8 sm:py-6">
+        <span className="pointer-events-none absolute -right-10 -top-16 w-64 h-64 rounded-full bg-royal-orange/25 blur-3xl" aria-hidden />
+        <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+          <div className="flex items-baseline gap-4 md:block">
+            <p className="font-royal font-bold text-6xl md:text-7xl leading-none text-[#E8C9A0] tabular-nums">{percent}%<span className="text-3xl md:text-4xl"> off</span></p>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-royal font-bold text-3xl md:text-4xl leading-tight">{offer.title}</p>
+            <p className="mt-1 text-sm md:text-base text-[#F4E6D8]/80">
+              On everything, use the code at checkout. Ends {lastDayLabel(offer)}.{' '}
+              <button onClick={() => setShowTerms((v) => !v)} aria-expanded={showTerms} className="underline underline-offset-2 text-[#E8C9A0] hover:text-white">T&amp;C apply</button>
+            </p>
+            {showTerms && (
+              <ul className="mt-3 text-xs md:text-sm text-[#F4E6D8]/75 space-y-1">
+                <li>{percent}% off on orders of ₹{minOrder.toLocaleString('en-IN')} or more.</li>
+                <li>Maximum discount ₹{maxOff.toLocaleString('en-IN')} per order.</li>
+                <li>Enter code {offer.code} at checkout. One code per order.</li>
+                <li>Valid until {lastDayLabel(offer)}, 11:59 pm.</li>
+              </ul>
+            )}
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button onClick={copy} className="flex-1 md:flex-none inline-flex items-center justify-between gap-3 h-12 pl-4 pr-3 rounded-full border-2 border-dashed border-[#E8C9A0]/70 hover:border-[#E8C9A0]" aria-label={`Copy code ${offer.code}`}>
+              <span className="font-mono font-bold tracking-[0.12em]">{offer.code}</span>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#E8C9A0]">{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}</span>
+            </button>
+            <Link href="/shop" className="inline-flex flex-shrink-0 items-center justify-center h-12 px-6 rounded-full bg-[#FBF3EA] text-heritage font-bold text-sm whitespace-nowrap hover:bg-[#E8C9A0]">Shop now</Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
