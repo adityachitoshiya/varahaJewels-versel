@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
+import { useCart } from '../context/CartContext';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 export default function PaymentCallback() {
     const router = useRouter();
+    const { clearCart } = useCart();
     const [status, setStatus] = useState('checking'); // checking, confirming, success, failed
     const [message, setMessage] = useState('Verifying your payment...');
     const [orderData, setOrderData] = useState(null);
@@ -52,10 +54,10 @@ export default function PaymentCallback() {
                         'Content-Type': 'application/json',
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                     },
+                    // Server builds the order from its own checkout record
                     body: JSON.stringify({
                         transaction_id: transactionId,
-                        orderId: transactionId,
-                        order_data: pendingOrder
+                        orderId: transactionId
                     })
                 });
 
@@ -66,6 +68,9 @@ export default function PaymentCallback() {
                     // Clear pending order
                     sessionStorage.removeItem('pending_order');
                     localStorage.removeItem('cart');
+                    if (pendingOrder?.isCartCheckout) {
+                        try { await clearCart(); } catch (e) { /* ignore */ }
+                    }
 
                     setStatus('success');
                     setMessage('Order placed successfully!');
@@ -77,10 +82,9 @@ export default function PaymentCallback() {
                             pathname: '/payment-success',
                             query: {
                                 orderId: data.orderId || transactionId,
+                                key: data.accessKey,
                                 amount: data.amount || pendingOrder?.amount || 0,
-                                provider: 'phonepe',
-                                email: pendingOrder?.email,
-                                name: pendingOrder?.name
+                                provider: 'phonepe'
                             }
                         });
                     }, 2000);
@@ -108,24 +112,9 @@ export default function PaymentCallback() {
                     // Payment successful - now confirm order
                     const pendingOrder = getPendingOrder();
 
-                    if (pendingOrder) {
-                        await confirmOrder(pendingOrder);
-                    } else {
-                        // No pending order data - maybe already processed or lost
-                        setStatus('success');
-                        setMessage('Payment successful! Redirecting...');
-
-                        setTimeout(() => {
-                            router.push({
-                                pathname: '/payment-success',
-                                query: {
-                                    orderId: transactionId,
-                                    amount: data.amount ? data.amount / 100 : 0,
-                                    provider: 'phonepe'
-                                }
-                            });
-                        }, 2000);
-                    }
+                    // Always confirm with the server (it has the order details);
+                    // sessionStorage may be empty if the page was opened in a new tab.
+                    await confirmOrder(pendingOrder);
                 } else if (data.status === 'PENDING' || data.status === 'PAYMENT_PENDING' || data.status === 'INITIATED') {
                     setStatus('checking');
                     setMessage('Payment is being processed. Please wait...');

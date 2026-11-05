@@ -1,240 +1,233 @@
-import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { ShoppingBag, Check } from 'lucide-react';
 import { getApiUrl, getAuthHeaders } from '../../lib/config';
 import ShimmerImage from '../ShimmerImage';
+import { MENU } from '../CollectionsMenu';
+import { useHomeProducts } from './ProductHome';
+import { useCart } from '../../context/CartContext';
+import { formatINR, parseList } from '../../lib/products';
 
-// Default slides constant moved outside for reusability
+// Product-first hero: the CMS banner slides (Admin > CMS) on the left, and two
+// live product tiles on the right: the best real deal (Add to cart right
+// here) and the newest collection. On phones the tiles sit under the banner.
+
 const defaultSlides = [
-  {
-    id: 1,
-    image: '/varaha-assets/heroimage.avif',
-    title: 'Timeless Elegance',
-    subtitle: 'Heritage-inspired masterpieces crafted with tradition and artistry',
-    link_text: 'Explore Collections',
-    link_url: '/collections/all',
-    secondary_link_text: 'Our Heritage',
-    secondary_link_url: '/heritage'
-  },
-  {
-    id: 2,
-    image: '/varaha-assets/Jimage2.avif',
-    title: 'Royal Heritage',
-    subtitle: 'Exquisite pieces that celebrate India\'s rich cultural legacy',
-    link_text: 'Explore Collections',
-    link_url: '/collections/all',
-    secondary_link_text: 'Our Heritage',
-    secondary_link_url: '/heritage'
-  },
-  {
-    id: 3,
-    image: '/varaha-assets/Jimage3.webp',
-    title: 'Artisan Excellence',
-    subtitle: 'Every piece handcrafted by master artisans with devotion and precision',
-    link_text: 'Explore Collections',
-    link_url: '/collections/all',
-    secondary_link_text: 'Our Heritage',
-    secondary_link_url: '/heritage'
-  }
+  { id: 1, image: '/varaha-assets/heroimage.avif', title: 'Timeless Elegance', subtitle: 'Heritage-inspired pieces crafted with tradition and artistry', link_text: 'Shop now', link_url: '/shop' },
+  { id: 2, image: '/varaha-assets/Jimage2.avif', title: 'Royal Heritage', subtitle: "Pieces that celebrate India's rich cultural legacy", link_text: 'Shop now', link_url: '/shop' },
+  { id: 3, image: '/varaha-assets/Jimage3.webp', title: 'Artisan Excellence', subtitle: 'Every piece finished by hand', link_text: 'Shop now', link_url: '/shop' },
 ];
 
-export default function HeroSection({ initialSlides }) {
-  // Initialize with passed props to ensure immediate render (Hyperspeed LCP)
-  const [slides, setSlides] = useState(initialSlides || defaultSlides);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [loadedSlides, setLoadedSlides] = useState([0]); // Track which slides have been allowed to load
+const SLIDE_MS = 6000;
+const MAX_SLIDES = 6;
+const MIN_DEAL_PRICE = 199; // keep test/placeholder items (e.g. ₹10) out of the deal tile
 
-  // Still fetch on mount to get updates if any (stale-while-revalidate strategy)
+// Old CMS slides point at /collections/... pages that do not exist
+const fixLink = (url) => (!url || url.startsWith('/collections') ? '/shop' : url);
+
+// One slide per collection that has stock, using that collection's best photo
+// (the piece with the most photos, newest first). Falls back to the CMS slides.
+function collectionSlides(products) {
+  return MENU.find((g) => g.key === 'collections').links
+    .map((l) => {
+      const items = products.filter((p) => l.match(p) && p.image);
+      if (!items.length) return null;
+      const hero = [...items].sort((a, b) =>
+        (parseList(b.additional_images).length - parseList(a.additional_images).length) ||
+        String(b.id).localeCompare(String(a.id), undefined, { numeric: true }))[0];
+      const priced = items.filter((p) => p.price);
+      const from = priced.length ? Math.min(...priced.map((p) => p.price)) : null;
+      return {
+        id: `c-${l.label}`,
+        image: hero.image,
+        title: l.label,
+        subtitle: `${l.note}${from ? `, from ${formatINR(from)}` : ''}`,
+        link_text: `Shop ${l.label.toLowerCase()}`,
+        link_url: l.href,
+      };
+    })
+    .filter(Boolean)
+    .slice(0, MAX_SLIDES); // Bridal/Minimal repeat pieces from the sections above
+}
+
+export default function HeroSection({ initialSlides }) {
+  const products = useHomeProducts();
+  const [cmsSlides, setSlides] = useState(initialSlides?.length ? initialSlides : defaultSlides);
+  const fromProducts = products ? collectionSlides(products) : null;
+  // While products load, show the dark banner without text instead of flashing the old photos
+  const slides = fromProducts === null ? [] : fromProducts.length ? fromProducts : cmsSlides;
+  const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
+
   useEffect(() => {
-    if (!initialSlides) {
-      fetchSlides();
-    }
+    if (initialSlides?.length) return;
+    fetch(`${getApiUrl()}/api/content/hero`, { headers: getAuthHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => data?.length && setSlides(data))
+      .catch(() => {});
   }, [initialSlides]);
 
-  const fetchSlides = async () => {
-    try {
-      const API_URL = getApiUrl();
-      const res = await fetch(`${API_URL}/api/content/hero`, { headers: getAuthHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.length > 0) {
-          setSlides(data);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch hero slides:", err);
-      // Keep existing slides
-    }
-  };
-
-  // Auto-advance slides every 4 seconds
   useEffect(() => {
-    if (!isAutoPlaying || slides.length === 0) return;
+    if (paused || slides.length <= 1) return;
+    const t = setTimeout(() => setCurrent((i) => (i + 1) % slides.length), SLIDE_MS);
+    return () => clearTimeout(t);
+  }, [current, paused, slides.length]);
 
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4000);
-
-    return () => clearInterval(timer);
-  }, [isAutoPlaying, slides]);
-
-  // Progressive Loading Effect: Add current slide to loaded list
-  useEffect(() => {
-    if (!loadedSlides.includes(currentSlide)) {
-      setLoadedSlides(prev => [...prev, currentSlide]);
-    }
-    // Optional: Preload next slide for smoother auto-play transition
-    const nextIndex = (currentSlide + 1) % slides.length;
-    if (!loadedSlides.includes(nextIndex)) {
-      // Small delay to prioritize current slide render
-      const timer = setTimeout(() => {
-        setLoadedSlides(prev => {
-          if (!prev.includes(nextIndex)) return [...prev, nextIndex];
-          return prev;
-        });
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [currentSlide, slides.length]);
-
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-    setIsAutoPlaying(false);
-    // Resume auto-play after 10 seconds
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+  // Swipe on phones
+  const touchX = useRef(null);
+  const onTouchEnd = (e) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (Math.abs(dx) > 50) setCurrent((i) => (i + (dx < 0 ? 1 : -1) + slides.length) % slides.length);
+    touchX.current = null;
   };
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
-  };
+  const slide = slides[current % (slides.length || 1)];
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+  return (
+    <section className="hero bg-warm-sand pt-3 md:pt-6" aria-label="Featured">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 grid lg:grid-cols-3 gap-3 md:gap-5">
+        {/* Banner slideshow */}
+        <div
+          className="relative lg:col-span-2 h-[440px] sm:h-[480px] lg:h-[560px] rounded-3xl overflow-hidden bg-[#2a150c]"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+          onTouchEnd={onTouchEnd}
+          aria-roledescription="carousel"
+        >
+          {slides.map((s, i) => (
+            <div key={s.id ?? i} className={`absolute inset-0 transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0'}`} aria-hidden={i !== current}>
+              {(i === current || i === (current + 1) % slides.length) && (
+                <>
+                  <div className="md:hidden w-full h-full">
+                    <ShimmerImage src={s.mobile_image && s.mobile_image !== 'None' ? s.mobile_image : s.image} alt={s.title || ''} className="w-full h-full object-cover object-[50%_30%]" priority={i === 0} quality={65} sizes="100vw" />
+                  </div>
+                  <div className="hidden md:block w-full h-full">
+                    <ShimmerImage src={s.image} alt={s.title || ''} className="w-full h-full object-cover object-[50%_30%]" priority={i === 0} quality={75} sizes="(max-width: 1024px) 100vw, 66vw" />
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#2a150c]/85 via-[#2a150c]/15 to-transparent pointer-events-none" />
+
+          {slide && (
+            <div className="absolute inset-x-0 bottom-0 p-6 sm:p-9 lg:p-11 text-[#FBF3EA]">
+              <h1 className="font-royal font-semibold text-[2.6rem] sm:text-6xl lg:text-7xl leading-[0.98] max-w-[14ch]">{slide.title}</h1>
+              {slide.subtitle && <p className="mt-3 text-[15px] sm:text-lg text-[#F4E6D8]/85 max-w-md">{slide.subtitle}</p>}
+              <div className="mt-6 flex items-center justify-between gap-4">
+                <Link
+                  href={fixLink(slide.link_url)}
+                  className="inline-flex flex-shrink-0 whitespace-nowrap items-center justify-center h-12 px-6 sm:px-7 rounded-full bg-[#FBF3EA] text-heritage font-bold text-sm hover:bg-[#E8C9A0] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FBF3EA]"
+                >
+                  {slide.link_text && slide.link_text !== 'Explore Collections' ? slide.link_text : 'Shop now'}
+                </Link>
+                {slides.length > 1 && (
+                  <div className="flex items-center" role="tablist" aria-label="Slides">
+                    {slides.map((s, i) => (
+                      // Tap area stays 44px tall (globals.css touch rule); only the inner dot is visible
+                      <button
+                        key={s.id ?? i}
+                        role="tab"
+                        aria-selected={i === current}
+                        aria-label={`Slide ${i + 1}: ${s.title || ''}`}
+                        onClick={() => setCurrent(i)}
+                        className={`group h-11 !min-w-0 flex items-center justify-center bg-transparent ${i === current ? 'w-9' : 'w-5'}`}
+                      >
+                        <span className={`block h-2 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-[#FBF3EA]' : 'w-2 bg-[#FBF3EA]/50 group-hover:bg-[#FBF3EA]/80'}`} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Live product tiles */}
+        <div className="grid grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 gap-3 md:gap-5 lg:h-[560px]">
+          <DealTile />
+          <NewCollectionTile />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DealTile() {
+  const products = useHomeProducts();
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const off = (p) => (p.mrp > p.price ? 1 - p.price / p.mrp : 0);
+  const deal = products
+    ?.filter((p) => p.price >= MIN_DEAL_PRICE && p.image && off(p) > 0)
+    .sort((a, b) => off(b) - off(a))[0];
+
+  if (!products) return <div className="rounded-3xl bg-heritage/10 animate-pulse min-h-[260px]" />;
+  if (!deal) return <NewCollectionTile index={1} />;
+
+  const pct = Math.round(off(deal) * 100);
+  const href = `/product/${deal.slug || deal.id}`;
+  const add = async () => {
+    await addToCart(deal, { sku: `${deal.id}-default`, price: deal.price, name: 'Standard', image: deal.image }, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   return (
-    <section className="relative h-screen bg-warm-sand">
-      {/* Slides */}
-      {slides.map((slide, index) => (
-        <div
-          key={slide.id}
-          className={`absolute inset-0 h-screen transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
-            } `}
-        >
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            {/* Only load content if this slide has been triggered */}
-            {loadedSlides.includes(index) && (
-              <>
-                {/* Mobile Image */}
-                <div className="md:hidden w-full h-full">
-                  <ShimmerImage
-                    src={slide.mobile_image || slide.image}
-                    alt={slide.title}
-                    className="w-full h-full object-cover"
-                    priority={index === 0}
-                    quality={60} // Reduced quality for mobile data saving
-                    sizes="100vw"
-                  />
-                </div>
-
-                {/* Desktop Image */}
-                <div className="hidden md:block w-full h-full">
-                  <ShimmerImage
-                    src={slide.image}
-                    alt={slide.title}
-                    className="w-full h-full object-cover"
-                    priority={index === 0}
-                    quality={75}
-                    sizes="100vw"
-                  />
-                </div>
-              </>
-            )}
-            {/* Soft warm lighting overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-warm-sand/70 via-warm-sand/50 to-warm-sand/70"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-warm-sand/60 via-transparent to-warm-sand/60"></div>
-          </div>
-
-          {/* Content */}
-          <div className="relative z-10 h-full flex items-center justify-center">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <div className="max-w-4xl mx-auto">
-                {/* Subtle accent line */}
-                <div className="w-24 h-px bg-copper mx-auto mb-8 animate-fadeIn"></div>
-
-                <h1 className="font-royal text-6xl md:text-8xl lg:text-9xl font-bold text-heritage mb-8 tracking-tight leading-none animate-fadeUp">
-                  {slide.title}
-                </h1>
-
-                {/* Subtle line under title */}
-                <div className="w-32 h-px bg-copper/60 mx-auto mb-10 animate-fadeIn" style={{ animationDelay: '0.3s' }}></div>
-
-                <p className="font-playfair text-2xl md:text-3xl text-heritage/80 mb-16 max-w-3xl mx-auto leading-relaxed font-light tracking-wide animate-fadeUp" style={{ animationDelay: '0.4s' }}>
-                  {slide.subtitle}
-                </p>
-
-                {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-scaleIn" style={{ animationDelay: '0.6s' }}>
-                  <Link
-                    href={slide.link_url || "/collections/all"}
-                    className="group px-10 py-4 bg-copper border border-copper text-warm-sand font-medium rounded-sm hover:bg-heritage transition-all duration-300 flex items-center gap-3"
-                  >
-                    {slide.link_text || "Explore Collections"}
-                    <ChevronRight className="group-hover:translate-x-2 transition-transform duration-300" size={24} />
-                  </Link>
-
-                  <Link
-                    href={slide.secondary_link_url || "/heritage"}
-                    className="px-10 py-4 bg-transparent border border-copper text-heritage font-medium rounded-sm hover:bg-copper/5 transition-all duration-300"
-                  >
-                    {slide.secondary_link_text || "Our Heritage"}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="group relative flex flex-col rounded-3xl overflow-hidden bg-white min-h-[260px]">
+      <Link href={href} prefetch={false} aria-label={deal.name} className="relative flex-1 min-h-[150px] block focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-copper">
+        <Image src={deal.image} alt={deal.name} fill sizes="(max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-royal-orange text-white text-xs font-bold">Deal of the day</span>
+      </Link>
+      <div className="p-3 sm:p-4 lg:p-5 lg:flex lg:items-end lg:justify-between lg:gap-4">
+        <div className="min-w-0">
+          <Link href={href} prefetch={false} className="block font-royal font-semibold text-heritage text-[15px] sm:text-lg leading-snug line-clamp-1 hover:text-copper">{deal.name}</Link>
+          <p className="mt-0.5 flex items-baseline flex-wrap gap-x-2">
+            <span className="font-semibold text-heritage tabular-nums">{formatINR(deal.price)}</span>
+            <span className="text-xs sm:text-sm text-heritage/40 line-through tabular-nums">{formatINR(deal.mrp)}</span>
+            <span className="text-xs sm:text-sm font-semibold text-emerald-700">{pct}% off</span>
+          </p>
         </div>
-      ))}
-
-      {/* Navigation Arrows - Hidden on Mobile, Visible on Desktop */}
-      <button
-        onClick={prevSlide}
-        className="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft size={28} />
-      </button>
-      <button
-        onClick={nextSlide}
-        className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 z-20 p-4 bg-white/90 text-heritage border border-copper/40 rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300 backdrop-blur-sm"
-        aria-label="Next slide"
-      >
-        <ChevronRight size={28} />
-      </button>
-
-      {/* Slide Indicators - Hidden for cleaner mobile UX */}
-      <div className="hidden">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`h - 1 rounded - full transition - all duration - 500 ${index === currentSlide
-              ? 'w-16 bg-copper'
-              : 'w-8 bg-heritage/30 hover:bg-heritage/50'
-              } `}
-            aria-label={`Go to slide ${index + 1} `}
-          />
-        ))}
+        <button
+          onClick={add}
+          className="mt-2 lg:mt-0 w-full lg:w-auto flex-shrink-0 inline-flex items-center justify-center gap-1.5 h-9 sm:h-10 px-4 rounded-full bg-heritage text-warm-sand text-xs sm:text-sm font-semibold hover:bg-copper transition-colors"
+        >
+          {added ? <><Check size={15} /> Added</> : <><ShoppingBag size={15} /> Add</>}
+        </button>
       </div>
+    </div>
+  );
+}
 
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-warm-sand to-transparent z-5"></div>
-    </section>
+// Newest collection that has stock, with its starting price
+function NewCollectionTile({ index = 0 }) {
+  const products = useHomeProducts();
+  if (!products) return <div className="rounded-3xl bg-heritage/10 animate-pulse min-h-[260px]" />;
+
+  const tiles = MENU.find((g) => g.key === 'collections').links
+    .map((l) => {
+      const items = products.filter(l.match);
+      const newest = items.reduce((a, b) => (String(b.id).localeCompare(String(a?.id || ''), undefined, { numeric: true }) > 0 ? b : a), null);
+      return { ...l, items, newest, from: items.length ? Math.min(...items.filter((p) => p.price).map((p) => p.price)) : null };
+    })
+    .filter((t) => t.items.length && t.newest?.image)
+    .sort((a, b) => String(b.newest.id).localeCompare(String(a.newest.id), undefined, { numeric: true }));
+  const t = tiles[index] || tiles[0];
+  if (!t) return null;
+
+  return (
+    <Link href={t.href} prefetch={false} className="group relative rounded-3xl overflow-hidden bg-heritage min-h-[260px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-copper">
+      <Image src={t.newest.image} alt="" fill sizes="(max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+      <span className="absolute inset-0 bg-gradient-to-t from-[#2a150c]/90 via-[#2a150c]/20 to-transparent" />
+      <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[#FBF3EA] text-heritage text-xs font-bold">New in</span>
+      <span className="absolute inset-x-0 bottom-0 p-4 lg:p-6 text-[#FBF3EA]">
+        <span className="block font-royal font-semibold text-2xl lg:text-4xl leading-none">{t.label}</span>
+        <span className="block mt-1.5 text-xs sm:text-sm text-[#F4E6D8]/85">{t.items.length} pieces{t.from ? `, from ${formatINR(t.from)}` : ''}</span>
+      </span>
+    </Link>
   );
 }

@@ -116,11 +116,11 @@ export default function Shipping() {
                                     <div className="bg-green-50 border border-green-200 rounded-sm p-4 mb-3">
                                         <p className="font-bold text-green-800 flex items-center gap-2">
                                             <CheckCircle size={18} />
-                                            FREE Shipping on orders above ₹5,000
+                                            FREE delivery on all orders of ₹499 and above
                                         </p>
                                     </div>
                                     <p className="text-heritage/80">
-                                        For orders below ₹5,000, a flat shipping charge of <span className="font-semibold">₹99</span> applies.
+                                        For orders below ₹499, delivery is still <span className="font-semibold">free when you pay online</span>. If you choose Cash on Delivery, a <span className="font-semibold">₹99</span> COD charge applies.
                                     </p>
                                 </div>
 
@@ -195,7 +195,7 @@ export default function Shipping() {
                                     <ol className="space-y-3 text-heritage/80">
                                         <li className="flex gap-3">
                                             <span className="flex-shrink-0 w-6 h-6 bg-copper text-warm-sand rounded-full flex items-center justify-center text-sm font-bold">1</span>
-                                            <span>Contact our support team at +91 98765 43210 or hello@varahajewels.com</span>
+                                            <span>Contact our support team at help@varahajewels.in</span>
                                         </li>
                                         <li className="flex gap-3">
                                             <span className="flex-shrink-0 w-6 h-6 bg-copper text-warm-sand rounded-full flex items-center justify-center text-sm font-bold">2</span>

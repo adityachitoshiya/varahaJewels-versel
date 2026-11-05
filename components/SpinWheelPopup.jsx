@@ -1,316 +1,224 @@
-import { useState, useEffect } from 'react';
-import { X, Gift, Copy, Check, Sparkles, Star } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { X, Copy, Check, Gift } from 'lucide-react';
 
-const OFFERS = [
-  { id: 1, label: '10% OFF', code: 'ROYAL10', discount: '10%', color: 'bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-[#e2c799]' },
-  { id: 2, label: '15% OFF', code: 'ROYAL15', discount: '15%', color: 'bg-gradient-to-br from-[#e2c799] to-[#bfa06d] text-[#1a1a1a]' },
-  { id: 3, label: '20% OFF', code: 'ROYAL20', discount: '20%', color: 'bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-[#e2c799]' },
-  { id: 4, label: '5% OFF', code: 'ROYAL5', discount: '5%', color: 'bg-gradient-to-br from-[#e2c799] to-[#bfa06d] text-[#1a1a1a]' },
-  { id: 5, label: '25% OFF', code: 'ROYAL25', discount: '25%', color: 'bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-[#e2c799]' },
-  { id: 6, label: 'FREE SHIP', code: 'FREESHIP', discount: 'Free Shipping', color: 'bg-gradient-to-br from-[#e2c799] to-[#bfa06d] text-[#1a1a1a]' },
-  { id: 7, label: '30% OFF', code: 'ROYAL30', discount: '30%', color: 'bg-gradient-to-br from-[#1a1a1a] to-[#2d2d2d] text-[#e2c799]' },
-  { id: 8, label: '12% OFF', code: 'ROYAL12', discount: '12%', color: 'bg-gradient-to-br from-[#e2c799] to-[#bfa06d] text-[#1a1a1a]' },
-];
+// Spin to Win (homepage). Every prize is a real coupon on the store:
+// SPIN5 / SPIN10 / SPIN15 / SPIN20, percentage off, min order ₹999, max ₹1,000 off.
+// Odds are weighted; the wheel shows 8 slices.
+
+const PRIZES = {
+  SPIN5: { pct: 5, weight: 40 },
+  SPIN10: { pct: 10, weight: 35 },
+  SPIN15: { pct: 15, weight: 20 },
+  SPIN20: { pct: 20, weight: 5 },
+};
+const SLICES = ['SPIN10', 'SPIN5', 'SPIN15', 'SPIN5', 'SPIN20', 'SPIN10', 'SPIN5', 'SPIN10'];
+const SLICE = 360 / SLICES.length;
+const MIN_ORDER = 999;
+const MAX_OFF = 1000;
+const SPIN_MS = 4200;
+const SHOW_AFTER_MS = 12000;
+const KEY_WON = 'spin-wheel-code';
+const KEY_PLAYED = 'spin-wheel-played';
+const KEY_DISMISS = 'spin-wheel-dismiss-count';
+const KEY_CHIP_HIDDEN = 'spin-wheel-chip-hidden';
+
+const COLOURS = ['#2a150c', '#A3562A', '#7A3B23', '#C8894F'];
+
+const store = {
+  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+};
+
+function pickPrize() {
+  const total = Object.values(PRIZES).reduce((s, p) => s + p.weight, 0);
+  let r = Math.random() * total;
+  for (const [code, p] of Object.entries(PRIZES)) {
+    if ((r -= p.weight) < 0) return code;
+  }
+  return 'SPIN5';
+}
+
+// SVG path for slice i of a wheel of radius r centred at (r, r), starting at the top
+function slicePath(i, r) {
+  const a0 = ((i * SLICE - 90) * Math.PI) / 180;
+  const a1 = (((i + 1) * SLICE - 90) * Math.PI) / 180;
+  const p = (a) => `${r + r * Math.cos(a)} ${r + r * Math.sin(a)}`;
+  return `M ${r} ${r} L ${p(a0)} A ${r} ${r} 0 0 1 ${p(a1)} Z`;
+}
 
 export default function SpinWheelPopup({ isHomepage = false }) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [email, setEmail] = useState('');
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [hasSpun, setHasSpun] = useState(false);
-  const [wonOffer, setWonOffer] = useState(null);
+  const [open, setOpen] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const [won, setWon] = useState(null);       // code won in this or an earlier visit
   const [copied, setCopied] = useState(false);
-  const [showEmailForm, setShowEmailForm] = useState(true);
+  const [chip, setChip] = useState(false);
+  const dialogRef = useRef(null);
 
   useEffect(() => {
-    // Only show on homepage
     if (!isHomepage) return;
-
-    // Check if user already played or dismissed too many times
-    const hasPlayed = localStorage.getItem('spin-wheel-played');
-    const dismissCount = parseInt(localStorage.getItem('spin-wheel-dismiss-count') || '0');
-
-    // Don't show if already played or dismissed 2+ times
-    if (hasPlayed || dismissCount >= 2) return;
-
-    // Show popup after 12 seconds
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 12000);
-
-    return () => clearTimeout(timer);
+    const saved = store.get(KEY_WON);
+    if (saved && PRIZES[saved]) {
+      setWon(saved);
+      setChip(store.get(KEY_CHIP_HIDDEN) !== '1');
+      return;
+    }
+    if (store.get(KEY_PLAYED) || parseInt(store.get(KEY_DISMISS) || '0', 10) >= 2) return;
+    const t = setTimeout(() => setOpen(true), SHOW_AFTER_MS);
+    return () => clearTimeout(t);
   }, [isHomepage]);
 
-  const handleClose = () => {
-    setIsVisible(false);
+  // Esc closes; focus the dialog when it opens
+  useEffect(() => {
+    if (!open) return;
+    dialogRef.current?.focus();
+    const onKey = (e) => e.key === 'Escape' && close();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
-    // If user spun and won, mark as played permanently
-    if (hasSpun) {
-      localStorage.setItem('spin-wheel-played', 'true');
-    } else {
-      // If user closed without spinning, increment dismiss count
-      const currentCount = parseInt(localStorage.getItem('spin-wheel-dismiss-count') || '0');
-      const newCount = currentCount + 1;
-      localStorage.setItem('spin-wheel-dismiss-count', newCount.toString());
-
-      // If dismissed 2 times, mark as played to never show again
-      if (newCount >= 2) {
-        localStorage.setItem('spin-wheel-played', 'true');
-      }
+  const close = () => {
+    if (spinning) return;
+    setOpen(false);
+    if (won) {
+      setChip(true);
+      return;
     }
+    const n = parseInt(store.get(KEY_DISMISS) || '0', 10) + 1;
+    store.set(KEY_DISMISS, String(n));
   };
 
-  const handleEmailSubmit = (e) => {
-    e.preventDefault();
-    if (email && email.includes('@')) {
-      setShowEmailForm(false);
-    }
-  };
+  const spin = () => {
+    if (spinning || won) return;
+    const code = pickPrize();
+    const options = SLICES.map((c, i) => (c === code ? i : -1)).filter((i) => i >= 0);
+    const i = options[Math.floor(Math.random() * options.length)];
+    // Land somewhere inside the slice (not on a line), pointer is at the top
+    const inSlice = SLICE * (0.25 + Math.random() * 0.5);
+    const target = 360 * 6 + (360 - (i * SLICE + inSlice));
+    const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const handleSpin = () => {
-    if (isSpinning || hasSpun) return;
-
-    setIsSpinning(true);
-
-    // Random number of full rotations (5-8) + random segment
-    const randomSegment = Math.floor(Math.random() * OFFERS.length);
-    const segmentAngle = 360 / OFFERS.length;
-    // Align the winning segment to the top (pointer is at top)
-    // We need to rotate such that the segment is at 0 degrees (top)
-    // The segments are drawn starting from 0 (top-center) and rotating clockwise
-    // To bring segment N to the top, we need to rotate negative(N * segmentAngle)
-    // But we are adding rotations, so total rotation = (FullRotation * 360) - (N * segmentAngle)
-    const extraRotations = 5 + Math.floor(Math.random() * 3);
-    const finalRotation = (extraRotations * 360) + ((360 - (randomSegment * segmentAngle)));
-
-    setRotation(finalRotation);
-
-    // After spin completes (4 seconds), show result
+    setSpinning(true);
+    setRotation(target);
     setTimeout(() => {
-      setIsSpinning(false);
-      setHasSpun(true);
-      setWonOffer(OFFERS[randomSegment]);
-      localStorage.setItem('spin-wheel-played', 'true');
-    }, 4000);
+      setSpinning(false);
+      setWon(code);
+      store.set(KEY_WON, code);
+      store.set(KEY_PLAYED, 'true');
+    }, reduce ? 50 : SPIN_MS);
   };
 
-  const handleCopy = () => {
-    if (wonOffer) {
-      navigator.clipboard.writeText(wonOffer.code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(won); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   };
 
-  if (!isVisible) return null;
+  const hideChip = () => {
+    setChip(false);
+    store.set(KEY_CHIP_HIDDEN, '1');
+  };
+
+  if (!isHomepage) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fadeIn">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-md"
-        onClick={handleClose}
-      ></div>
+    <>
+      {open && (
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4">
+          <div className="absolute inset-0 bg-[#1a0d07]/70" onClick={close} aria-hidden />
+          <div
+            ref={dialogRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="spin-title"
+            className="relative w-full sm:max-w-[440px] bg-[#FBF3EA] rounded-t-3xl sm:rounded-3xl shadow-2xl px-6 pt-7 pb-7 sm:px-8 focus:outline-none"
+          >
+            <button onClick={close} disabled={spinning} className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-heritage/60 hover:bg-heritage/10 disabled:opacity-30" aria-label="Close">
+              <X size={18} />
+            </button>
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-[#e2c799]/30">
+            {!won ? (
+              <>
+                <h2 id="spin-title" className="font-royal font-bold text-4xl text-heritage leading-none text-center">Spin for a discount</h2>
+                <p className="mt-2 text-center text-sm text-heritage/70">One spin. Every slice wins up to 20% off your order.</p>
 
-        {/* Decor Pattern */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #e2c799 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
-
-        {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 z-50 p-2 bg-white/80 hover:bg-white rounded-full transition-all duration-300 shadow-sm border border-gray-100"
-          aria-label="Close"
-        >
-          <X size={20} className="text-gray-600 hover:text-red-500 transition-colors" />
-        </button>
-
-        {/* Header */}
-        <div className="text-center pt-8 pb-4 px-6 relative z-10">
-          <div className="inline-flex items-center justify-center gap-2 mb-2 p-3 bg-[#e2c799]/10 rounded-full">
-            <Gift className="text-[#bfa06d]" size={28} />
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#1a1a1a] mb-1 font-serif tracking-tight">
-            Spin to Win
-          </h2>
-          <p className="text-[#666] text-sm">
-            Unlock exclusive royal privileges & discounts
-          </p>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 sm:p-8 relative z-10">
-
-          {/* Email Form */}
-          {showEmailForm && !hasSpun && (
-            <div className="animate-fadeIn">
-              <form onSubmit={handleEmailSubmit} className="space-y-5">
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-[#e2c799] to-[#bfa06d] rounded-xl opacity-30 group-hover:opacity-100 transition duration-500 blur"></div>
-                  <div className="relative bg-white p-1 rounded-xl">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email address..."
-                      className="w-full px-4 py-3 bg-white rounded-lg border-0 text-gray-900 placeholder-gray-400 focus:ring-0 text-center font-medium"
-                      required
-                    />
+                <div className="relative mx-auto mt-6 w-[260px] h-[260px] sm:w-[290px] sm:h-[290px]">
+                  {/* Pointer */}
+                  <svg className="absolute left-1/2 -top-2 -translate-x-1/2 z-10 drop-shadow" width="28" height="34" viewBox="0 0 28 34" aria-hidden>
+                    <path d="M14 34 L2 6 A14 14 0 0 1 26 6 Z" fill="#E07A24" stroke="#FBF3EA" strokeWidth="2" />
+                  </svg>
+                  <div className="absolute inset-0 rounded-full p-2 bg-[#2a150c] shadow-[0_18px_40px_-12px_rgba(42,21,12,0.6)]">
+                    <svg
+                      viewBox="0 0 200 200"
+                      className="w-full h-full"
+                      style={{ transform: `rotate(${rotation}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(0.12, 0.8, 0.12, 1)` : 'none' }}
+                      aria-hidden
+                    >
+                      {SLICES.map((code, i) => {
+                        const mid = i * SLICE + SLICE / 2;
+                        const light = i % 2 === 1;
+                        return (
+                          <g key={i}>
+                            <path d={slicePath(i, 100)} fill={COLOURS[i % COLOURS.length]} stroke="#E8C9A0" strokeWidth="0.8" />
+                            <g transform={`rotate(${mid} 100 100)`}>
+                              <text x="100" y="34" textAnchor="middle" fill={light ? '#FBF3EA' : '#E8C9A0'} style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 19 }}>
+                                {PRIZES[code].pct}%
+                              </text>
+                              <text x="100" y="47" textAnchor="middle" fill={light ? '#FBF3EA' : '#E8C9A0'} style={{ fontSize: 7.5, letterSpacing: 0.5 }} opacity="0.85">off</text>
+                            </g>
+                          </g>
+                        );
+                      })}
+                      <circle cx="100" cy="100" r="18" fill="#FBF3EA" stroke="#E8C9A0" strokeWidth="2" />
+                      <circle cx="100" cy="100" r="6" fill="#A3562A" />
+                    </svg>
                   </div>
                 </div>
+
                 <button
-                  type="submit"
-                  className="w-full py-4 bg-gradient-to-r from-[#1a1a1a] to-[#333] text-[#e2c799] font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 tracking-wide border border-[#e2c799]/20"
+                  onClick={spin}
+                  disabled={spinning}
+                  className="mt-7 w-full h-13 py-3.5 rounded-full bg-heritage text-warm-sand font-bold text-base hover:bg-copper disabled:opacity-70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper"
                 >
-                  CONTINUE TO SPIN
+                  {spinning ? 'Spinning…' : 'Spin the wheel'}
                 </button>
-              </form>
-            </div>
-          )}
+                <p className="mt-3 text-center text-xs text-heritage/55">On orders of ₹{MIN_ORDER.toLocaleString('en-IN')} or more, up to ₹{MAX_OFF.toLocaleString('en-IN')} off.</p>
+              </>
+            ) : (
+              <div className="text-center" aria-live="polite">
+                <span className="mx-auto w-14 h-14 rounded-full bg-heritage text-[#E8C9A0] flex items-center justify-center"><Gift size={26} /></span>
+                <h2 id="spin-title" className="mt-4 font-royal font-bold text-5xl text-heritage leading-none">{PRIZES[won].pct}% off</h2>
+                <p className="mt-2 text-heritage/70">is yours. Use this code at checkout.</p>
 
-          {/* Spin Wheel */}
-          {!showEmailForm && !wonOffer && (
-            <div className="animate-fadeIn">
-              <div className="relative mb-8">
+                <button onClick={copy} className="mt-6 w-full flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-copper/60 bg-white px-5 py-4 hover:border-copper" aria-label={`Copy code ${won}`}>
+                  <span className="font-mono font-bold text-2xl tracking-[0.15em] text-heritage">{won}</span>
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-copper">
+                    {copied ? <><Check size={16} /> Copied</> : <><Copy size={16} /> Copy</>}
+                  </span>
+                </button>
 
-                {/* Pointer */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 z-30 drop-shadow-xl">
-                  <div className="text-[#bfa06d]">
-                    <Star fill="#bfa06d" size={40} className="animate-pulse" />
-                  </div>
-                  <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-[#bfa06d] mx-auto -mt-3"></div>
-                </div>
-
-                {/* Wheel Container */}
-                <div className="relative w-full aspect-square max-w-[320px] mx-auto">
-
-                  {/* Outer Glow Ring */}
-                  <div className="absolute -inset-4 rounded-full bg-gradient-to-tr from-[#e2c799]/20 to-[#bfa06d]/20 animate-pulse blur-xl"></div>
-
-                  {/* Wheel Border with Dots */}
-                  <div className="absolute inset-0 rounded-full border-[8px] border-[#1a1a1a] shadow-2xl overflow-hidden bg-[#1a1a1a]">
-                    {/* Decorative Dots */}
-                    {[...Array(12)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute w-2 h-2 bg-[#e2c799] rounded-full z-20"
-                        style={{
-                          top: '50%',
-                          left: '50%',
-                          transform: `rotate(${i * 30}deg) translate(154px) rotate(-${i * 30}deg)` // Adjust translate based on radius
-                        }}
-                      ></div>
-                    ))}
-                  </div>
-
-                  {/* Wheel Itself */}
-                  <div
-                    className="relative w-full h-full rounded-full shadow-inner transition-transform duration-[4000ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-                    style={{
-                      transform: `rotate(${rotation}deg)`,
-                    }}
-                  >
-                    {/* Create wheel segments */}
-                    {OFFERS.map((offer, index) => {
-                      const angle = (360 / OFFERS.length) * index;
-                      const skew = 90 - (360 / OFFERS.length);
-
-                      return (
-                        <div
-                          key={offer.id}
-                          className="absolute w-full h-full rounded-full"
-                          style={{
-                            transform: `rotate(${angle}deg)`,
-                            clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.sin((360 / OFFERS.length) * Math.PI / 180)}% ${50 - 50 * Math.cos((360 / OFFERS.length) * Math.PI / 180)}%)`
-                          }}
-                        >
-                          <div
-                            className={`w-full h-full ${offer.color} flex items-start justify-center pt-8`}
-                            style={{ transform: `rotate(${360 / OFFERS.length / 2}deg)` }}
-                          >
-                            <span
-                              className="font-bold text-xs sm:text-sm tracking-wider uppercase pt-4"
-                              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}
-                            >
-                              {offer.label}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Center Hub */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-[#1a1a1a] shadow-xl flex items-center justify-center border-4 border-[#e2c799] z-20">
-                    <Sparkles className="text-[#e2c799] animate-spin-slow" size={24} />
-                  </div>
-
-                </div>
+                <Link href="/shop" onClick={() => { setOpen(false); setChip(true); }} className="mt-4 flex items-center justify-center w-full h-12 rounded-full bg-heritage text-warm-sand font-bold hover:bg-copper">
+                  Shop now
+                </Link>
+                <p className="mt-3 text-xs text-heritage/55">On orders of ₹{MIN_ORDER.toLocaleString('en-IN')} or more, up to ₹{MAX_OFF.toLocaleString('en-IN')} off.</p>
               </div>
-
-              {/* Spin Button */}
-              <button
-                onClick={handleSpin}
-                disabled={isSpinning || hasSpun}
-                className={`w-full py-4 font-bold text-lg rounded-xl transition-all duration-300 transform border-b-4 ${isSpinning || hasSpun
-                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-[#e2c799] to-[#bfa06d] text-[#1a1a1a] border-[#a38655] hover:brightness-110 active:border-b-0 active:translate-y-1 shadow-lg'
-                  }`}
-              >
-                {isSpinning ? 'SPINNING...' : 'SPIN THE WHEEL'}
-              </button>
-            </div>
-          )}
-
-          {/* Result */}
-          {wonOffer && (
-            <div className="text-center space-y-6 animate-scaleIn relative z-10">
-              {/* Confetti-like effect using CSS or just design */}
-
-              <div className="space-y-2">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-50 border-2 border-green-100 mb-2">
-                  <Gift className="text-green-600" size={32} />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1a1a1a] font-serif">
-                  Congratulations!
-                </h3>
-                <p className="text-gray-500">
-                  You've won a special reward
-                </p>
-              </div>
-
-              <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#e2c799]/30 shadow-inner group">
-                <div className="text-5xl font-bold text-[#e2c799] mb-4 drop-shadow-sm">
-                  {wonOffer.discount}
-                </div>
-
-                {/* Code Copy */}
-                <div
-                  onClick={handleCopy}
-                  className="flex items-center justify-between bg-white/10 rounded-lg p-3 cursor-pointer hover:bg-white/20 transition-colors border border-[#e2c799]/20"
-                >
-                  <code className="text-xl font-mono font-bold text-white tracking-widest pl-2">
-                    {wonOffer.code}
-                  </code>
-                  <div className="p-2 bg-[#e2c799] rounded text-[#1a1a1a]">
-                    {copied ? <Check size={18} /> : <Copy size={18} />}
-                  </div>
-                </div>
-                {copied && <p className="text-[#e2c799] text-xs mt-2">Code copied!</p>}
-              </div>
-
-              <button
-                onClick={handleClose}
-                className="w-full py-4 bg-[#1a1a1a] text-white font-bold rounded-xl hover:bg-gray-900 transition-all shadow-lg border border-gray-800"
-              >
-                Claim Offer Now
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* Reminder chip after closing */}
+      {!open && chip && won && (
+        <div className="fixed left-3 bottom-20 lg:bottom-5 z-[900] flex items-center gap-1 rounded-full bg-heritage text-warm-sand shadow-lg pl-4 pr-1 py-1">
+          <button onClick={copy} className="text-sm py-1.5" aria-label={`Copy discount code ${won}`}>
+            <span className="opacity-75">Your code</span> <span className="font-mono font-bold tracking-wider">{won}</span>
+            <span className="ml-2 text-[#E8C9A0] text-xs">{copied ? 'Copied' : 'Copy'}</span>
+          </button>
+          <button onClick={hideChip} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10" aria-label="Hide code reminder"><X size={14} /></button>
+        </div>
+      )}
+    </>
   );
 }

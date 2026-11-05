@@ -165,7 +165,7 @@ export default function TrackOrder() {
                         {/* Footer */}
                         <div className="border-t border-gray-100 p-4 bg-gray-50 text-center">
                             <p className="text-xs text-gray-500">
-                                Need help? Contact <a href="mailto:support@varahajewels.com" className="text-copper hover:underline">support@varahajewels.com</a>
+                                Need help? Contact <a href="mailto:help@varahajewels.in" className="text-copper hover:underline">help@varahajewels.in</a>
                             </p>
                         </div>
                     </div>

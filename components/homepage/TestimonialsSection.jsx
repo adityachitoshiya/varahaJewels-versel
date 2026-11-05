@@ -1,7 +1,7 @@
 import { Star, Quote, CheckCircle } from 'lucide-react';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 
-const defaultTestimonials = [
+const testimonials = [
   {
     id: 1,
     name: 'Priya Sharma',
@@ -18,7 +18,7 @@ const defaultTestimonials = [
     location: 'Hyderabad',
     rating: 5,
     text: 'Varaha Jewels perfectly blends traditional artistry with contemporary elegance. Each piece feels like wearing a piece of heritage. Truly exceptional quality.',
-    image: '/varaha-assets/dp2.jpeg',
+    image: '/varaha-assets/DP.png',
     verified: true,
     platform: 'Flipkart'
   },
@@ -34,31 +34,9 @@ const defaultTestimonials = [
   }
 ];
 
-function normalizeTestimonials(raw) {
-  if (!Array.isArray(raw) || raw.length === 0) return defaultTestimonials;
-  return raw.map((item, index) => ({
-    id: item?.id || index + 1,
-    name: item?.name || 'Customer',
-    location: item?.location || 'India',
-    rating: Math.max(1, Math.min(5, Number(item?.rating) || 5)),
-    text: item?.text || 'Great experience shopping with Varaha Jewels.',
-    image: item?.image || '/varaha-assets/DP.png',
-    verified: item?.verified !== false,
-    platform: item?.platform || 'Verified'
-  }));
-}
-
-export default function TestimonialsSection({ testimonialsJson }) {
+export default function TestimonialsSection() {
   const [headerRef, headerVisible] = useScrollAnimation();
   const [cardsRef, cardsVisible] = useScrollAnimation();
-
-  let testimonials = defaultTestimonials;
-  try {
-    const parsed = typeof testimonialsJson === 'string' ? JSON.parse(testimonialsJson) : testimonialsJson;
-    testimonials = normalizeTestimonials(parsed);
-  } catch (e) {
-    testimonials = defaultTestimonials;
-  }
 
   return (
     <section className="py-24 bg-white">

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Crown, Heart, Shield, Sparkles, Award, Users, MapPin, Phone, Mail } from 'lucide-react';
+import { FOUNDERS, organizationLd, SITE } from '../lib/brand';
 
 export default function About() {
     return (
@@ -11,6 +12,14 @@ export default function About() {
             <Head>
                 <title>About Varaha Jewels™ | Heritage Gold & Diamond Jewellery Experts</title>
                 <meta name="description" content="Discover the legacy of Varaha Jewels. Experts in authentic handcrafted Indian gold and diamond jewelry since generations. Learn about our master craftsmanship." />
+                <link rel="canonical" href={`${SITE}/about`} />
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'AboutPage',
+                    url: `${SITE}/about`,
+                    name: 'About Varaha Jewels',
+                    mainEntity: organizationLd,
+                }) }} />
             </Head>
 
             <Header />
@@ -27,6 +36,31 @@ export default function About() {
                         <p className="text-xl text-heritage/80 max-w-3xl mx-auto leading-relaxed">
                             For generations, Varaha Jewels has been crafting exquisite jewelry that celebrates India's rich heritage and timeless traditions.
                         </p>
+                    </div>
+                </section>
+
+                {/* Founders */}
+                <section className="pb-4" aria-labelledby="founders-title">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="rounded-3xl bg-white border border-heritage/10 p-8 md:p-12">
+                            <h2 id="founders-title" className="text-4xl font-royal font-bold text-heritage">The founders</h2>
+                            <p className="mt-3 text-heritage/75 leading-relaxed max-w-2xl">
+                                Varaha Jewels was founded in Jaipur, Rajasthan by {FOUNDERS.map((f) => f.name).join(' and ')}.
+                            </p>
+                            <ul className="mt-8 grid sm:grid-cols-2 gap-5">
+                                {FOUNDERS.map((f) => (
+                                    <li key={f.name} className="flex items-center gap-4 rounded-2xl bg-warm-sand/60 p-5">
+                                        <span className="w-16 h-16 rounded-full bg-heritage text-warm-sand flex items-center justify-center font-royal font-bold text-2xl flex-shrink-0" aria-hidden>
+                                            {f.name.split(' ').map((w) => w[0]).join('').slice(0, 2)}
+                                        </span>
+                                        <span>
+                                            <span className="block font-royal font-bold text-2xl text-heritage leading-tight">{f.name}</span>
+                                            <span className="block text-sm text-copper mt-0.5">{f.role}, Varaha Jewels</span>
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </section>
 
@@ -228,17 +262,10 @@ export default function About() {
                                 </div>
                             </div>
                             <div className="flex flex-col items-center gap-3">
-                                <Phone className="text-copper" size={32} />
-                                <div>
-                                    <p className="font-semibold text-heritage">Phone</p>
-                                    <p className="text-sm text-heritage/70">+91 98765 43210</p>
-                                </div>
-                            </div>
-                            <div className="flex flex-col items-center gap-3">
                                 <Mail className="text-copper" size={32} />
                                 <div>
                                     <p className="font-semibold text-heritage">Email</p>
-                                    <p className="text-sm text-heritage/70">hello@varahajewels.com</p>
+                                    <p className="text-sm text-heritage/70">help@varahajewels.in</p>
                                 </div>
                             </div>
                         </div>

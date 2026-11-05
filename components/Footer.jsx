@@ -159,7 +159,7 @@ export default function Footer() {
         {/* Premium Trust Badges - Top Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16 animate-fadeIn">
           {[
-            { icon: <ShoppingBag />, title: 'Free Shipping', desc: 'On orders above ₹5000' },
+            { icon: <ShoppingBag />, title: 'Free Delivery', desc: 'On orders above ₹499' },
             { icon: <Heart />, title: '7 Day Returns', desc: 'Easy return policy' },
             { icon: <Crown />, title: 'Lifetime Warranty', desc: 'Certified jewellery' },
             { icon: <Sparkles />, title: '100% Authentic', desc: 'Guaranteed purity' }
@@ -234,13 +234,9 @@ export default function Footer() {
 
               {/* Quick Contact */}
               <div className="pt-4 space-y-2 border-t border-copper/20">
-                <a href="tel:+919876543210" className="flex items-center gap-3 text-sm text-warm-sand/80 hover:text-copper transition-colors group">
-                  <Phone size={16} className="text-copper group-hover:scale-110 transition-transform" />
-                  <span>+91 98765 43210</span>
-                </a>
-                <a href="mailto:hello@varahajewels.com" className="flex items-center gap-3 text-sm text-warm-sand/80 hover:text-copper transition-colors group">
+                <a href="mailto:help@varahajewels.in" className="flex items-center gap-3 text-sm text-warm-sand/80 hover:text-copper transition-colors group">
                   <Mail size={16} className="text-copper group-hover:scale-110 transition-transform" />
-                  <span>hello@varahajewels.com</span>
+                  <span>help@varahajewels.in</span>
                 </a>
                 <div className="flex items-start gap-3 text-sm text-warm-sand/80">
                   <MapPin size={16} className="text-copper mt-0.5 flex-shrink-0" />
@@ -259,11 +255,19 @@ export default function Footer() {
                 Collections
               </h4>
               <ul className="space-y-3 text-sm text-warm-sand/80">
-                {['Heritage', 'Bridal', 'Exclusive', 'New Arrivals', 'Best Sellers'].map((item) => (
-                  <li key={item}>
-                    <Link href="/shop" prefetch={false} className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
+                {[
+                  { label: 'Heritage', href: '/heritage' },
+                  { label: 'Kundan Sets', href: '/women/necklaces' },
+                  { label: 'Earrings', href: '/women/earrings' },
+                  { label: '925 Silver', href: '/silver' },
+                  { label: 'Divine', href: '/divine' },
+                  { label: 'Watches', href: '/watches' },
+                  { label: 'Potli Bags', href: '/potli-bags' },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} prefetch={false} className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group">
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-1">→</span>
-                      {item}
+                      {item.label}
                     </Link>
                   </li>
                 ))}
@@ -304,9 +308,9 @@ export default function Footer() {
                 {[
                   { label: 'About Us', href: '/about' },
                   { label: 'Our Story', href: '/story' },
+                  { label: 'Blog', href: '/blogs' },
                   { label: 'Careers', href: '/coming-soon' },
                   { label: 'Privacy Policy', href: '/privacy-policy' },
-                  { label: 'Cookie Policy', href: '/cookie-policy' },
                   { label: 'Terms', href: '/terms' }
                 ].map((item) => (
                   <li key={item.label}>
@@ -320,20 +324,6 @@ export default function Footer() {
                     </Link>
                   </li>
                 ))}
-                <li>
-                  <button
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        localStorage.removeItem('cookieConsent');
-                        window.location.reload();
-                      }
-                    }}
-                    className="hover:text-copper hover:pl-2 transition-all duration-300 inline-block group text-left"
-                  >
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mr-1">→</span>
-                    Cookie Settings
-                  </button>
-                </li>
               </ul>
             </div>
           </div>

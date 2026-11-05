@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getApiUrl } from '../../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import Head from 'next/head';
 import { Search, Mail, Phone, MapPin } from 'lucide-react';
@@ -16,7 +16,7 @@ export default function Customers() {
     const fetchCustomers = async () => {
         try {
             // Since we don't have a dedicated customers endpoint yet, we'll derive it from orders
-            const res = await fetch(`${getApiUrl()}/api/orders`);
+            const res = await fetch(`${getApiUrl()}/api/orders`, { headers: getAdminHeaders(false) });
             if (res.ok) {
                 const orders = await res.json();
 

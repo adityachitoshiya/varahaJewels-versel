@@ -16,7 +16,6 @@ import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { WishlistProvider } from '../context/WishlistContext';
 
-const CookieConsent = dynamic(() => import('../components/CookieConsent'), { ssr: false });
 
 const CLARITY_PROJECT_ID = 'vme6nv0h09';
 
@@ -154,7 +153,6 @@ function MyApp({ Component, pageProps }) {
             <Component {...pageProps} />
 
             {/* Cookie Consent — only on Homepage */}
-            {isHomePage && <CookieConsent />}
 
             {/* Mobile Bottom Nav - Hidden on Product, Checkout, Ciplx & Heritage Pages */}
             {!router.pathname.startsWith('/product/') && router.pathname !== '/checkout' && !isCiplx && !isHeritage && (

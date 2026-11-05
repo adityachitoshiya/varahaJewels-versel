@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import AddToCartModal from './AddToCartModal';
 import AnnouncementBar from './AnnouncementBar';
+import { CollectionsPanel, MobileGroupLinks, useMenuData } from './CollectionsMenu';
 
 export default function Header({ cartCount = 0, onCartClick }) {
   const router = useRouter();
@@ -23,6 +24,8 @@ export default function Header({ cartCount = 0, onCartClick }) {
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState(null); // 'women', 'men', or null
   const [headerHeight, setHeaderHeight] = useState(64);
+  const [menuWanted, setMenuWanted] = useState(false); // load menu counts on first open
+  const menuData = useMenuData(menuWanted || isMobileMenuOpen);
 
   const searchRef = useRef(null);
   const profileRef = useRef(null);
@@ -153,78 +156,27 @@ export default function Header({ cartCount = 0, onCartClick }) {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
+            <nav className="hidden lg:flex items-center space-x-5 xl:space-x-8 whitespace-nowrap">
               {/* Collections Mega Menu */}
-              <div className="relative group">
-                <button className="flex items-center gap-1 text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+              <div className="relative group" onMouseEnter={() => setMenuWanted(true)} onFocus={() => setMenuWanted(true)}>
+                <button className="flex items-center gap-1 text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1" aria-haspopup="true">
                   Collections
-                  <ChevronDown size={16} className="group-hover:rotate-180 transition-transform duration-300" />
+                  <ChevronDown size={16} className="group-hover:rotate-180 group-focus-within:rotate-180 transition-transform duration-300" />
                 </button>
 
-                {/* Mega Dropdown */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                  <div className="bg-white rounded-lg shadow-2xl border border-heritage/10 p-6 min-w-[500px]">
-                    <div className="grid grid-cols-2 gap-8">
-                      {/* Women Section */}
-                      <div>
-                        <h3 className="font-royal font-bold text-heritage text-lg mb-4 pb-2 border-b border-copper/30">Women</h3>
-
-                        <div className="mb-4">
-                          <p className="text-xs uppercase tracking-wider text-heritage/50 mb-2">Shop by Category</p>
-                          <div className="space-y-2">
-                            <Link href="/women/necklaces" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Necklaces</Link>
-                            <Link href="/women/earrings" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Earrings</Link>
-                            <Link href="/women/rings" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Rings</Link>
-                            <Link href="/women/bangles-bracelets" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Bangles & Bracelets</Link>
-                            <Link href="/women/mangalsutra" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Mangalsutra</Link>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-xs uppercase tracking-wider text-heritage/50 mb-2">Shop by Look</p>
-                          <div className="space-y-2">
-                            <Link href="/women/bridal-jewellery" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Bridal</Link>
-                            <Link href="/women/minimal" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Minimal</Link>
-                          </div>
-                        </div>
-
-                        <Link href="/women" prefetch={false} className="inline-block mt-4 text-sm font-semibold text-copper hover:underline">
-                          View All Women's →
-                        </Link>
-                      </div>
-
-                      {/* Men Section */}
-                      <div>
-                        <h3 className="font-royal font-bold text-heritage text-lg mb-4 pb-2 border-b border-copper/30">Men</h3>
-
-                        <div className="space-y-2">
-                          <Link href="/men/necklaces-chains" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Necklaces & Chains</Link>
-                          <Link href="/men/rings" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Rings</Link>
-                          <Link href="/men/bracelets" prefetch={false} className="block text-sm text-heritage hover:text-copper hover:pl-2 transition-all">Bracelets</Link>
-                        </div>
-
-                        <Link href="/men" prefetch={false} className="inline-block mt-4 text-sm font-semibold text-copper hover:underline">
-                          View All Men's →
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* All Collections Link */}
-                    <div className="mt-6 pt-4 border-t border-heritage/10 text-center">
-                      <Link href="/shop" prefetch={false} className="text-sm font-semibold text-heritage hover:text-copper transition-colors">
-                        Browse All Collections →
-                      </Link>
-                    </div>
-                  </div>
+                <div className="absolute left-0 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-opacity duration-200 z-50">
+                  <CollectionsPanel data={menuData} />
                 </div>
               </div>
 
-              <Link href="/ciplx" prefetch={false} className="group flex flex-col items-center justify-center text-center leading-tight text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
-                <span>Ciplx</span>
-                <span className="text-[9px] font-normal tracking-wide opacity-80 group-hover:opacity-100">by varaha heaths</span>
-              </Link>
               <Link href="/heritage" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 Heritage
+              </Link>
+              <Link href="/silver" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+                Silver
+              </Link>
+              <Link href="/divine" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
+                Divine
               </Link>
               <Link href="/new-arrivals" prefetch={false} className="text-heritage hover:text-copper transition-colors duration-200 font-medium border-b-2 border-transparent hover:border-copper pb-1">
                 New Arrivals
@@ -414,6 +366,25 @@ export default function Header({ cartCount = 0, onCartClick }) {
 
             {/* Menu Items with staggered animation */}
 
+            {/* Collections Accordion */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setMobileAccordion(mobileAccordion === 'collections' ? null : 'collections')}
+                className="w-full group block relative overflow-hidden"
+                aria-expanded={mobileAccordion === 'collections'}
+              >
+                <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300">
+                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium">
+                    Collections
+                  </span>
+                  <ChevronDown size={18} className={`text-heritage transition-transform duration-300 ${mobileAccordion === 'collections' ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+              <div className={`overflow-hidden transition-all duration-300 ${mobileAccordion === 'collections' ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <MobileGroupLinks groupKey="collections" data={menuData} onNavigate={() => setIsMobileMenuOpen(false)} />
+              </div>
+            </div>
+
             {/* Women Accordion */}
             <div className="space-y-1">
               <button
@@ -429,19 +400,8 @@ export default function Header({ cartCount = 0, onCartClick }) {
               </button>
 
               {/* Women Submenu */}
-              <div className={`overflow-hidden transition-all duration-300 ${mobileAccordion === 'women' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="pl-4 py-2 space-y-1">
-                  <p className="text-xs uppercase tracking-wider text-heritage/50 px-4 mb-1">Shop by Category</p>
-                  <Link href="/women/necklaces" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Necklaces</Link>
-                  <Link href="/women/earrings" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Earrings</Link>
-                  <Link href="/women/rings" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Rings</Link>
-                  <Link href="/women/bangles-bracelets" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Bangles & Bracelets</Link>
-                  <Link href="/women/mangalsutra" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Mangalsutra</Link>
-                  <p className="text-xs uppercase tracking-wider text-heritage/50 px-4 mt-2 mb-1">Shop by Look</p>
-                  <Link href="/women/bridal-jewellery" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Bridal</Link>
-                  <Link href="/women/minimal" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Minimal</Link>
-                  <Link href="/women" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-copper">View All Women's →</Link>
-                </div>
+              <div className={`overflow-hidden transition-all duration-300 ${mobileAccordion === 'women' ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <MobileGroupLinks groupKey="women" data={menuData} onNavigate={() => setIsMobileMenuOpen(false)} />
               </div>
             </div>
 
@@ -460,13 +420,8 @@ export default function Header({ cartCount = 0, onCartClick }) {
               </button>
 
               {/* Men Submenu */}
-              <div className={`overflow-hidden transition-all duration-300 ${mobileAccordion === 'men' ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="pl-4 py-2 space-y-1">
-                  <Link href="/men/necklaces-chains" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Necklaces & Chains</Link>
-                  <Link href="/men/rings" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Rings</Link>
-                  <Link href="/men/bracelets" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm text-heritage hover:text-copper hover:bg-copper/5 rounded-md">Bracelets</Link>
-                  <Link href="/men" prefetch={false} onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-copper">View All Men's →</Link>
-                </div>
+              <div className={`overflow-hidden transition-all duration-300 ${mobileAccordion === 'men' ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <MobileGroupLinks groupKey="men" data={menuData} onNavigate={() => setIsMobileMenuOpen(false)} />
               </div>
             </div>
 
@@ -486,24 +441,6 @@ export default function Header({ cartCount = 0, onCartClick }) {
             </Link>
 
             <Link
-              href="/ciplx"
-              prefetch={false}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="group block relative overflow-hidden"
-              style={{ animationDelay: '50ms' }}
-            >
-              <div className="flex items-center justify-between px-4 py-3.5 rounded-lg bg-white/50 backdrop-blur-sm border border-heritage/10 hover:border-copper/50 hover:bg-copper/5 transition-all duration-300 transform hover:translate-x-2 hover:shadow-md">
-                <div className="flex flex-col items-start justify-center text-left">
-                  <span className="text-heritage group-hover:text-copper transition-colors duration-200 font-medium leading-tight">
-                    Ciplx
-                  </span>
-                  <span className="text-[10px] text-heritage/60 group-hover:text-copper/80 font-normal">by varaha heaths</span>
-                </div>
-                <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300 flex-shrink-0 ml-2"></div>
-              </div>
-            </Link>
-
-            <Link
               href="/heritage"
               prefetch={false}
               onClick={() => setIsMobileMenuOpen(false)}
@@ -517,6 +454,7 @@ export default function Header({ cartCount = 0, onCartClick }) {
                 <div className="w-2 h-2 rounded-full bg-copper/0 group-hover:bg-copper transition-all duration-300"></div>
               </div>
             </Link>
+
 
             <Link
               href="/new-arrivals"

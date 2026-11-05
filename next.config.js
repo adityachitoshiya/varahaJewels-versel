@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Build standalone server for low-memory VPS/EC2 deployments
-    output: 'standalone',
-
     // Optimize compilation and reduce recompilation
     reactStrictMode: false,
     swcMinify: true,
@@ -21,13 +18,6 @@ const nextConfig = {
     compiler: {
         removeConsole: process.env.NODE_ENV === 'production', // Remove console.logs in production
     },
-
-    experimental: {
-        // Reduce client bundle size by tree-shaking icon imports more aggressively
-        optimizePackageImports: ['lucide-react'],
-    },
-
-    productionBrowserSourceMaps: false,
 
     // Reduce recompilation on file changes
     webpack: (config, { dev }) => {
@@ -68,6 +58,10 @@ const nextConfig = {
             },
             {
                 protocol: 'https',
+                hostname: 'cdn.shopify.com',
+            },
+            {
+                protocol: 'https',
                 hostname: 'fqnzerfbrwwranmiznkw.supabase.co',
             },
             {
@@ -89,6 +83,15 @@ const nextConfig = {
                     }
                 ],
             },
+        ];
+    },
+
+    // Old/linked URLs that have no page of their own
+    // (hero slides saved in the CMS still point to /collections/all)
+    async redirects() {
+        return [
+            { source: '/collections/all', destination: '/collections', permanent: false },
+            { source: '/cookie-policy', destination: '/privacy-policy', permanent: false },
         ];
     },
 

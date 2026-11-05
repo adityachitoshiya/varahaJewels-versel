@@ -3,8 +3,10 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
+import { organizationLd } from '../lib/brand';
 import dynamic from 'next/dynamic';
 import HeroSection from '../components/homepage/HeroSection';
+import { CategoryCircles, TopPicksRail, CollectionRail, ProductRail, ShopByPrice, JustInGrid } from '../components/homepage/ProductHome';
 // Lazy load below-fold components
 const FeaturedCollections = dynamic(() => import('../components/homepage/FeaturedCollections'), {
   loading: () => <div className="h-96 w-full bg-warm-sand/20 animate-pulse rounded-sm" />
@@ -206,27 +208,10 @@ export default function Home({ heroSlides, initialSettings }) {
           }}
         />
 
-        {/* Organization Schema */}
+        {/* Organization Schema (founders, location: lib/brand.js) */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": "Varaha Jewels",
-              "alternateName": "Varaha Jewellery",
-              "url": "https://www.varahajewels.in",
-              "logo": "https://www.varahajewels.in/varaha-assets/logo.png",
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "telephone": "+91-98765-43210",
-                "contactType": "customer service",
-                "email": "support@varahajewels.com",
-                "areaServed": "IN",
-                "availableLanguage": ["en", "hi"]
-              }
-            })
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
         />
 
         {/* WebSite Schema for Sitelinks Search Box */}
@@ -287,10 +272,22 @@ export default function Home({ heroSlides, initialSettings }) {
 
           <main className="bg-warm-sand">
             {/* Pass SSG props to HeroSection */}
+            {/* Product-first: almost every block below is shoppable */}
             <HeroSection initialSlides={heroSlides} />
-            <FeaturedCollections settings={initialSettings} />
+            <CategoryCircles />
+            <TopPicksRail />
+            <CollectionRail label="Heritage" title="Heritage necklace sets" tone="ivory" />
+            <ShopByPrice />
+            <CollectionRail label="Kundan sets" />
+            <ProductRail title="Earrings" note="Kundan and Meenakari earrings" href="/women/earrings" pick={(ps) => ps.filter((p) => p.category === 'Earrings')} tone="ivory" />
             <ProductSpotlight />
-            <TestimonialsSection testimonialsJson={initialSettings?.testimonials_json} />
+            <CollectionRail label="925 Silver" title="925 sterling silver" tone="ivory" />
+            <CollectionRail label="Divine" />
+            <CollectionRail label="Watches" tone="ivory" />
+            <CollectionRail label="Potli bags" title="Potli bags and clutches" />
+            <FeaturedCollections settings={initialSettings} />
+            <JustInGrid />
+            <TestimonialsSection />
             <CreatorShowcase />
           </main>
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Star, CheckCircle } from 'lucide-react';
 
-export default function ReviewsSection({ reviews, averageRating, reviewCount }) {
+export default function ReviewsSection({ reviews = [], averageRating = 0, reviewCount = 0 }) {
   const [visibleCount, setVisibleCount] = useState(3);
 
   const StarRating = ({ rating }) => {
@@ -23,7 +23,13 @@ export default function ReviewsSection({ reviews, averageRating, reviewCount }) 
   return (
     <div className="py-12 border-t">
       <div className="mb-8">
-        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Customer Reviews</h2>
+        <h2 className="font-royal text-2xl lg:text-3xl font-bold text-heritage mb-4">Customer Reviews</h2>
+        {reviews.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-copper/30 bg-warm-sand/40 px-6 py-8 text-center">
+            <p className="font-royal text-lg text-heritage">No reviews yet</p>
+            <p className="mt-1 text-sm text-matte-brown">Bought this piece? Your review will help other shoppers.</p>
+          </div>
+        ) : (
         <div className="flex items-center space-x-4">
           <div className="text-5xl font-bold text-copper">{averageRating.toFixed(1)}</div>
           <div>
@@ -36,9 +42,10 @@ export default function ReviewsSection({ reviews, averageRating, reviewCount }) 
                 />
               ))}
             </div>
-            <p className="text-sm text-gray-600">Based on {reviewCount} reviews</p>
+            <p className="text-sm text-gray-600">Based on {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}</p>
           </div>
         </div>
+        )}
       </div>
 
       {/* Reviews List */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getApiUrl } from '../../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import VideoUpload from '../../../components/admin/VideoUpload';
 import MediaUpload from '../../../components/admin/MediaUpload';
@@ -13,13 +13,12 @@ export default function Settings() {
     const [isLoading, setIsLoading] = useState(true);
     const [settings, setSettings] = useState({
         store_name: "Varaha Jewels",
-        support_email: "support@varahajewels.com",
+        support_email: "help@varahajewels.in",
         currency_symbol: "₹",
         announcement_text: "Grand Launch In:",
         announcement_date: "2026-02-12T00:00:00",
         show_announcement: true,
         announcement_bar_json: '[]',
-        testimonials_json: '[]',
         delivery_free_threshold: 1000.0,
         logo_url: "/varaha-assets/logo.png",
         favicon_url: "/favicon-circle.png"
@@ -86,10 +85,11 @@ export default function Settings() {
             const API_URL = getApiUrl();
             const res = await fetch(`${API_URL}/api/settings`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAdminHeaders(),
                 body: JSON.stringify(settings)
             });
             if (res.ok) toast.success('Store settings saved!');
+            else toast.error(res.status === 401 || res.status === 403 ? 'Session expired - please login again' : 'Failed to save settings');
         } catch (e) {
             console.error(e);
             toast.error('Failed to save settings');
@@ -445,145 +445,6 @@ export default function Settings() {
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
-                        <h2 className="text-lg font-bold text-gray-800 mb-4">Homepage Testimonials</h2>
-                        <p className="text-sm text-gray-500 mb-4">Upload testimonial profile images and edit content shown on homepage.</p>
-
-                        {(() => {
-                            const fallbackTestimonials = [
-                                {
-                                    id: 1,
-                                    name: 'Priya Sharma',
-                                    location: 'Mumbai',
-                                    rating: 5,
-                                    text: 'The craftsmanship is absolutely exquisite. I purchased a bridal set for my wedding, and it became the centerpiece of my entire ensemble. The attention to detail is remarkable.',
-                                    image: '/varaha-assets/dp1.avif',
-                                    verified: true,
-                                    platform: 'Amazon'
-                                },
-                                {
-                                    id: 2,
-                                    name: 'Anjali Reddy',
-                                    location: 'Hyderabad',
-                                    rating: 5,
-                                    text: 'Varaha Jewels perfectly blends traditional artistry with contemporary elegance. Each piece feels like wearing a piece of heritage. Truly exceptional quality.',
-                                    image: '/varaha-assets/DP.png',
-                                    verified: true,
-                                    platform: 'Flipkart'
-                                },
-                                {
-                                    id: 3,
-                                    name: 'Kavita Mehta',
-                                    location: 'Delhi',
-                                    rating: 5,
-                                    text: 'I have been a loyal customer for over a decade. The timeless designs and impeccable service keep me coming back. These are heirlooms I will pass to my daughters.',
-                                    image: '/varaha-assets/dp3.avif',
-                                    verified: true,
-                                    platform: 'Amazon'
-                                }
-                            ];
-
-                            let testimonials = fallbackTestimonials;
-                            try {
-                                const parsed = JSON.parse(settings.testimonials_json || '[]');
-                                if (Array.isArray(parsed) && parsed.length > 0) testimonials = parsed;
-                            } catch (e) {
-                                testimonials = fallbackTestimonials;
-                            }
-
-                            return (
-                                <div className="space-y-6">
-                                    {testimonials.map((t, index) => (
-                                        <div key={t.id || index} className="p-4 border border-gray-200 rounded-lg">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
-                                                    <input
-                                                        value={t.name || ''}
-                                                        onChange={(e) => {
-                                                            const updated = [...testimonials];
-                                                            updated[index] = { ...updated[index], name: e.target.value };
-                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
-                                                        }}
-                                                        className="w-full p-2 border rounded-lg text-sm"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
-                                                    <input
-                                                        value={t.location || ''}
-                                                        onChange={(e) => {
-                                                            const updated = [...testimonials];
-                                                            updated[index] = { ...updated[index], location: e.target.value };
-                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
-                                                        }}
-                                                        className="w-full p-2 border rounded-lg text-sm"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-3">
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Review Text</label>
-                                                <textarea
-                                                    value={t.text || ''}
-                                                    onChange={(e) => {
-                                                        const updated = [...testimonials];
-                                                        updated[index] = { ...updated[index], text: e.target.value };
-                                                        setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
-                                                    }}
-                                                    className="w-full p-2 border rounded-lg text-sm min-h-[90px]"
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Platform</label>
-                                                    <input
-                                                        value={t.platform || ''}
-                                                        onChange={(e) => {
-                                                            const updated = [...testimonials];
-                                                            updated[index] = { ...updated[index], platform: e.target.value };
-                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
-                                                        }}
-                                                        className="w-full p-2 border rounded-lg text-sm"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Rating (1-5)</label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max="5"
-                                                        value={t.rating || 5}
-                                                        onChange={(e) => {
-                                                            const updated = [...testimonials];
-                                                            updated[index] = { ...updated[index], rating: Math.max(1, Math.min(5, Number(e.target.value) || 5)) };
-                                                            setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
-                                                        }}
-                                                        className="w-full p-2 border rounded-lg text-sm"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-4">
-                                                <MediaUpload
-                                                    key={`testimonial-${index}-${t.image || 'empty'}`}
-                                                    label={`Testimonial ${index + 1} Profile Image`}
-                                                    initialMedia={t.image || ''}
-                                                    onUpload={(url) => {
-                                                        const updated = [...testimonials];
-                                                        updated[index] = { ...updated[index], image: url };
-                                                        setSettings({ ...settings, testimonials_json: JSON.stringify(updated) });
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        })()}
-                    </div>
-
                     <div className="flex justify-end">
                         <button onClick={handleSaveGeneral} disabled={isSaving} className="px-6 py-2 bg-copper text-white rounded-lg hover:bg-heritage transition-colors flex items-center gap-2">
                             <Save size={18} /> Save Changes
@@ -686,7 +547,7 @@ export default function Settings() {
                                 const API_URL = getApiUrl();
                                 const res = await fetch(`${API_URL}/api/settings/flash-pincodes`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: getAdminHeaders(),
                                     body: JSON.stringify(newPincode)
                                 });
                                 if (res.ok) {
@@ -733,7 +594,7 @@ export default function Settings() {
                                             if (!ok) return;
                                             try {
                                                 const API_URL = getApiUrl();
-                                                await fetch(`${API_URL}/api/settings/flash-pincodes/${pin.pincode}`, { method: 'DELETE' });
+                                                await fetch(`${API_URL}/api/settings/flash-pincodes/${pin.pincode}`, { method: 'DELETE', headers: getAdminHeaders(false) });
                                                 fetchData();
                                             } catch (err) { toast.error('Error deleting pincode'); }
                                         }}
@@ -791,7 +652,8 @@ export default function Settings() {
                                             try {
                                                 const API_URL = getApiUrl();
                                                 const res = await fetch(`${API_URL}/api/settings/blocked-regions/${region.region_code}`, {
-                                                    method: 'PUT'
+                                                    method: 'PUT',
+                                                    headers: getAdminHeaders(false)
                                                 });
                                                 if (res.ok) fetchData();
                                             } catch (err) { toast.error('Error toggling region'); }

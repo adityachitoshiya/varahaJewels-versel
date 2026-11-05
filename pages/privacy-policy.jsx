@@ -210,19 +210,6 @@ export default function PrivacyPolicy() {
                 </div>
               </div>
 
-              {/* Cookie Settings Link */}
-              <div className="mt-8 text-center">
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('cookieConsent');
-                    window.location.reload();
-                  }}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-copper to-heritage text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-300"
-                >
-                  <Cookie className="w-5 h-5" />
-                  Manage Cookie Preferences
-                </button>
-              </div>
             </div>
           </div>
         </section>

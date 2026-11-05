@@ -1,127 +1,86 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import useScrollAnimation from '../../hooks/useScrollAnimation';
-import ShimmerImage from '../ShimmerImage';
+import Image from 'next/image';
+import { MENU, useMenuData } from '../CollectionsMenu';
 
-const defaultCollections = [
-  {
-    id: 1,
-    title: 'Heritage Collection',
-    description: 'Timeless pieces inspired by royal traditions',
-    image: '/varaha-assets/heroimage.avif',
-    href: '/shop?category=Heritage'
-  },
-  {
-    id: 2,
-    title: 'Bridal Elegance',
-    description: 'Exquisite adornments for your special day',
-    image: '/varaha-assets/Jimage2.avif',
-    href: '/shop?category=Bridal'
-  },
-  {
-    id: 3,
-    title: 'Contemporary Classics',
-    description: 'Modern designs with traditional soul',
-    image: '/varaha-assets/Jimage3.webp',
-    href: '/shop?category=Contemporary'
-  },
-  {
-    id: 4,
-    title: 'Temple Treasures',
-    description: 'Sacred artistry in every detail',
-    image: '/varaha-assets/herosection2.jpg',
-    href: '/shop?category=Temple'
-  }
-];
+// Homepage "Our collections": the store's real sections (same list as the
+// Collections menu), each with a live piece count and starting price.
+// A photo uploaded in Admin > CMS for a card with the same link is used first.
 
-function CollectionCard({ collection, delay }) {
-  const [ref, isVisible] = useScrollAnimation();
-
-  return (
-    <Link
-      ref={ref}
-      href={collection.href}
-      className={`group transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      <div className="bg-white border border-copper/30 rounded-sm overflow-hidden hover:border-copper hover:shadow-lg transition-all duration-500 hover:scale-[1.02]">
-        {/* Image Container */}
-        <div className="relative h-80 overflow-hidden">
-          <ShimmerImage
-            src={collection.image}
-            alt={collection.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            onError={(e) => {
-              // Note: next/image handles errors differently, but we can pass standard props
-              // If fallback is needed, ShimmerImage/NextImage handles it via src fallback usually
-              // For now simpler to keep clean or rely on next/image built-in handling
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-heritage/80 via-heritage/20 to-transparent opacity-60"></div>
-        </div>
-
-        {/* Content */}
-        <div className="p-8 bg-white">
-          <h3 className="font-playfair text-2xl font-bold text-heritage mb-3 group-hover:text-copper transition-colors duration-300">
-            {collection.title}
-          </h3>
-          <p className="font-sans text-sm text-heritage/70 mb-5 leading-relaxed">
-            {collection.description}
-          </p>
-
-          <div className="flex items-center text-copper font-semibold text-sm group-hover:gap-3 transition-all duration-300">
-            <span>Explore</span>
-            <ArrowRight className="ml-2 group-hover:translate-x-2 transition-transform duration-300" size={18} />
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
+const TILES = 4;
 
 export default function FeaturedCollections({ settings }) {
-  const [ref, isVisible] = useScrollAnimation();
+  const data = useMenuData(true);
 
-  // Dynamic collections from CMS settings
-  const collections = (() => {
-    if (settings?.heritage_cards_json) {
-      try {
-        const parsed = JSON.parse(settings.heritage_cards_json);
-        if (parsed.length > 0) return parsed.map((c, i) => ({ ...c, id: i + 1 }));
-      } catch (e) { }
+  const cmsImages = (() => {
+    try {
+      const cards = JSON.parse(settings?.heritage_cards_json || '[]');
+      return Object.fromEntries(cards.filter((c) => c.href && c.image).map((c) => [c.href, c.image]));
+    } catch {
+      return {};
     }
-    return defaultCollections;
   })();
 
+  const links = MENU.find((g) => g.key === 'collections').links;
+  const tiles = (data ? links.filter((l) => data.info.get(l.label)?.count > 0) : links)
+    .slice(0, TILES)
+    .map((l) => ({ ...l, ...(data?.info.get(l.label) || {}), image: cmsImages[l.href] || data?.info.get(l.label)?.image }));
+
+  if (data && tiles.length === 0) return null;
+
   return (
-    <section className="py-24 bg-warm-sand">
+    <section className="py-16 md:py-24 bg-warm-sand" aria-labelledby="collections-title">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div
-          ref={ref}
-          className={`text-center mb-20 transition-all duration-800 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-        >
-          <div className="w-16 h-px bg-copper mx-auto mb-6"></div>
-          <h2 className="font-royal text-5xl md:text-6xl font-bold text-heritage mb-6 tracking-tight">
-            Our Collections
-          </h2>
-          <p className="font-playfair text-xl text-heritage/70 max-w-2xl mx-auto font-light">
-            Discover exquisite pieces that blend heritage with contemporary elegance
-          </p>
+        <div className="flex items-end justify-between gap-6 mb-8 md:mb-12">
+          <div>
+            <h2 id="collections-title" className="font-royal text-4xl sm:text-5xl md:text-6xl font-bold text-heritage leading-[1.05]">
+              Our collections
+            </h2>
+            <p className="mt-3 text-heritage/70 max-w-xl">Necklace sets for weddings and festivals, sterling silver for every day, and malas for prayer.</p>
+          </div>
+          <Link href="/shop" prefetch={false} className="hidden sm:inline-block text-sm font-semibold text-copper hover:text-heritage underline underline-offset-4 whitespace-nowrap">
+            Shop everything
+          </Link>
         </div>
 
-        {/* Collection Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {collections.map((collection, index) => (
-            <CollectionCard
-              key={collection.id}
-              collection={collection}
-              delay={index * 150}
-            />
+        {/* First collection large, the rest stacked beside it */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-3 md:gap-5 lg:h-[640px]">
+          {tiles.map((t, i) => (
+            <Link
+              key={t.label}
+              href={t.href}
+              prefetch={false}
+              className={`group relative overflow-hidden rounded-2xl md:rounded-3xl bg-heritage/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-copper ${
+                i === 0 ? 'col-span-2 row-span-2 aspect-[4/5] sm:aspect-[16/11] lg:aspect-auto' : i === 1 ? 'col-span-2 aspect-[16/9] lg:aspect-auto' : 'aspect-[4/5] lg:aspect-auto'
+              }`}
+            >
+              {t.image && (
+                <Image
+                  src={t.image}
+                  alt=""
+                  fill
+                  sizes={i === 0 ? '(max-width: 1024px) 100vw, 50vw' : '(max-width: 1024px) 50vw, 25vw'}
+                  className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                  priority={i === 0}
+                />
+              )}
+              <span className="absolute inset-0 bg-gradient-to-t from-[#2a150c]/85 via-[#2a150c]/15 to-transparent" />
+              <span className={`absolute inset-x-0 bottom-0 text-[#FBF3EA] ${i === 0 ? 'p-6 md:p-9' : 'p-4 md:p-6'}`}>
+                <span className={`block font-royal font-semibold leading-none ${i === 0 ? 'text-4xl md:text-6xl' : 'text-2xl md:text-3xl'}`}>{t.label}</span>
+                {t.note && <span className={`block mt-2 text-[#F4E6D8]/85 ${i === 0 ? 'text-base md:text-lg' : 'text-xs md:text-sm'}`}>{t.note}</span>}
+                {t.count > 0 && (
+                  <span className={`mt-3 inline-flex flex-wrap gap-x-3 text-[#E8C9A0] ${i === 0 ? 'text-sm md:text-base' : 'text-xs md:text-sm'}`}>
+                    <span>{t.count} pieces</span>
+                    {t.from && <span>from ₹{Math.round(t.from).toLocaleString('en-IN')}</span>}
+                  </span>
+                )}
+              </span>
+            </Link>
           ))}
         </div>
+
+        <Link href="/shop" prefetch={false} className="sm:hidden mt-6 inline-block text-sm font-semibold text-copper underline underline-offset-4">
+          Shop everything
+        </Link>
       </div>
     </section>
   );

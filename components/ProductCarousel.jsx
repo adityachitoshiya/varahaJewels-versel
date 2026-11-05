@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, ZoomIn, Star, Layers } from 'lucide-react';
 
-export default function ProductCarousel({ images = [], rating = 4.8, reviewCount = 6, onViewSimilar }) {
+export default function ProductCarousel({ images = [], rating = 0, reviewCount = 0, onViewSimilar }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [mobileIndex, setMobileIndex] = useState(0);
@@ -109,35 +109,40 @@ export default function ProductCarousel({ images = [], rating = 4.8, reviewCount
             <span className="text-xs font-semibold text-heritage">View Similar</span>
           </button>
 
-          {/* Rating Badge - Top Right */}
-          <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/95 backdrop-blur-sm px-2 py-1.5 rounded-full shadow-md">
-            <span className="text-sm font-bold text-heritage">{rating}</span>
-            <Star size={14} className="fill-copper text-copper" />
-            <span className="text-xs text-matte-brown ml-0.5">{reviewCount}</span>
-          </div>
+          {/* Rating Badge - Top Right (only with real reviews) */}
+          {reviewCount > 0 && (
+            <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/95 backdrop-blur-sm px-2 py-1.5 rounded-full shadow-md">
+              <span className="text-sm font-bold text-heritage">{Number(rating).toFixed(1)}</span>
+              <Star size={14} className="fill-copper text-copper" />
+              <span className="text-xs text-matte-brown ml-0.5">{reviewCount}</span>
+            </div>
+          )}
 
           {/* Dot Indicators */}
+          {gridImages.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
             {gridImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setMobileIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${index === mobileIndex
+                aria-label={`Show image ${index + 1}`}
+                className={`w-2 h-2 min-h-0 min-w-0 p-0 rounded-full transition-all duration-300 ${index === mobileIndex
                   ? 'bg-heritage w-5'
                   : 'bg-heritage/40'
                   }`}
               />
             ))}
           </div>
+          )}
         </div>
       </div>
 
-      {/* === DESKTOP: 2x2 Grid Layout === */}
-      <div className="hidden lg:grid grid-cols-2 gap-3 md:gap-4">
+      {/* === DESKTOP: hero image + 2-column grid, stays in view while the info column scrolls === */}
+      <div className="hidden lg:grid grid-cols-2 gap-3 md:gap-4 lg:sticky lg:top-24">
         {gridImages.map((item, index) => (
           <div
             key={item.id || index}
-            className="relative aspect-square bg-warm-sand rounded-lg overflow-hidden cursor-pointer group"
+            className={`relative aspect-square bg-warm-sand rounded-xl overflow-hidden cursor-pointer group ${index === 0 || gridImages.length === 2 ? 'col-span-2' : ''}`}
             onClick={() => openLightbox(index)}
           >
             <img

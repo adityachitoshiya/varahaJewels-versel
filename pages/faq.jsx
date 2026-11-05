@@ -39,7 +39,7 @@ export default function FAQ() {
         {
             category: 'ordering',
             question: 'What is Cash on Delivery (COD)?',
-            answer: 'COD allows you to pay for your order when it\'s delivered to your doorstep. A nominal COD charge of ₹59 applies. You can pay in cash or via card/UPI to the delivery partner.'
+            answer: 'COD allows you to pay for your order when it\'s delivered to your doorstep. COD is free on orders of ₹499 and above; below ₹499 a ₹99 COD charge applies. You can pay in cash or via card/UPI to the delivery partner.'
         },
         {
             category: 'ordering',
@@ -56,7 +56,7 @@ export default function FAQ() {
         {
             category: 'shipping',
             question: 'What are the shipping charges?',
-            answer: 'We offer FREE shipping on all orders above ₹5,000. For orders below ₹5,000, a flat shipping charge of ₹99 applies.'
+            answer: 'Delivery is FREE on all orders of ₹499 and above. Below ₹499, delivery is free with online payment, and a ₹99 charge applies only if you choose Cash on Delivery.'
         },
         {
             category: 'shipping',
@@ -71,7 +71,7 @@ export default function FAQ() {
         {
             category: 'shipping',
             question: 'Can I change my delivery address?',
-            answer: 'Yes, you can change the delivery address before the order is shipped. Contact our support team immediately at +91 98765 43210 or hello@varahajewels.com.'
+            answer: 'Yes, you can change the delivery address before the order is shipped. Contact our support team immediately at help@varahajewels.in.'
         },
 
         // Returns & Refunds
@@ -142,7 +142,7 @@ export default function FAQ() {
         {
             category: 'account',
             question: 'How can I contact customer support?',
-            answer: 'You can reach us at +91 98765 43210, email hello@varahajewels.com, or use the contact form on our Contact page. We\'re available Mon-Sat, 10 AM - 8 PM.'
+            answer: 'You can email us at help@varahajewels.in or use the contact form on our Contact page. We\'re available Mon-Sat, 10 AM - 8 PM.'
         },
         {
             category: 'account',
@@ -284,10 +284,10 @@ export default function FAQ() {
                                 Contact Support
                             </Link>
                             <a
-                                href="tel:+919876543210"
+                                href="mailto:help@varahajewels.in"
                                 className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-copper text-copper font-semibold rounded-sm hover:bg-copper hover:text-warm-sand transition-all"
                             >
-                                Call Us: +91 98765 43210
+                                Email: help@varahajewels.in
                             </a>
                         </div>
                     </div>

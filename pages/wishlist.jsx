@@ -55,6 +55,9 @@ export default function Wishlist() {
       }
     } catch (error) {
       console.error("Failed to fetch products for wishlist", error);
+    } finally {
+      // Without this the page stayed on the spinner forever
+      setIsLoading(false);
     }
   };
 

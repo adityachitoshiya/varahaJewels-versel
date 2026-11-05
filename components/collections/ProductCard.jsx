@@ -96,6 +96,16 @@ export default function ProductCard({ product, onQuickLook }) {
 
   const isOutOfStock = product.stock !== undefined && product.stock <= 0;
 
+  // Hover image: additional_images can be an array or a JSON string (sometimes "[]")
+  const secondImage = (() => {
+    let imgs = product.additional_images;
+    if (typeof imgs === 'string') {
+      try { imgs = JSON.parse(imgs); } catch { imgs = []; }
+    }
+    const first = Array.isArray(imgs) ? imgs.find(Boolean) : null;
+    return typeof first === 'string' ? first : first?.url || null;
+  })();
+
   return (
     <Link href={`/product/${product.slug || product.id}`}>
       <div
@@ -148,12 +158,9 @@ export default function ProductCard({ product, onQuickLook }) {
           />
 
           {/* Secondary Image (shows on hover) */}
-          {product.additional_images && product.additional_images.length > 0 && (
+          {secondImage && (
             <Image
-              src={typeof product.additional_images === 'string'
-                ? JSON.parse(product.additional_images)[0]
-                : product.additional_images[0]
-              }
+              src={secondImage}
               alt={`${product.name} - view 2`}
               fill
               className={`object-cover transition-all duration-700 ${isHovered ? 'scale-100 opacity-100' : 'scale-110 opacity-0'
@@ -277,7 +284,7 @@ export default function ProductCard({ product, onQuickLook }) {
                   {formatPrice(product.price)}
                 </span>
                 <span className="text-xs text-heritage/50 line-through">
-                  {formatPrice(product.price * 1.15)}
+                  {formatPrice(product.mrp > product.price ? product.mrp : product.price * 1.15)}
                 </span>
               </div>
             )}

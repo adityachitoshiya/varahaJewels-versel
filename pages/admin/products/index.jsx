@@ -1,273 +1,225 @@
-import { useState, useEffect } from 'react';
-import { getApiUrl } from '../../../lib/config';
-import Link from 'next/link';
-import AdminLayout from '../../../components/admin/AdminLayout';
-import { Plus, Search, Edit, Trash2, Filter, Star, Upload } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { Plus, Search, Edit, Trash2, Star, Upload, ExternalLink } from 'lucide-react';
+import AdminLayout from '../../../components/admin/AdminLayout';
 import { useAdminToast } from '../../../components/admin/AdminToast';
+import { getApiUrl, getAdminHeaders } from '../../../lib/config';
+
+// Products: filter by section and stock, search, edit stock in place,
+// toggle the homepage spotlight, edit or delete.
+
+const LOW = 2;
+const STOCK_FILTERS = [
+    { key: 'all', label: 'All' },
+    { key: 'low', label: `Low (${LOW} or less)`, match: (p) => p.stock > 0 && p.stock <= LOW },
+    { key: 'out', label: 'Out of stock', match: (p) => p.stock === 0 },
+];
+const inr = (n) => (n ? `₹${Math.round(n).toLocaleString('en-IN')}` : 'On request');
 
 export default function Products() {
-    const [products, setProducts] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('All');
+    const router = useRouter();
+    const toast = useAdminToast();
+    const [products, setProducts] = useState(null);
+    const [search, setSearch] = useState('');
+    const [section, setSection] = useState('All');
+    const [stockFilter, setStockFilter] = useState('all');
 
     useEffect(() => {
-        fetchProducts();
-    }, []);
+        if (!router.isReady) return;
+        if (typeof router.query.q === 'string') setSearch(router.query.q);
+        if (typeof router.query.section === 'string') setSection(router.query.section);
+    }, [router.isReady, router.query.q, router.query.section]);
 
-    const fetchProducts = async () => {
-        try {
-            const API_URL = getApiUrl();
-            const res = await fetch(`${API_URL}/api/products`);
-            if (res.ok) {
-                const data = await res.json();
-                setProducts(data);
-            } else {
-                console.error('Failed to fetch products');
-            }
-        } catch (error) {
-            console.error('Error fetching products:', error);
-        } finally {
-            setIsLoading(false);
+    const load = () =>
+        fetch(`${getApiUrl()}/api/products`)
+            .then((r) => (r.ok ? r.json() : []))
+            .then(setProducts)
+            .catch(() => setProducts([]));
+    useEffect(() => { load(); }, []);
+
+    const sections = useMemo(() => {
+        const c = {};
+        (products || []).forEach((p) => { const s = p.category || 'Other'; c[s] = (c[s] || 0) + 1; });
+        return Object.entries(c).sort((a, b) => b[1] - a[1]);
+    }, [products]);
+
+    const shown = useMemo(() => {
+        if (!products) return [];
+        const term = search.trim().toLowerCase();
+        const sf = STOCK_FILTERS.find((f) => f.key === stockFilter);
+        return products.filter((p) =>
+            (section === 'All' || (p.category || 'Other') === section) &&
+            (!sf?.match || sf.match(p)) &&
+            (!term || `${p.name} ${p.id} ${p.tag || ''}`.toLowerCase().includes(term))
+        );
+    }, [products, search, section, stockFilter]);
+
+    const saveStock = async (p, value) => {
+        const stock = Math.max(0, parseInt(value, 10));
+        if (Number.isNaN(stock) || stock === p.stock) return;
+        const res = await fetch(`${getApiUrl()}/api/products/${p.id}`, { method: 'PUT', headers: getAdminHeaders(), body: JSON.stringify({ stock }) });
+        if (res.ok) {
+            setProducts((ps) => ps.map((x) => (x.id === p.id ? { ...x, stock } : x)));
+            toast.success?.(`Stock for "${p.name.slice(0, 40)}" set to ${stock}`);
+        } else {
+            toast.error(res.status === 401 ? 'Sign in again to change stock' : 'Could not save stock');
         }
     };
 
-    const toast = useAdminToast();
+    const toggleSpotlight = async (p) => {
+        const res = await fetch(`${getApiUrl()}/api/products/${p.id}/spotlight`, { method: 'PATCH', headers: getAdminHeaders(false) });
+        if (res.ok) {
+            const data = await res.json();
+            setProducts((ps) => ps.map((x) => (x.id === p.id ? { ...x, is_spotlight: data.is_spotlight } : x)));
+        } else toast.error('Could not change spotlight');
+    };
 
-    const handleDelete = async (id) => {
-        const ok = await toast.confirm('Are you sure you want to delete this product?', { confirmText: 'Delete', type: 'warning' });
+    const remove = async (p) => {
+        const ok = await toast.confirm(`Delete "${p.name}"? This cannot be undone.`, { confirmText: 'Delete', type: 'warning' });
         if (!ok) return;
-        try {
-            const API_URL = getApiUrl();
-            const token = localStorage.getItem('admin_token');
-            const res = await fetch(`${API_URL}/api/products/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (res.ok) {
-                fetchProducts();
-            } else {
-                toast.error('Failed to delete product');
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Error deleting product');
-        }
+        const res = await fetch(`${getApiUrl()}/api/products/${p.id}`, { method: 'DELETE', headers: getAdminHeaders(false) });
+        if (res.ok) setProducts((ps) => ps.filter((x) => x.id !== p.id));
+        else toast.error('Could not delete the product');
     };
 
-    const handleToggleSpotlight = async (productId) => {
-        try {
-            const API_URL = getApiUrl();
-            const token = localStorage.getItem('admin_token');
-            const res = await fetch(`${API_URL}/api/products/${productId}/spotlight`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setProducts(prev => prev.map(p =>
-                    p.id === productId ? { ...p, is_spotlight: data.is_spotlight } : p
-                ));
-            } else {
-                toast.error('Failed to toggle spotlight');
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Error toggling spotlight');
-        }
+    const counts = {
+        low: (products || []).filter(STOCK_FILTERS[1].match).length,
+        out: (products || []).filter(STOCK_FILTERS[2].match).length,
     };
-
-    const filteredProducts = products.filter(product => {
-        const matchesSearch =
-            product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.id?.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesCategory = categoryFilter === 'All' || product.category === categoryFilter;
-
-        return matchesSearch && matchesCategory;
-    });
-
-    // Get unique categories statically + dynamic ones from data
-    const predefinedCategories = ['Artificial', 'Heritage', 'Bridal', 'Gold', 'Diamond', 'Polki'];
-    const dynamicCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
-    const allCategories = ['All', ...new Set([...predefinedCategories, ...dynamicCategories])];
 
     return (
         <AdminLayout>
-            <Head>
-                <title>Products - Varaha Admin</title>
-            </Head>
+            <Head><title>Products - Varaha Admin</title></Head>
+            <h1 className="sr-only">Products</h1>
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                <h1 className="text-xl font-bold text-gray-800">Products Inventory</h1>
-                <div className="flex gap-3">
-                    <Link
-                        href="/admin/products/bulk-upload"
-                        className="px-4 py-2 border border-copper text-copper font-medium rounded-lg flex items-center gap-2 hover:bg-copper/5 transition-all"
-                    >
-                        <Upload size={18} />
-                        Bulk Upload
-                    </Link>
-                    <Link
-                        href="/admin/products/new"
-                        className="px-4 py-2 bg-gradient-to-r from-copper to-heritage text-white font-medium rounded-lg flex items-center gap-2 hover:shadow-lg transition-all"
-                    >
-                        <Plus size={20} />
-                        Add New Product
-                    </Link>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Tools Bar */}
-                <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between">
-                    <div className="relative max-w-md w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search by name or ID..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-copper focus:border-transparent"
-                        />
+            <div className="max-w-7xl">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-[#2a150c]/60">{products ? `${products.length} products, ${shown.length} shown` : 'Loading products…'}</p>
+                    <div className="flex gap-2">
+                        <Link href="/admin/products/bulk-upload" className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-[#2a150c]/15 bg-white text-sm font-semibold hover:border-copper">
+                            <Upload size={16} /> Bulk upload
+                        </Link>
+                        <Link href="/admin/products/new" className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-[#2a150c] text-white text-sm font-semibold hover:bg-copper">
+                            <Plus size={17} /> Add product
+                        </Link>
                     </div>
+                </div>
 
-                    <div className="flex items-center gap-2">
-                        <Filter size={20} className="text-gray-400" />
-                        <select
-                            value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-copper cursor-pointer"
-                        >
-                            {allCategories.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
+                {/* Filters */}
+                <div className="mt-5 rounded-2xl bg-white border border-[#2a150c]/10 p-4 space-y-3">
+                    <div className="flex flex-col md:flex-row gap-3 md:items-center">
+                        <label className="relative flex-1 max-w-md">
+                            <span className="sr-only">Search products</span>
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2a150c]/40" size={16} />
+                            <input
+                                type="search"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by name, ID or tag"
+                                className="w-full h-10 pl-9 pr-3 rounded-full bg-[#F6F1EB] border border-transparent text-sm focus:outline-none focus:bg-white focus:border-copper"
+                            />
+                        </label>
+                        <div className="flex gap-1.5 p-1 rounded-full bg-[#F6F1EB] w-fit" role="group" aria-label="Stock">
+                            {STOCK_FILTERS.map((f) => (
+                                <button
+                                    key={f.key}
+                                    onClick={() => setStockFilter(f.key)}
+                                    aria-pressed={stockFilter === f.key}
+                                    className={`h-8 px-3.5 rounded-full text-sm font-medium ${stockFilter === f.key ? 'bg-[#2a150c] text-white' : 'text-[#2a150c]/70 hover:text-[#2a150c]'}`}
+                                >
+                                    {f.label}{f.key !== 'all' && counts[f.key] > 0 && <span className="ml-1.5 tabular-nums opacity-70">{counts[f.key]}</span>}
+                                </button>
                             ))}
-                        </select>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide" role="tablist" aria-label="Sections">
+                        {[['All', products?.length || 0], ...sections].map(([name, n]) => (
+                            <button
+                                key={name}
+                                role="tab"
+                                aria-selected={section === name}
+                                onClick={() => setSection(name)}
+                                className={`flex-shrink-0 h-8 px-3.5 rounded-full border text-sm ${section === name ? 'bg-copper border-copper text-white' : 'border-[#2a150c]/15 text-[#2a150c]/75 hover:border-copper'}`}
+                            >
+                                {name} <span className="tabular-nums opacity-60">{n}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                {/* Mobile Cards */}
-                <div className="block md:hidden divide-y divide-gray-100">
-                    {isLoading ? (
-                        <div className="p-6 text-center text-gray-500">Loading inventory...</div>
-                    ) : filteredProducts.length === 0 ? (
-                        <div className="p-6 text-center text-gray-500">No products found</div>
+                {/* List */}
+                <div className="mt-4 rounded-2xl bg-white border border-[#2a150c]/10 overflow-hidden">
+                    <div className="hidden md:grid grid-cols-[1fr_120px_120px_90px_110px] gap-4 px-5 py-3 text-xs text-[#2a150c]/50 border-b border-[#2a150c]/10">
+                        <span>Product</span><span>Price</span><span>Stock</span><span className="text-center">Spotlight</span><span className="text-right">Actions</span>
+                    </div>
+                    {!products ? (
+                        <p className="p-6 text-sm text-[#2a150c]/50">Loading products…</p>
+                    ) : shown.length === 0 ? (
+                        <div className="p-10 text-center">
+                            <p className="font-royal text-2xl">No products match these filters</p>
+                            <button onClick={() => { setSearch(''); setSection('All'); setStockFilter('all'); }} className="mt-3 text-sm font-semibold text-copper underline underline-offset-4">Clear filters</button>
+                        </div>
                     ) : (
-                        filteredProducts.map((product) => (
-                            <div key={product.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="h-14 w-14 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                                        <img className="h-full w-full object-cover" src={product.image} alt={product.name} onError={(e) => e.target.src = '/varaha-assets/logo.png'} />
+                        <ul className="divide-y divide-[#2a150c]/5">
+                            {shown.map((p) => (
+                                <li key={p.id} className="px-4 md:px-5 py-3 grid grid-cols-[1fr_auto] md:grid-cols-[1fr_120px_120px_90px_110px] gap-x-4 gap-y-2 items-center hover:bg-[#F6F1EB]/50">
+                                    <div className="flex items-center gap-3 min-w-0 col-span-2 md:col-span-1">
+                                        <img src={p.image} alt="" className="w-12 h-12 rounded-lg object-cover bg-[#F6F1EB] flex-shrink-0" onError={(e) => { e.currentTarget.src = '/varaha-assets/logo.png'; }} />
+                                        <div className="min-w-0">
+                                            <Link href={`/admin/products/edit/${p.id}`} className="block text-sm font-medium truncate hover:text-copper">{p.name}</Link>
+                                            <p className="text-xs text-[#2a150c]/50 truncate">{p.category || 'No section'}{p.tag ? `, ${p.tag}` : ''}</p>
+                                        </div>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-gray-900 truncate">{product.name}</p>
-                                        <p className="text-xs text-gray-500">{product.category}</p>
-                                        <p className="text-sm font-bold text-gray-900 mt-0.5">₹{product.price?.toLocaleString() || 'On Request'}</p>
+                                    <div className="text-sm">
+                                        <span className="font-semibold tabular-nums">{inr(p.price)}</span>
+                                        {p.mrp > p.price && <span className="block text-xs text-[#2a150c]/40 line-through tabular-nums">{inr(p.mrp)}</span>}
                                     </div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        {product.category === 'Artificial' ? (
-                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-800 border border-pink-200">Artificial</span>
-                                        ) : product.premium ? (
-                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Premium</span>
-                                        ) : (
-                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">Standard</span>
-                                        )}
-                                        {product.tag && (
-                                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 border border-orange-200">{product.tag}</span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => handleToggleSpotlight(product.id)} className={`p-1.5 rounded-full transition-all duration-200 ${product.is_spotlight ? 'text-amber-500 bg-amber-50' : 'text-gray-300 hover:text-amber-400'}`} title={product.is_spotlight ? 'Remove from Spotlight' : 'Add to Spotlight'}>
-                                            <Star size={18} fill={product.is_spotlight ? 'currentColor' : 'none'} />
-                                        </button>
-                                        <Link href={`/admin/products/edit/${product.id}`} className="p-1.5 text-gray-400 hover:text-copper transition-colors">
-                                            <Edit size={18} />
-                                        </Link>
-                                        <button onClick={() => handleDelete(product.id)} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
-                                            <Trash2 size={18} />
+                                    <StockInput product={p} onSave={saveStock} />
+                                    <div className="hidden md:flex justify-center">
+                                        <button onClick={() => toggleSpotlight(p)} className={`w-9 h-9 rounded-full flex items-center justify-center ${p.is_spotlight ? 'text-amber-500 bg-amber-50' : 'text-[#2a150c]/25 hover:text-amber-500'}`} aria-pressed={p.is_spotlight} aria-label={p.is_spotlight ? 'Remove from homepage spotlight' : 'Show in homepage spotlight'}>
+                                            <Star size={18} fill={p.is_spotlight ? 'currentColor' : 'none'} />
                                         </button>
                                     </div>
-                                </div>
-                            </div>
-                        ))
+                                    <div className="flex items-center justify-end gap-1 col-span-2 md:col-span-1">
+                                        <button onClick={() => toggleSpotlight(p)} className={`md:hidden w-9 h-9 rounded-full flex items-center justify-center ${p.is_spotlight ? 'text-amber-500 bg-amber-50' : 'text-[#2a150c]/30'}`} aria-label="Toggle spotlight"><Star size={17} fill={p.is_spotlight ? 'currentColor' : 'none'} /></button>
+                                        <a href={`/product/${p.slug || p.id}`} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full flex items-center justify-center text-[#2a150c]/40 hover:text-copper hover:bg-white" aria-label="View on store"><ExternalLink size={16} /></a>
+                                        <Link href={`/admin/products/edit/${p.id}`} className="w-9 h-9 rounded-full flex items-center justify-center text-[#2a150c]/40 hover:text-copper hover:bg-white" aria-label="Edit"><Edit size={16} /></Link>
+                                        <button onClick={() => remove(p)} className="w-9 h-9 rounded-full flex items-center justify-center text-[#2a150c]/40 hover:text-red-600 hover:bg-red-50" aria-label="Delete"><Trash2 size={16} /></button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
                     )}
-                </div>
-
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Details</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tag</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Spotlight</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {isLoading ? (
-                                <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-500">Loading inventory...</td></tr>
-                            ) : filteredProducts.length === 0 ? (
-                                <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-500">No products found</td></tr>
-                            ) : (
-                                filteredProducts.map((product) => (
-                                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-3">
-                                            <div className="flex items-center">
-                                                <div className="h-12 w-12 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden mr-4 border border-gray-200">
-                                                    <img className="h-full w-full object-cover" src={product.image} alt={product.name} onError={(e) => e.target.src = '/varaha-assets/logo.png'} />
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-gray-900">{product.name}</div>
-                                                    <div className="text-xs text-gray-500">{product.category}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-3">
-                                            <div className="text-sm text-gray-500">
-                                                <span className="block text-xs">Metal: <span className="text-gray-700">{product.metal || 'N/A'}</span></span>
-                                                <span className="block text-xs">Purity: <span className="text-gray-700">{product.carat || 'N/A'}</span></span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-3 text-sm font-bold text-gray-900">₹{product.price?.toLocaleString() || 'On Request'}</td>
-                                        <td className="px-6 py-3">
-                                            {product.category === 'Artificial' ? (
-                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-pink-100 text-pink-800 border border-pink-200">Artificial</span>
-                                            ) : product.premium ? (
-                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Premium</span>
-                                            ) : (
-                                                <span className="px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">Standard</span>
-                                            )}
-                                            {product.tag && (
-                                                <span className="ml-2 px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-orange-100 text-orange-800 border border-orange-200">{product.tag}</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-3 text-center">
-                                            <button onClick={() => handleToggleSpotlight(product.id)} className={`p-1.5 rounded-full transition-all duration-200 ${product.is_spotlight ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-gray-300 hover:text-amber-400 hover:bg-gray-50'}`} title={product.is_spotlight ? 'Remove from Spotlight' : 'Add to Spotlight'}>
-                                                <Star size={20} fill={product.is_spotlight ? 'currentColor' : 'none'} />
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Link href={`/admin/products/edit/${product.id}`} className="p-1 text-gray-400 hover:text-copper transition-colors"><Edit size={18} /></Link>
-                                                <button onClick={() => handleDelete(product.id)} className="p-1 text-gray-400 hover:text-red-600 transition-colors text-trash"><Trash2 size={18} /></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </AdminLayout>
+    );
+}
+
+// Stock box: type a number, press Enter or click away to save
+function StockInput({ product, onSave }) {
+    const [value, setValue] = useState(product.stock ?? '');
+    useEffect(() => setValue(product.stock ?? ''), [product.stock]);
+    const unlimited = product.stock === null || product.stock === undefined;
+    const tone = product.stock === 0 ? 'border-red-300 bg-red-50 text-red-700' : product.stock <= LOW && !unlimited ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-[#2a150c]/15 bg-white';
+
+    return (
+        <label className="flex items-center gap-2 text-sm">
+            <span className="sr-only">Stock for {product.name}</span>
+            <input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                value={value}
+                placeholder={unlimited ? '∞' : ''}
+                onChange={(e) => setValue(e.target.value)}
+                onBlur={() => value !== '' && onSave(product, value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                className={`w-16 h-9 px-2 rounded-lg border text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-copper/30 ${tone}`}
+            />
+            {product.stock === 0 && <span className="text-xs font-semibold text-red-600">Out</span>}
+        </label>
     );
 }

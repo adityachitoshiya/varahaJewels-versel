@@ -8,6 +8,7 @@ import { getApiUrl } from '../lib/config';
 import { Search, SlidersHorizontal, Grid, List, Heart, ChevronDown, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import HeritageWaiting from '../components/HeritageWaiting';
+import SectionGrid from '../components/SectionGrid';
 
 export default function Heritage() {
   // Initialize products empty
@@ -311,7 +312,12 @@ export default function Heritage() {
         <Header />
 
         <main className="min-h-screen bg-warm-sand">
-          <HeritageWaiting />
+          <SectionGrid
+            category="Heritage"
+            title="Heritage Collection"
+            subtitle="Royal American Diamond necklace sets, crafted for weddings and festive days"
+            fallback={<HeritageWaiting />}
+          />
         </main>
         <Footer />
       </div>
