@@ -57,9 +57,12 @@ export default function HeroSection({ initialSlides }) {
   const [cmsSlides, setSlides] = useState(initialSlides?.length ? initialSlides : defaultSlides);
   const fromProducts = products ? collectionSlides(products) : null;
   // While products load, show the dark banner without text instead of flashing the old photos
-  const slides = fromProducts === null ? [] : fromProducts.length ? fromProducts : cmsSlides;
+  const baseSlides = fromProducts === null ? [] : fromProducts.length ? fromProducts : cmsSlides;
+  const offer = useActiveOffer();
+  const slides = offer && baseSlides.length ? [offerSlide(offer, products, baseSlides), ...baseSlides] : baseSlides;
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   useEffect(() => {
     if (initialSlides?.length) return;
@@ -70,10 +73,10 @@ export default function HeroSection({ initialSlides }) {
   }, [initialSlides]);
 
   useEffect(() => {
-    if (paused || slides.length <= 1) return;
+    if (paused || termsOpen || slides.length <= 1) return;
     const t = setTimeout(() => setCurrent((i) => (i + 1) % slides.length), SLIDE_MS);
     return () => clearTimeout(t);
-  }, [current, paused, slides.length]);
+  }, [current, paused, termsOpen, slides.length]);
 
   // Swipe on phones
   const touchX = useRef(null);
@@ -86,9 +89,27 @@ export default function HeroSection({ initialSlides }) {
 
   const slide = slides[current % (slides.length || 1)];
 
+  const dots = slides.length > 1 && (
+    <div className="flex items-center" role="tablist" aria-label="Slides">
+      {slides.map((s, i) => (
+        // Tap area stays 44px tall (globals.css touch rule); only the inner dot is visible
+        <button
+          key={s.id ?? i}
+          role="tab"
+          aria-selected={i === current}
+          aria-label={`Slide ${i + 1}: ${s.title || ''}`}
+          onClick={() => setCurrent(i)}
+          className={`group h-11 !min-w-0 flex items-center justify-center bg-transparent ${i === current ? 'w-9' : 'w-5'}`}
+        >
+          <span className={`block h-2 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-[#FBF3EA]' : 'w-2 bg-[#FBF3EA]/50 group-hover:bg-[#FBF3EA]/80'}`} />
+        </button>
+      ))}
+    </div>
+  );
+
+
   return (
     <section className="hero bg-warm-sand pt-3 md:pt-6" aria-label="Featured">
-      <OfferBand />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 grid lg:grid-cols-3 gap-3 md:gap-5">
         {/* Banner slideshow */}
         <div
@@ -113,9 +134,12 @@ export default function HeroSection({ initialSlides }) {
               )}
             </div>
           ))}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#2a150c]/85 via-[#2a150c]/15 to-transparent pointer-events-none" />
+          <div className={`absolute inset-0 pointer-events-none bg-gradient-to-t ${slide?.offer ? 'from-[#2a150c]/95 via-[#2a150c]/55 to-[#2a150c]/20' : 'from-[#2a150c]/85 via-[#2a150c]/15 to-transparent'}`} />
 
-          {slide && (
+          {slide?.offer && (
+            <OfferSlideContent offer={slide.offer} dots={dots} termsOpen={termsOpen} setTermsOpen={setTermsOpen} />
+          )}
+          {slide && !slide.offer && (
             <div className="absolute inset-x-0 bottom-0 p-6 sm:p-9 lg:p-11 text-[#FBF3EA]">
               <h1 className="font-royal font-semibold text-[2.6rem] sm:text-6xl lg:text-7xl leading-[0.98] max-w-[14ch]">{slide.title}</h1>
               {slide.subtitle && <p className="mt-3 text-[15px] sm:text-lg text-[#F4E6D8]/85 max-w-md">{slide.subtitle}</p>}
@@ -126,23 +150,7 @@ export default function HeroSection({ initialSlides }) {
                 >
                   {slide.link_text && slide.link_text !== 'Explore Collections' ? slide.link_text : 'Shop now'}
                 </Link>
-                {slides.length > 1 && (
-                  <div className="flex items-center" role="tablist" aria-label="Slides">
-                    {slides.map((s, i) => (
-                      // Tap area stays 44px tall (globals.css touch rule); only the inner dot is visible
-                      <button
-                        key={s.id ?? i}
-                        role="tab"
-                        aria-selected={i === current}
-                        aria-label={`Slide ${i + 1}: ${s.title || ''}`}
-                        onClick={() => setCurrent(i)}
-                        className={`group h-11 !min-w-0 flex items-center justify-center bg-transparent ${i === current ? 'w-9' : 'w-5'}`}
-                      >
-                        <span className={`block h-2 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-[#FBF3EA]' : 'w-2 bg-[#FBF3EA]/50 group-hover:bg-[#FBF3EA]/80'}`} />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {dots}
               </div>
             </div>
           )}
@@ -234,23 +242,30 @@ function NewCollectionTile({ index = 0 }) {
   );
 }
 
-// Festival offer band (dates in lib/offers.js). Rendered after mount so the
-// date check uses the visitor's clock, not the time the page was built.
-function OfferBand() {
+// Festival offer (dates in lib/offers.js). Checked after mount and every
+// minute, so it uses the visitor's clock and switches at midnight by itself.
+function useActiveOffer() {
   const [offer, setOffer] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
-
   useEffect(() => {
     const tick = () => setOffer(activeOffer());
     tick();
-    const t = setInterval(tick, 60 * 1000); // switches over at midnight without a reload
+    const t = setInterval(tick, 60 * 1000);
     return () => clearInterval(t);
   }, []);
+  return offer;
+}
 
-  if (!offer) return null;
+// Offer slide photo: a Heritage piece that is not already used by another slide
+function offerSlide(offer, products, baseSlides) {
+  const used = new Set(baseSlides.map((b) => b.image));
+  const heritage = (products || []).filter((p) => p.category === 'Heritage' && p.image);
+  const pick = heritage.find((p) => !used.has(p.image)) || heritage[0];
+  return { id: `offer-${offer.id}`, offer, title: offer.title, image: pick?.image || baseSlides[0]?.image };
+}
+
+function OfferSlideContent({ offer, dots, termsOpen, setTermsOpen }) {
+  const [copied, setCopied] = useState(false);
   const { percent, minOrder, maxOff } = OFFER_TERMS;
-
   const copy = async () => {
     try { await navigator.clipboard.writeText(offer.code); } catch {}
     setCopied(true);
@@ -258,36 +273,32 @@ function OfferBand() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mb-3 md:mb-5">
-      <div className="relative overflow-hidden rounded-3xl bg-[#2a150c] text-[#FBF3EA] px-5 py-5 sm:px-8 sm:py-6">
-        <span className="pointer-events-none absolute -right-10 -top-16 w-64 h-64 rounded-full bg-royal-orange/25 blur-3xl" aria-hidden />
-        <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
-          <div className="flex items-baseline gap-4 md:block">
-            <p className="font-royal font-bold text-6xl md:text-7xl leading-none text-[#E8C9A0] tabular-nums">{percent}%<span className="text-3xl md:text-4xl"> off</span></p>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-royal font-bold text-3xl md:text-4xl leading-tight">{offer.title}</p>
-            <p className="mt-1 text-sm md:text-base text-[#F4E6D8]/80">
-              On everything, use the code at checkout. Ends {lastDayLabel(offer)}.{' '}
-              <button onClick={() => setShowTerms((v) => !v)} aria-expanded={showTerms} className="underline underline-offset-2 text-[#E8C9A0] hover:text-white">T&amp;C apply</button>
-            </p>
-            {showTerms && (
-              <ul className="mt-3 text-xs md:text-sm text-[#F4E6D8]/75 space-y-1">
-                <li>{percent}% off on orders of ₹{minOrder.toLocaleString('en-IN')} or more.</li>
-                <li>Maximum discount ₹{maxOff.toLocaleString('en-IN')} per order.</li>
-                <li>Enter code {offer.code} at checkout. One code per order.</li>
-                <li>Valid until {lastDayLabel(offer)}, 11:59 pm.</li>
-              </ul>
-            )}
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button onClick={copy} className="flex-1 md:flex-none inline-flex items-center justify-between gap-3 h-12 pl-4 pr-3 rounded-full border-2 border-dashed border-[#E8C9A0]/70 hover:border-[#E8C9A0]" aria-label={`Copy code ${offer.code}`}>
-              <span className="font-mono font-bold tracking-[0.12em]">{offer.code}</span>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#E8C9A0]">{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}</span>
-            </button>
-            <Link href="/shop" className="inline-flex flex-shrink-0 items-center justify-center h-12 px-6 rounded-full bg-[#FBF3EA] text-heritage font-bold text-sm whitespace-nowrap hover:bg-[#E8C9A0]">Shop now</Link>
-          </div>
+    <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-9 lg:p-11 text-[#FBF3EA]">
+      <p className="inline-flex w-fit items-center px-3 py-1.5 rounded-full bg-royal-orange text-white text-xs sm:text-sm font-bold">{offer.title}</p>
+      <h1 className="mt-3 font-royal font-bold leading-[0.9] text-[#E8C9A0]">
+        <span className="text-7xl sm:text-8xl lg:text-9xl tabular-nums">{percent}%</span>
+        <span className="text-4xl sm:text-5xl lg:text-6xl"> off</span>
+      </h1>
+      <p className="mt-3 text-[15px] sm:text-lg text-[#F4E6D8]/90 max-w-md">
+        On everything. Ends {lastDayLabel(offer)}.{' '}
+        <button onClick={() => setTermsOpen((v) => !v)} aria-expanded={termsOpen} className="underline underline-offset-2 text-[#E8C9A0] hover:text-white">T&amp;C apply</button>
+      </p>
+      {termsOpen && (
+        <ul className="mt-2 text-xs sm:text-sm text-[#F4E6D8]/85 space-y-0.5 max-w-md">
+          <li>{percent}% off on orders of ₹{minOrder.toLocaleString('en-IN')} or more, up to ₹{maxOff.toLocaleString('en-IN')} off.</li>
+          <li>Enter code {offer.code} at checkout. One code per order.</li>
+          <li>Valid until {lastDayLabel(offer)}, 11:59 pm.</li>
+        </ul>
+      )}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <button onClick={copy} className="inline-flex items-center gap-3 h-12 pl-4 pr-3 rounded-full border-2 border-dashed border-[#E8C9A0]/80 bg-[#2a150c]/40 hover:border-[#E8C9A0]" aria-label={`Copy code ${offer.code}`}>
+            <span className="font-mono font-bold tracking-[0.12em]">{offer.code}</span>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#E8C9A0]">{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}</span>
+          </button>
+          <Link href="/shop" className="inline-flex flex-shrink-0 items-center justify-center h-12 px-6 rounded-full bg-[#FBF3EA] text-heritage font-bold text-sm whitespace-nowrap hover:bg-[#E8C9A0]">Shop now</Link>
         </div>
+        {dots}
       </div>
     </div>
   );
