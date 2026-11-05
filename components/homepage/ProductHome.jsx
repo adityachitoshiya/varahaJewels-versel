@@ -114,29 +114,70 @@ export function TopPicksRail() {
   return <ProductRail title="Top picks" note="Our favourites this week, with the best prices first" href="/shop" pick={pick} />;
 }
 
-/* Price bands linking to /shop?max= */
-const BANDS = [499, 999, 1999, 2999];
+/* Price bands linking to /shop?max= : each card shows real pieces from its range */
+const BANDS = [
+  { max: 499, label: 'Little luxuries' },
+  { max: 999, label: 'Everyday picks' },
+  { max: 2999, label: 'Gift-worthy' },
+  { max: 4999, label: 'Festive statement' },
+];
+
 export function ShopByPrice() {
   const products = useHomeProducts();
-  const bands = BANDS.map((max) => ({ max, count: products ? products.filter((p) => p.price && p.price <= max).length : null }))
-    .filter((b) => b.count === null || b.count > 0);
+  const bands = BANDS.map((b, i) => {
+    const min = i ? BANDS[i - 1].max : 0;
+    const inBand = products ? products.filter((p) => p.price && p.price <= b.max && p.image) : [];
+    // Photos: pieces from this band's own range first (so each card looks different), dearest first
+    const own = inBand.filter((p) => p.price > min).sort((x, y) => y.price - x.price);
+    const photos = [...own, ...inBand.filter((p) => !own.includes(p))].slice(0, 3).map((p) => p.image);
+    return { ...b, count: products ? inBand.length : null, photos };
+  }).filter((b) => b.count === null || b.count > 0);
   if (products && bands.length === 0) return null;
 
   return (
-    <section className="bg-heritage py-10 md:py-14">
+    <section className="bg-warm-sand py-10 md:py-14" aria-labelledby="price-title">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="font-royal font-bold text-3xl md:text-[2.6rem] leading-none text-warm-sand mb-6 md:mb-8">Shop by price</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-          {bands.map((b) => (
+        <div className="flex items-end justify-between gap-4 mb-6 md:mb-8">
+          <h2 id="price-title" className="font-royal font-bold text-3xl md:text-[2.6rem] leading-none text-heritage">Shop by price</h2>
+          <Link href="/shop" prefetch={false} className="text-sm font-semibold text-copper hover:text-heritage underline underline-offset-4">All prices</Link>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+          {bands.map((b, i) => (
             <Link
               key={b.max}
               href={`/shop?max=${b.max}`}
               prefetch={false}
-              className="group rounded-2xl border border-warm-sand/25 px-5 py-6 md:px-7 md:py-8 text-warm-sand hover:bg-warm-sand hover:text-heritage transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-warm-sand"
+              className="group relative flex flex-col overflow-hidden rounded-3xl bg-white border border-heritage/10 hover:border-copper hover:shadow-[0_18px_40px_-20px_rgba(122,59,35,0.45)] transition-[border-color,box-shadow] focus-visible:outline focus-visible:outline-2 focus-visible:outline-copper"
             >
-              <span className="block text-sm opacity-75">Under</span>
-              <span className="block font-royal font-bold text-4xl md:text-5xl leading-tight tabular-nums">₹{b.max.toLocaleString('en-IN')}</span>
-              {b.count !== null && <span className="block mt-2 text-sm opacity-75">{b.count} pieces</span>}
+              {/* Fanned photos */}
+              <div className={`relative h-32 sm:h-40 ${i % 2 ? 'bg-[#F3E3D3]' : 'bg-[#EFE9E2]'}`}>
+                {(b.photos.length ? b.photos : [null, null, null]).map((src, k, arr) => {
+                  const mid = (arr.length - 1) / 2;
+                  const off = k - mid;
+                  return (
+                    <span
+                      key={k}
+                      className="absolute left-1/2 bottom-[-18px] w-[38%] aspect-[4/5] rounded-xl overflow-hidden bg-heritage/10 ring-4 ring-white shadow-md transition-transform duration-300 group-hover:-translate-y-1"
+                      style={{ transform: `translateX(calc(-50% + ${off * 58}%)) rotate(${off * 8}deg)`, zIndex: k === Math.round(mid) ? 3 : 2 }}
+                    >
+                      {src && <Image src={src} alt="" fill sizes="120px" className="object-cover" />}
+                    </span>
+                  );
+                })}
+              </div>
+
+              <div className="relative z-10 bg-white px-4 pt-5 pb-4 sm:px-5 sm:pb-5">
+                <p className="text-xs sm:text-sm text-heritage/55">{b.label}</p>
+                <p className="mt-0.5 font-royal font-bold text-heritage leading-none">
+                  <span className="text-base sm:text-lg align-top mr-1 font-sans font-semibold text-heritage/70">Under</span>
+                  <span className="text-4xl sm:text-5xl tabular-nums">₹{b.max.toLocaleString('en-IN')}</span>
+                </p>
+                <div className="mt-3 flex items-center justify-end">
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-copper group-hover:gap-2 transition-all">
+                    Shop <ChevronRight size={15} />
+                  </span>
+                </div>
+              </div>
             </Link>
           ))}
         </div>

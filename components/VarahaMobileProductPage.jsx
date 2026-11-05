@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import {
   ChevronLeft, ChevronRight, Share2, Heart, Star, Truck, RotateCcw, ShieldCheck,
   ChevronDown, ChevronUp, MapPin, Check, Percent, Sparkles,
@@ -76,7 +77,39 @@ export default function VarahaMobileProductPage({
   isWishlisted,
   onCheckPincode,
 }) {
+  const router = useRouter();
+  const [shareNote, setShareNote] = useState('');
   const [activeImage, setActiveImage] = useState(0);
+
+  // Back: previous page if the shopper came from inside the site, else the shop
+  const goBack = () => {
+    const fromSite = typeof document !== 'undefined' && document.referrer && new URL(document.referrer).origin === window.location.origin;
+    if (fromSite && window.history.length > 1) router.back();
+    else router.push('/shop');
+  };
+
+  // Share: phone share sheet when available, otherwise copy the link
+  const shareProduct = async () => {
+    const url = window.location.href.split('#')[0];
+    const data = { title: product?.name || 'Varaha Jewels', text: product?.name ? `${product.name} on Varaha Jewels` : 'Varaha Jewels', url };
+    try {
+      if (navigator.share) { await navigator.share(data); return; }
+    } catch (e) {
+      if (e?.name === 'AbortError') return; // shopper closed the share sheet
+    }
+    let copied = false;
+    try { await navigator.clipboard.writeText(url); copied = true; } catch {}
+    if (!copied) {
+      // Older phones: copy through a temporary text box
+      const box = document.createElement('textarea');
+      box.value = url; box.setAttribute('readonly', ''); box.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(box); box.select();
+      try { copied = document.execCommand('copy'); } catch {}
+      box.remove();
+    }
+    setShareNote(copied ? 'Link copied' : url);
+    setTimeout(() => setShareNote(''), 1800);
+  };
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0] || null);
   useEffect(() => { if (product?.variants?.length) setSelectedVariant(product.variants[0]); }, [product]);
@@ -218,13 +251,18 @@ export default function VarahaMobileProductPage({
 
           {/* Floating header */}
           <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
-            <button aria-label="Go back" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-stone-900 shadow-sm backdrop-blur">
+            <button onClick={goBack} aria-label="Go back" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-stone-900 shadow-sm backdrop-blur">
               <ChevronLeft size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <button aria-label="Share this product" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-stone-900 shadow-sm backdrop-blur">
-                <Share2 size={17} />
-              </button>
+              <span className="relative">
+                <button onClick={shareProduct} aria-label="Share this product" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-stone-900 shadow-sm backdrop-blur">
+                  <Share2 size={17} />
+                </button>
+                {shareNote && (
+                  <span role="status" className="absolute right-0 top-12 whitespace-nowrap rounded-full bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white shadow">{shareNote}</span>
+                )}
+              </span>
               <button
                 onClick={() => { if (onWishlistToggle) onWishlistToggle(product.id); }}
                 aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}

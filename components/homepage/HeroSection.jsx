@@ -236,7 +236,7 @@ function NewCollectionTile({ index = 0 }) {
       <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[#FBF3EA] text-heritage text-xs font-bold">New in</span>
       <span className="absolute inset-x-0 bottom-0 p-4 lg:p-6 text-[#FBF3EA]">
         <span className="block font-royal font-semibold text-2xl lg:text-4xl leading-none">{t.label}</span>
-        <span className="block mt-1.5 text-xs sm:text-sm text-[#F4E6D8]/85">{t.items.length} pieces{t.from ? `, from ${formatINR(t.from)}` : ''}</span>
+        <span className="block mt-1.5 text-xs sm:text-sm text-[#F4E6D8]/85">{t.from ? `From ${formatINR(t.from)}` : t.note}</span>
       </span>
     </Link>
   );

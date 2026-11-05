@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { getApiUrl } from '../lib/config';
 import { supabase } from '../lib/supabaseClient';
 import { Mail, Lock, AlertCircle, ArrowRight, Loader2, Facebook, CheckCircle } from 'lucide-react';
-import { useGoogleLogin } from '@react-oauth/google';
+import { useSafeGoogleLogin } from '../lib/googleAuth';
 import { authenticateWithGoogleBackend, authenticateWithBackend } from '../lib/authUtils';
 import TelegramLoginModal from '../components/TelegramLoginModal';
 
@@ -29,7 +29,7 @@ export default function Login() {
     const [showTelegramModal, setShowTelegramModal] = useState(false);
 
     // Google OAuth sign-in via Google Identity Services
-    const googleLogin = useGoogleLogin({
+    const googleLogin = useSafeGoogleLogin({
         onSuccess: async (tokenResponse) => {
             setLoading(true);
             setError(null);

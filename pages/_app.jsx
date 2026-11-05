@@ -8,6 +8,7 @@ if (typeof window !== 'undefined') {
   import('../lib/firebase').catch(() => {});
 }
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GOOGLE_CLIENT_ID } from '../lib/googleAuth';
 import '../styles/globals.css';
 import DeliveryBar from '../components/DeliveryBar';
 import { useRouter } from 'next/router';
@@ -170,8 +171,6 @@ function MyApp({ Component, pageProps }) {
     fbq('track', 'PageView');
   `;
 
-  const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  if (!GOOGLE_CLIENT_ID) console.error('NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set!');
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>

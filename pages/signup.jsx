@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getApiUrl } from '../lib/config';
-import { useGoogleLogin } from '@react-oauth/google';
+import { useSafeGoogleLogin } from '../lib/googleAuth';
 import { authenticateWithGoogleBackend } from '../lib/authUtils';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -20,7 +20,7 @@ export default function Signup() {
     const [success, setSuccess] = useState(false);
 
     // Google OAuth sign-in via Google Identity Services
-    const googleLogin = useGoogleLogin({
+    const googleLogin = useSafeGoogleLogin({
         onSuccess: async (tokenResponse) => {
             setLoading(true);
             setError(null);

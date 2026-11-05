@@ -67,10 +67,9 @@ export default function FeaturedCollections({ settings }) {
               <span className={`absolute inset-x-0 bottom-0 text-[#FBF3EA] ${i === 0 ? 'p-6 md:p-9' : 'p-4 md:p-6'}`}>
                 <span className={`block font-royal font-semibold leading-none ${i === 0 ? 'text-4xl md:text-6xl' : 'text-2xl md:text-3xl'}`}>{t.label}</span>
                 {t.note && <span className={`block mt-2 text-[#F4E6D8]/85 ${i === 0 ? 'text-base md:text-lg' : 'text-xs md:text-sm'}`}>{t.note}</span>}
-                {t.count > 0 && (
-                  <span className={`mt-3 inline-flex flex-wrap gap-x-3 text-[#E8C9A0] ${i === 0 ? 'text-sm md:text-base' : 'text-xs md:text-sm'}`}>
-                    <span>{t.count} pieces</span>
-                    {t.from && <span>from ₹{Math.round(t.from).toLocaleString('en-IN')}</span>}
+                {t.from && (
+                  <span className={`mt-3 inline-block text-[#E8C9A0] ${i === 0 ? 'text-sm md:text-base' : 'text-xs md:text-sm'}`}>
+                    From ₹{Math.round(t.from).toLocaleString('en-IN')}
                   </span>
                 )}
               </span>
