@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getApiUrl, getAdminHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
+import OtpToggle from '../../../components/admin/OtpToggle';
 import VideoUpload from '../../../components/admin/VideoUpload';
 import MediaUpload from '../../../components/admin/MediaUpload';
 import Head from 'next/head';
@@ -249,6 +250,8 @@ export default function Settings() {
                 <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
                 <p className="text-gray-500">Manage your store details and configuration.</p>
             </div>
+
+            <OtpToggle />
 
             {/* Tabs */}
             <div className="flex gap-1 md:gap-4 mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hide -mx-4 md:mx-0 px-4 md:px-0">

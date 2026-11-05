@@ -10,6 +10,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout';
 import OrderSummary from '../components/checkout/OrderSummary';
+import PhoneOtpModal from '../components/checkout/PhoneOtpModal';
 import { trackEvent, storeUserData } from '../lib/metaPixel';
 
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User, MapPin, Home, Briefcase, ChevronDown } from 'lucide-react';
@@ -71,6 +72,22 @@ export default function Checkout() {
   // const [isPhoneVerified, setIsPhoneVerified] = useState(true); // Removed - No Guest Checkout
   // const [isOtpLoading, setIsOtpLoading] = useState(false); // Removed
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Cash on Delivery needs a verified mobile number (the server says if it is switched on)
+  const [codOtpRequired, setCodOtpRequired] = useState(false);
+  const [otpAsk, setOtpAsk] = useState(null); // { phone, resolve, reject } while the OTP box is open
+  const phoneProofRef = useRef({ phone: '', proof: '' });
+  useEffect(() => {
+    fetch(`${getApiUrl()}/api/otp/config`).then((r) => (r.ok ? r.json() : null))
+      .then((d) => setCodOtpRequired(!!d?.cod_otp_required)).catch(() => {});
+  }, []);
+  const tenDigits = (v) => (v || '').replace(/\D/g, '').slice(-10);
+  const ensurePhoneProof = (contact) => {
+    if (!codOtpRequired) return Promise.resolve(undefined);
+    const ph = tenDigits(contact);
+    if (phoneProofRef.current.phone === ph && phoneProofRef.current.proof) return Promise.resolve(phoneProofRef.current.proof);
+    return new Promise((resolve, reject) => setOtpAsk({ phone: ph, resolve, reject }));
+  };
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showSavedAddrs, setShowSavedAddrs] = useState(false);
 
@@ -626,8 +643,11 @@ export default function Checkout() {
       // OR rely on backend adding it. Backend adds it if 'codCharges' is passed.
       // My PaymentLayout adds 59 to the button text, let's ensure backend knows.
 
+      const phoneProof = await ensurePhoneProof(formData.contact);
+
       const orderData = cartItems.length > 0
         ? {
+          phoneProof,
           items: cartItems.map(item => ({
             productId: item.productId || item.id,
             productName: item.productName || item.name,
@@ -650,6 +670,7 @@ export default function Checkout() {
           session_id: localStorage.getItem('vj_session_id') || undefined
         }
         : {
+          phoneProof,
           productId: orderDetails.productId,
           variantId: orderDetails.variantId,
           quantity: orderDetails.quantity,
@@ -695,6 +716,7 @@ export default function Checkout() {
           });
         }, 800);
       } else {
+        if (/verif/i.test(data.detail || '')) phoneProofRef.current = { phone: '', proof: '' };
         throw new Error(data.detail || 'Failed to place order');
       }
     }, 'cod');
@@ -1051,6 +1073,13 @@ export default function Checkout() {
           )}
         </div>
       </main>
+      {otpAsk && (
+        <PhoneOtpModal
+          phone={otpAsk.phone}
+          onVerified={(proof) => { phoneProofRef.current = { phone: otpAsk.phone, proof }; otpAsk.resolve(proof); setOtpAsk(null); }}
+          onClose={() => { otpAsk.reject(new Error('Mobile verification was cancelled')); setOtpAsk(null); }}
+        />
+      )}
     </>
   );
 }
