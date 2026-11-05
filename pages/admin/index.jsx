@@ -184,7 +184,8 @@ export default function AdminDashboard() {
                         <ul className="mt-4 space-y-1">
                             {[
                                 { href: '/admin/products/new', icon: Package, label: 'Add a product' },
-                                { href: '/admin/products/bulk-upload', icon: Upload, label: 'Bulk upload products' },
+                                { href: '/admin/stock-sync', icon: Upload, label: 'Update stock from Excel' },
+                                { href: '/admin/products/bulk-upload', icon: Package, label: 'Bulk upload products' },
                                 { href: '/admin/cms', icon: ImageIcon, label: 'Edit homepage content' },
                                 { href: '/admin/offers', icon: Sparkles, label: 'Create an offer' },
                             ].map((s) => (

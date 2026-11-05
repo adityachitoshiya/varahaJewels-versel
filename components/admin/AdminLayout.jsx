@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import {
     LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Package, Menu, X, Search, Bell,
     Activity, Image as ImageIcon, Sparkles, RotateCcw, FolderTree, FileBarChart, ExternalLink,
-    PanelLeftClose, PanelLeftOpen,
+    PanelLeftClose, PanelLeftOpen, FileSpreadsheet,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { getApiUrl, getAdminHeaders } from '../../lib/config';
@@ -26,6 +26,7 @@ const NAV = [
         group: 'Catalogue',
         items: [
             { name: 'Products', href: '/admin/products', icon: Package },
+            { name: 'Stock update', href: '/admin/stock-sync', icon: FileSpreadsheet },
             { name: 'Categories', href: '/admin/categories', icon: FolderTree },
             { name: 'Offers', href: '/admin/offers', icon: Sparkles },
         ],
