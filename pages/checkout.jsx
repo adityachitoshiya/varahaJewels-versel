@@ -488,7 +488,46 @@ export default function Checkout() {
       console.log("Payment success, validating...", response);
       const API_URL = getApiUrl();
 
-      // Order details are taken from the server-side checkout snapshot
+      // The newer backend rebuilds the order from its own saved checkout and
+      // ignores this; the older backend still needs it to create the order.
+      // Sending it keeps payments working against either version.
+      const orderData = cartItems.length > 0
+        ? {
+          items: cartItems.map(item => ({
+            productId: item.productId || item.id,
+            productName: item.productName || item.name,
+            variantId: item.variant.id,
+            variantName: item.variant.name,
+            quantity: item.quantity,
+            price: item.variant.price,
+          })),
+          amount: Math.round(finalAmount),
+          name: formData.name,
+          email: formData.email,
+          contact: formData.contact,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          isCartCheckout: true,
+          paymentMethod: 'online',
+          couponCode: appliedCoupon?.code || ''
+        }
+        : {
+          productId: orderDetails.productId,
+          variantId: orderDetails.variantId,
+          quantity: orderDetails.quantity,
+          amount: Math.round(finalAmount),
+          name: formData.name,
+          email: formData.email,
+          contact: formData.contact,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          paymentMethod: 'online',
+          couponCode: appliedCoupon?.code || ''
+        };
 
       // Explicitly verify and create order in backend
       const token = localStorage.getItem('customer_token') || localStorage.getItem('token');
@@ -501,7 +540,8 @@ export default function Checkout() {
         body: JSON.stringify({
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_order_id: response.razorpay_order_id,
-          razorpay_signature: response.razorpay_signature
+          razorpay_signature: response.razorpay_signature,
+          order_data: orderData
         })
       });
 
@@ -526,9 +566,10 @@ export default function Checkout() {
             orderId: verifyData.orderId,          // real order id (ORD-...), not the Razorpay id
             key: verifyData.accessKey,            // lets guests view their own order
             paymentId: response.razorpay_payment_id,
-            amount: verifyData.amount
-            // no email/name here: personal data in URLs ends up in history, logs and analytics;
-            // payment-success loads them from the order instead
+            amount: verifyData.amount ?? finalAmount,
+            // Newer backend returns an access key and the page loads name/email from
+            // the order. The older one does not, so pass them as before.
+            ...(verifyData.accessKey ? {} : { email: formData.email, name: formData.name })
           }
         });
       }, 800);
