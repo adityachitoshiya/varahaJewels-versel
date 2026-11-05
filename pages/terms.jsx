@@ -102,7 +102,7 @@ export default function Terms() {
                                     <li>Credit/Debit Cards</li>
                                     <li>Net Banking</li>
                                     <li>UPI</li>
-                                    <li>Cash on Delivery (COD) - Subject to ₹59 COD charges</li>
+                                    <li>Cash on Delivery (COD) - free on orders of ₹499 and above; ₹99 COD charge on orders below ₹499</li>
                                 </ul>
                                 <p>All online payments are processed securely through Razorpay, a PCI DSS compliant payment gateway.</p>
                             </div>
@@ -180,8 +180,7 @@ export default function Terms() {
                                 <p>If you have any questions about these Terms and Conditions, please contact us:</p>
                                 <div className="bg-copper/10 border border-copper/30 rounded-sm p-4 mt-4">
                                     <p className="font-semibold text-heritage mb-2">Varaha Jewels</p>
-                                    <p className="text-sm text-heritage/70">Email: hello@varahajewels.com</p>
-                                    <p className="text-sm text-heritage/70">Phone: +91 98765 43210</p>
+                                    <p className="text-sm text-heritage/70">Email: help@varahajewels.in</p>
                                     <p className="text-sm text-heritage/70">Address: Jaipur, Rajasthan, India</p>
                                 </div>
                             </div>

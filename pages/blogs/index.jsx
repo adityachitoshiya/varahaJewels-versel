@@ -1,221 +1,86 @@
-import { useState, useEffect } from 'react';
-import { getApiUrl } from '../../lib/config';
+import { useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { Calendar, User, Tag, ArrowRight, Search } from 'lucide-react';
+import { getAllPostSummaries, BLOG_CATEGORIES } from '../../lib/blogs';
 
-export default function BlogsPage() {
-  const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [selectedTag, setSelectedTag] = useState('');
-  const [allTags, setAllTags] = useState([]);
+const SITE = 'https://www.varahajewels.in';
 
-  useEffect(() => {
-    fetchBlogs();
-  }, [page, selectedTag]);
-
-  const fetchBlogs = async () => {
-    setIsLoading(true);
-    try {
-      let url = `${getApiUrl()}/api/blogs?page=${page}&limit=12`;
-      if (selectedTag) url += `&tag=${selectedTag}`;
-      
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setPosts(data.posts || []);
-        setTotalPages(data.pages || 1);
-        
-        // Extract all unique tags
-        if (!selectedTag && page === 1) {
-          const tags = new Set();
-          (data.posts || []).forEach(p => {
-            (p.tags || []).forEach(t => tags.add(t));
-          });
-          setAllTags([...tags]);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch blogs:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
-  };
+export default function BlogIndex({ posts, categories }) {
+  const [category, setCategory] = useState('All');
+  const shown = useMemo(() => (category === 'All' ? posts : posts.filter((p) => p.category === category)), [posts, category]);
+  const [lead, ...rest] = shown;
 
   return (
     <>
       <Head>
-        <title>Blog — Varaha Jewels | Jewellery Insights & Style Guide</title>
-        <meta name="description" content="Explore jewellery care tips, styling guides, and heritage stories from Varaha Jewels. Discover the art of Indian jewellery." />
+        <title>Jewellery Guides and Styling Tips | Varaha Jewels Blog</title>
+        <meta name="description" content="Guides to Kundan, American Diamond, 925 silver and rudraksha jewellery: how to choose, style, gift and care for your pieces." />
+        <link rel="canonical" href={`${SITE}/blogs`} />
+        <meta property="og:title" content="Varaha Jewels Blog: jewellery guides and styling tips" />
+        <meta property="og:type" content="website" />
       </Head>
       <Header />
-      <main className="min-h-screen bg-white">
 
-        {/* Hero Section */}
-        <section className="relative bg-heritage text-white overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 25% 50%, rgba(197,160,89,0.3) 0%, transparent 50%), radial-gradient(circle at 75% 50%, rgba(197,160,89,0.2) 0%, transparent 50%)' }} />
-          </div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center relative">
-            <span className="inline-block text-copper text-xs tracking-[4px] uppercase mb-4 font-medium">Our Journal</span>
-            <h1 className="font-royal text-3xl sm:text-5xl lg:text-6xl font-bold mb-4 tracking-tight">
-              The Varaha <span className="text-copper">Blog</span>
-            </h1>
-            <p className="text-white/70 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
-              Jewellery care tips, styling guides, heritage stories, and behind-the-scenes glimpses into the world of Varaha Jewels.
+      <main className="min-h-screen bg-warm-sand pb-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="pt-10 md:pt-14 max-w-3xl">
+            <h1 className="font-royal font-bold text-5xl md:text-7xl text-heritage leading-none">Jewellery guides</h1>
+            <p className="mt-4 text-lg text-heritage/70">
+              How to choose, style, gift and look after Indian jewellery, from bridal sets to everyday silver.
             </p>
           </div>
-        </section>
 
-        {/* Tag Filters */}
-        {allTags.length > 0 && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button
-                onClick={() => { setSelectedTag(''); setPage(1); }}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  !selectedTag ? 'bg-heritage text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                All Posts
-              </button>
-              {allTags.map(tag => (
+          <div className="mt-8 flex gap-2.5 overflow-x-auto scrollbar-hide pb-2" role="tablist" aria-label="Topics">
+            {['All', ...categories].map((c) => {
+              const count = c === 'All' ? posts.length : posts.filter((p) => p.category === c).length;
+              if (!count) return null;
+              return (
                 <button
-                  key={tag}
-                  onClick={() => { setSelectedTag(tag); setPage(1); }}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    selectedTag === tag ? 'bg-heritage text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  key={c}
+                  role="tab"
+                  aria-selected={category === c}
+                  onClick={() => setCategory(c)}
+                  className={`flex-shrink-0 h-10 px-4 rounded-full border text-sm font-medium transition-colors ${category === c ? 'bg-heritage border-heritage text-warm-sand' : 'bg-white border-heritage/15 text-heritage hover:border-copper'}`}
                 >
-                  {tag}
+                  {c} <span className={category === c ? 'text-warm-sand/70' : 'text-heritage/45'}>{count}</span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
 
-        {/* Blog Grid */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="bg-gray-200 rounded-xl aspect-[16/10]" />
-                  <div className="mt-4 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-1/3" />
-                    <div className="h-6 bg-gray-200 rounded w-3/4" />
-                    <div className="h-4 bg-gray-200 rounded w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">No blog posts yet</h3>
-              <p className="text-gray-500">Check back soon for jewellery tips, guides, and stories.</p>
-            </div>
+          {!lead ? (
+            <p className="py-20 text-center text-heritage/70">New guides are on their way.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {posts.map((post, idx) => (
-                <Link key={post.id} href={`/blogs/${post.slug}`}>
-                  <article className="group cursor-pointer">
-                    {/* Cover Image */}
-                    <div className="relative overflow-hidden rounded-xl aspect-[16/10] bg-gray-100">
-                      {post.cover_image ? (
-                        <img
-                          src={post.cover_image}
-                          alt={post.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-heritage/10 to-copper/10 flex items-center justify-center">
-                          <span className="text-4xl">✍️</span>
-                        </div>
-                      )}
-                      {/* Overlay on hover */}
-                      <div className="absolute inset-0 bg-heritage/0 group-hover:bg-heritage/10 transition-colors duration-300" />
-                    </div>
+            <>
+              <Link href={`/blogs/${lead.slug}`} className="group mt-8 block rounded-3xl bg-heritage text-warm-sand p-8 md:p-12 hover:bg-[#6a321d] transition-colors">
+                <p className="text-sm text-[#E8C9A0]">{lead.category}, {lead.readMinutes} min read</p>
+                <h2 className="mt-3 font-royal font-bold text-3xl md:text-5xl leading-[1.08] max-w-[22ch] group-hover:underline decoration-1 underline-offset-8">{lead.title}</h2>
+                <p className="mt-4 text-warm-sand/80 max-w-2xl">{lead.description}</p>
+              </Link>
 
-                    {/* Content */}
-                    <div className="mt-4">
-                      {/* Tags */}
-                      {post.tags && post.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          {post.tags.slice(0, 2).map(tag => (
-                            <span key={tag} className="text-[10px] uppercase tracking-wider font-semibold text-copper bg-copper/10 px-2 py-0.5 rounded-full">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Title */}
-                      <h2 className="font-royal text-lg sm:text-xl font-bold text-heritage group-hover:text-copper transition-colors line-clamp-2 leading-tight">
-                        {post.title}
-                      </h2>
-
-                      {/* Excerpt */}
-                      {post.excerpt && (
-                        <p className="text-gray-500 text-sm mt-2 line-clamp-2 leading-relaxed">
-                          {post.excerpt}
-                        </p>
-                      )}
-
-                      {/* Meta */}
-                      <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={12} />
-                          {formatDate(post.created_at)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <User size={12} />
-                          {post.author}
-                        </span>
-                      </div>
-
-                      {/* Read More */}
-                      <div className="mt-3 flex items-center gap-1 text-copper text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        Read Article <ArrowRight size={14} />
-                      </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
+              <ul className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {rest.map((p) => (
+                  <li key={p.slug}>
+                    <Link href={`/blogs/${p.slug}`} className="group h-full flex flex-col rounded-2xl bg-white border border-heritage/10 p-6 hover:border-copper transition-colors">
+                      <p className="text-xs text-copper font-semibold">{p.category}</p>
+                      <h2 className="mt-2 font-royal font-bold text-2xl leading-snug text-heritage group-hover:text-copper">{p.title}</h2>
+                      <p className="mt-2 text-sm text-heritage/65 line-clamp-3">{p.description}</p>
+                      <p className="mt-auto pt-4 text-xs text-heritage/50">{p.readMinutes} min read</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-12">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setPage(i + 1)}
-                  className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
-                    page === i + 1
-                      ? 'bg-heritage text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
+        </div>
       </main>
       <Footer />
     </>
   );
+}
+
+export async function getStaticProps() {
+  return { props: { posts: getAllPostSummaries(), categories: BLOG_CATEGORIES } };
 }

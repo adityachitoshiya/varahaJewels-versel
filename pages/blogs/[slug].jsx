@@ -1,252 +1,171 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { getApiUrl } from '../../lib/config';
 import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { Calendar, User, Tag, ArrowLeft, Share2, Copy, Check } from 'lucide-react';
+import { CollectionRail } from '../../components/homepage/ProductHome';
+import { MENU } from '../../components/CollectionsMenu';
+import { getAllPostSummaries, getPost, getRelatedPosts } from '../../lib/blogs';
 
-export default function BlogPostPage() {
-  const router = useRouter();
-  const { slug } = router.query;
-  const [post, setPost] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
-  const [relatedPosts, setRelatedPosts] = useState([]);
+const SITE = 'https://www.varahajewels.in';
 
-  useEffect(() => {
-    if (slug) fetchPost();
-  }, [slug]);
-
-  const fetchPost = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${getApiUrl()}/api/blogs/${slug}`);
-      if (res.ok) {
-        const data = await res.json();
-        setPost(data);
-        // Fetch related posts
-        fetchRelated(data.tags);
-      } else {
-        setPost(null);
-      }
-    } catch (err) {
-      console.error('Failed to fetch blog:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchRelated = async (tags) => {
-    try {
-      const tag = tags && tags.length > 0 ? tags[0] : '';
-      const url = tag 
-        ? `${getApiUrl()}/api/blogs?limit=3&tag=${tag}` 
-        : `${getApiUrl()}/api/blogs?limit=3`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setRelatedPosts((data.posts || []).filter(p => p.slug !== slug).slice(0, 3));
-      }
-    } catch (err) {
-      console.error('Failed to fetch related posts:', err);
-    }
-  };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
-  };
-
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: post.title, url });
-      } catch {}
-    } else {
-      navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <>
-        <Header />
-        <main className="min-h-screen bg-white">
-          <div className="max-w-3xl mx-auto px-4 py-20">
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-gray-200 rounded w-3/4" />
-              <div className="h-4 bg-gray-200 rounded w-1/3" />
-              <div className="aspect-[16/9] bg-gray-200 rounded-xl" />
-              <div className="space-y-3">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="h-4 bg-gray-200 rounded" style={{ width: `${85 + Math.random() * 15}%` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </main>
-      </>
-    );
+// "[label](/path)" inside article text -> internal link; anything else stays text
+function RichText({ text }) {
+  const parts = [];
+  const re = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(<Link key={m.index} href={m[2]} className="text-copper font-medium underline underline-offset-2 hover:text-heritage">{m[1]}</Link>);
+    last = m.index + m[0].length;
   }
+  parts.push(text.slice(last));
+  return <>{parts}</>;
+}
 
-  if (!post) {
-    return (
-      <>
-        <Header />
-        <main className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">📄</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Blog post not found</h2>
-            <p className="text-gray-500 mb-6">This article may have been removed or doesn't exist.</p>
-            <Link href="/blogs" className="text-copper font-semibold hover:underline">
-              ← Back to Blog
-            </Link>
-          </div>
-        </main>
-      </>
-    );
-  }
+const plain = (t = '') => t.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+
+export default function BlogPost({ post, related }) {
+  const url = `${SITE}/blogs/${post.slug}`;
+  const shopLink = MENU.find((g) => g.key === 'collections').links.find((l) => post.links?.some((x) => x.href === l.href));
+
+  const articleLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.date,
+    mainEntityOfPage: url,
+    author: { '@type': 'Organization', name: 'Varaha Jewels' },
+    publisher: { '@type': 'Organization', name: 'Varaha Jewels', logo: { '@type': 'ImageObject', url: `${SITE}/varaha-assets/logo.png` } },
+  };
+  const faqLd = post.faq?.length ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: post.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: plain(f.a) } })),
+  } : null;
+  const crumbsLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE}/blogs` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: url },
+    ],
+  };
 
   return (
     <>
       <Head>
-        <title>{post.title} — Varaha Jewels Blog</title>
-        <meta name="description" content={post.excerpt || post.title} />
+        <title>{`${post.title} | Varaha Jewels`}</title>
+        <meta name="description" content={post.description} />
+        {post.keywords?.length > 0 && <meta name="keywords" content={post.keywords.join(', ')} />}
+        <link rel="canonical" href={url} />
+        <meta property="og:type" content="article" />
         <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.excerpt || post.title} />
-        {post.cover_image && <meta property="og:image" content={post.cover_image} />}
+        <meta property="og:description" content={post.description} />
+        <meta property="og:url" content={url} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsLd) }} />
+        {faqLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />}
       </Head>
       <Header />
-      <main className="min-h-screen bg-white">
 
-        {/* Back Link */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
-          <Link href="/blogs" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-heritage transition-colors">
-            <ArrowLeft size={16} /> Back to Blog
-          </Link>
-        </div>
+      <main className="bg-warm-sand">
+        <article className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 md:pt-12 pb-12">
+          <nav aria-label="Breadcrumb" className="text-sm text-heritage/60">
+            <Link href="/" className="hover:text-copper">Home</Link>
+            <span className="mx-2">/</span>
+            <Link href="/blogs" className="hover:text-copper">Blog</Link>
+            <span className="mx-2">/</span>
+            <span className="text-heritage/80">{post.category}</span>
+          </nav>
 
-        {/* Article */}
-        <article className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-          
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {post.tags.map(tag => (
-                <Link key={tag} href={`/blogs?tag=${tag}`}>
-                  <span className="text-[11px] uppercase tracking-wider font-semibold text-copper bg-copper/10 px-3 py-1 rounded-full hover:bg-copper/20 transition-colors cursor-pointer">
-                    {tag}
-                  </span>
+          <h1 className="mt-5 font-royal font-bold text-4xl md:text-6xl leading-[1.05] text-heritage">{post.title}</h1>
+          <p className="mt-4 text-sm text-heritage/60">
+            {post.readMinutes || 5} min read
+            {post.date && <>, <time dateTime={post.date}>{new Date(post.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</time></>}
+          </p>
+
+          {post.intro && <p className="mt-8 font-playfair text-xl leading-relaxed text-heritage/90"><RichText text={post.intro} /></p>}
+
+          <div className="mt-8 space-y-10">
+            {post.sections.map((s, i) => (
+              <section key={i}>
+                {s.heading && <h2 className="font-royal font-bold text-3xl text-heritage leading-tight">{s.heading}</h2>}
+                <div className="mt-3 space-y-4 text-[17px] leading-[1.75] text-[#4a2a1b]">
+                  {(s.paragraphs || []).map((para, j) => <p key={j}><RichText text={para} /></p>)}
+                  {s.list?.length > 0 && (
+                    <ul className="space-y-2 pl-1">
+                      {s.list.map((li, j) => (
+                        <li key={j} className="flex gap-3"><span className="mt-[11px] w-1.5 h-1.5 rounded-full bg-copper flex-shrink-0" /><span><RichText text={li} /></span></li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          {post.faq?.length > 0 && (
+            <section className="mt-12">
+              <h2 className="font-royal font-bold text-3xl text-heritage">Questions people ask</h2>
+              <div className="mt-4 divide-y divide-heritage/10 rounded-2xl bg-white border border-heritage/10">
+                {post.faq.map((f, i) => (
+                  <details key={i} className="group px-5 py-4" open={i === 0}>
+                    <summary className="cursor-pointer list-none flex justify-between gap-4 font-semibold text-heritage">
+                      {f.q}
+                      <span className="text-copper transition-transform group-open:rotate-45" aria-hidden>+</span>
+                    </summary>
+                    <p className="mt-2 text-[15px] leading-relaxed text-heritage/75"><RichText text={f.a} /></p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {post.links?.length > 0 && (
+            <div className="mt-10 flex flex-wrap gap-3">
+              {post.links.map((l) => (
+                <Link key={l.href + l.label} href={l.href} className="inline-flex items-center h-11 px-6 rounded-full bg-heritage text-warm-sand text-sm font-semibold hover:bg-copper transition-colors">
+                  {l.label}
                 </Link>
               ))}
             </div>
           )}
-
-          {/* Title */}
-          <h1 className="font-royal text-3xl sm:text-4xl lg:text-5xl font-bold text-heritage leading-tight mb-4">
-            {post.title}
-          </h1>
-
-          {/* Meta */}
-          <div className="flex items-center gap-4 text-sm text-gray-400 mb-8 pb-6 border-b border-gray-100">
-            <span className="flex items-center gap-1.5">
-              <Calendar size={14} />
-              {formatDate(post.created_at)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <User size={14} />
-              {post.author}
-            </span>
-            <button
-              onClick={handleShare}
-              className="ml-auto flex items-center gap-1.5 text-gray-400 hover:text-copper transition-colors"
-            >
-              {copied ? <><Check size={14} /> Copied!</> : <><Share2 size={14} /> Share</>}
-            </button>
-          </div>
-
-          {/* Cover Image */}
-          {post.cover_image && (
-            <div className="rounded-xl overflow-hidden mb-10 shadow-lg">
-              <img
-                src={post.cover_image}
-                alt={post.title}
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          )}
-
-          {/* Content */}
-          <div
-            className="prose prose-lg prose-gray max-w-none
-              prose-headings:font-royal prose-headings:text-heritage
-              prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
-              prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
-              prose-p:text-gray-600 prose-p:leading-relaxed prose-p:mb-5
-              prose-a:text-copper prose-a:no-underline hover:prose-a:underline
-              prose-strong:text-heritage
-              prose-img:rounded-xl prose-img:shadow-md
-              prose-blockquote:border-l-copper prose-blockquote:bg-copper/5 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-              prose-li:text-gray-600
-              prose-ul:my-4 prose-ol:my-4
-            "
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-
-          {/* Divider */}
-          <div className="my-12 flex items-center justify-center">
-            <span className="text-2xl text-copper">♦</span>
-          </div>
-
-          {/* Author Card */}
-          <div className="bg-gray-50 rounded-xl p-6 flex items-center gap-4 mb-12">
-            <div className="w-14 h-14 rounded-full bg-heritage/10 flex items-center justify-center flex-shrink-0">
-              <User size={24} className="text-heritage" />
-            </div>
-            <div>
-              <p className="font-semibold text-heritage">{post.author}</p>
-              <p className="text-sm text-gray-500">Varaha Jewels — Where Heritage Meets Royalty</p>
-            </div>
-          </div>
         </article>
 
-        {/* Related Posts */}
-        {relatedPosts.length > 0 && (
-          <section className="bg-gray-50 py-12 sm:py-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
-              <h3 className="font-royal text-2xl font-bold text-heritage text-center mb-8">More from our Journal</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {relatedPosts.map(rp => (
-                  <Link key={rp.id} href={`/blogs/${rp.slug}`}>
-                    <div className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                      <div className="aspect-[16/10] bg-gray-100 overflow-hidden">
-                        {rp.cover_image ? (
-                          <img src={rp.cover_image} alt={rp.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-heritage/10 to-copper/10 flex items-center justify-center">
-                            <span className="text-3xl">✍️</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h4 className="font-royal font-bold text-heritage group-hover:text-copper transition-colors line-clamp-2">{rp.title}</h4>
-                        <p className="text-xs text-gray-400 mt-2">{formatDate(rp.created_at)}</p>
-                      </div>
-                    </div>
+        {shopLink && <CollectionRail label={shopLink.label} title={`Shop ${shopLink.label.toLowerCase()}`} tone="ivory" />}
+
+        {related.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <h2 className="font-royal font-bold text-3xl text-heritage mb-5">Keep reading</h2>
+            <ul className="grid sm:grid-cols-3 gap-4 md:gap-6">
+              {related.map((p) => (
+                <li key={p.slug}>
+                  <Link href={`/blogs/${p.slug}`} className="group h-full block rounded-2xl bg-white border border-heritage/10 p-6 hover:border-copper transition-colors">
+                    <p className="text-xs text-copper font-semibold">{p.category}</p>
+                    <p className="mt-2 font-royal font-bold text-xl leading-snug text-heritage group-hover:text-copper">{p.title}</p>
+                    <p className="mt-3 text-xs text-heritage/50">{p.readMinutes} min read</p>
                   </Link>
-                ))}
-              </div>
-            </div>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </main>
       <Footer />
     </>
   );
+}
+
+export async function getStaticPaths() {
+  return { paths: getAllPostSummaries().map((p) => ({ params: { slug: p.slug } })), fallback: 'blocking' };
+}
+
+export async function getStaticProps({ params }) {
+  const post = getPost(params.slug);
+  if (!post) return { notFound: true };
+  return { props: { post, related: getRelatedPosts(post) } };
 }

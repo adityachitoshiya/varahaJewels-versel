@@ -1,110 +1,125 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
-    LayoutDashboard,
-    ShoppingBag,
-    Users,
-    Settings,
-    LogOut,
-    Package,
-    Menu,
-    ChevronRight,
-    Search,
-    Bell,
-    Tag,
-    Activity,
-    Image as ImageIcon,
-    TrendingUp,
-    Sparkles,
-    FileText
+    LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Package, Menu, X, Search, Bell,
+    Activity, Image as ImageIcon, Sparkles, RotateCcw, FolderTree, FileBarChart, ExternalLink,
+    PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
-import { getApiUrl } from '../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import { AdminToastProvider } from './AdminToast';
+
+// Shared admin frame: grouped sidebar, page title bar, product search and
+// notifications. Every /admin page renders inside this.
+
+const NAV = [
+    {
+        group: 'Sell',
+        items: [
+            { name: 'Overview', href: '/admin', icon: LayoutDashboard },
+            { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+            { name: 'Returns', href: '/admin/returns', icon: RotateCcw },
+            { name: 'Customers', href: '/admin/customers', icon: Users },
+        ],
+    },
+    {
+        group: 'Catalogue',
+        items: [
+            { name: 'Products', href: '/admin/products', icon: Package },
+            { name: 'Categories', href: '/admin/categories', icon: FolderTree },
+            { name: 'Offers', href: '/admin/offers', icon: Sparkles },
+        ],
+    },
+    {
+        group: 'Store',
+        items: [
+            { name: 'Content', href: '/admin/cms', icon: ImageIcon },
+            { name: 'Analytics', href: '/admin/analytics', icon: Activity },
+            { name: 'Reports', href: '/admin/reports', icon: FileBarChart },
+            { name: 'Notifications', href: '/admin/notifications', icon: Bell },
+            { name: 'Settings', href: '/admin/settings', icon: Settings },
+        ],
+    },
+];
+
+const isActive = (pathname, href) => (href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(`${href}/`));
 
 export default function AdminLayout({ children }) {
     const router = useRouter();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [scrolled, setScrolled] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);   // desktop: icon-only sidebar
+    const [mobileOpen, setMobileOpen] = useState(false); // phone: drawer
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [query, setQuery] = useState('');
 
-    // Notifications Logic
+    // Notifications
     const [notifications, setNotifications] = useState([]);
     const [showNotifications, setShowNotifications] = useState(false);
     const notificationRef = useRef(null);
 
     const fetchNotifications = async () => {
         try {
-            const res = await fetch(`${getApiUrl()}/api/notifications`);
-            if (res.ok) {
-                const data = await res.json();
-                setNotifications(data);
-            }
+            const res = await fetch(`${getApiUrl()}/api/notifications`, { headers: getAdminHeaders(false) });
+            if (res.ok) setNotifications(await res.json());
         } catch (error) {
-            console.error("Failed to fetch notifications", error);
+            console.error('Failed to fetch notifications', error);
         }
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchNotifications();
-            const interval = setInterval(fetchNotifications, 30000);
-            return () => clearInterval(interval);
-        }
+        if (!isAuthenticated) return;
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000);
+        return () => clearInterval(interval);
     }, [isAuthenticated]);
 
-    // Handle outside click
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-                setShowNotifications(false);
-            }
+        if (!showNotifications) return;
+        const close = (e) => {
+            if (notificationRef.current && !notificationRef.current.contains(e.target)) setShowNotifications(false);
         };
-
-        if (showNotifications) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
     }, [showNotifications]);
 
     const markAsRead = async (id) => {
         try {
-            await fetch(`${getApiUrl()}/api/notifications/${id}/read`, { method: 'POST' });
-            // Update local state
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+            await fetch(`${getApiUrl()}/api/notifications/${id}/read`, { method: 'PUT', headers: getAdminHeaders(false) });
+            setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
         } catch (error) {
-            console.error("Failed to mark read", error);
+            console.error('Failed to mark read', error);
         }
     };
+    const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-    const unreadCount = notifications.filter(n => !n.is_read).length;
-
-    // Check auth on mount
+    // Auth check (token in localStorage, same as before)
     useEffect(() => {
-        // If we continue to use localStorage for auth token
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
-
-        // If on login page, we don't need to block
         if (router.pathname === '/admin/login') {
             setIsAuthenticated(true);
             setIsLoading(false);
             return;
         }
-
-        if (!token) {
-            router.push('/admin/login');
-        } else {
-            setIsAuthenticated(true);
-        }
+        const token = localStorage.getItem('admin_token') || localStorage.getItem('token');
+        if (!token) router.push('/admin/login');
+        else setIsAuthenticated(true);
         setIsLoading(false);
-
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
     }, [router]);
+
+    // Remember the collapsed sidebar; close the phone drawer on navigation
+    useEffect(() => {
+        try { setCollapsed(localStorage.getItem('admin_sidebar_collapsed') === '1'); } catch {}
+    }, []);
+    useEffect(() => { setMobileOpen(false); }, [router.asPath]);
+    const toggleCollapsed = () => {
+        setCollapsed((c) => {
+            try { localStorage.setItem('admin_sidebar_collapsed', c ? '0' : '1'); } catch {}
+            return !c;
+        });
+    };
+
+    useEffect(() => {
+        if (typeof router.query.q === 'string') setQuery(router.query.q);
+    }, [router.query.q]);
 
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
@@ -112,246 +127,145 @@ export default function AdminLayout({ children }) {
         router.push('/admin/login');
     };
 
-    const [isMobile, setIsMobile] = useState(false);
-
-    // Resize Handler
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 768;
-            setIsMobile(mobile);
-            if (mobile) {
-                setSidebarOpen(false); // Default close on mobile
-            } else {
-                setSidebarOpen(true); // Default open on desktop
-            }
-        };
-
-        // Initial check
-        handleResize();
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const navItems = [
-        { name: 'Overview', href: '/admin', icon: LayoutDashboard },
-        { name: 'Analytics', href: '/admin/analytics', icon: Activity },
-        { name: 'Content', href: '/admin/cms', icon: ImageIcon },
-        { name: 'Blogs', href: '/admin/blogs', icon: FileText },
-        { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
-        { name: 'Products', href: '/admin/products', icon: Package },
-        { name: 'Offers', href: '/admin/offers', icon: Sparkles },
-        { name: 'Customers', href: '/admin/customers', icon: Users },
-        { name: 'Settings', href: '/admin/settings', icon: Settings },
-    ];
+    const onSearch = (e) => {
+        e.preventDefault();
+        const q = query.trim();
+        router.push(q ? `/admin/products?q=${encodeURIComponent(q)}` : '/admin/products');
+    };
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
-                <div className="w-16 h-16 border-4 border-copper border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-screen flex items-center justify-center bg-[#F6F1EB]">
+                <div className="w-12 h-12 border-4 border-copper border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
+    if (!isAuthenticated && router.pathname !== '/admin/login') return null;
+    if (router.pathname === '/admin/login') return <>{children}</>;
 
-    if (!isAuthenticated && router.pathname !== '/admin/login') {
-        return null; // Don't render protected content
-    }
+    const current = NAV.flatMap((g) => g.items).find((i) => isActive(router.pathname, i.href));
+    const sidebarWidth = collapsed ? 'md:w-[76px]' : 'md:w-64';
 
-    if (router.pathname === '/admin/login') {
-        return <>{children}</>;
-    }
+    const sidebar = (
+        <>
+            <div className={`h-16 flex items-center gap-3 px-5 border-b border-white/10 ${collapsed ? 'md:justify-center md:px-0' : ''}`}>
+                <img
+                    src="/varaha-assets/logo.png"
+                    alt="Varaha Jewels"
+                    className={`object-contain brightness-0 invert ${collapsed ? 'md:h-8 md:w-8' : ''} h-8 w-auto`}
+                    onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }}
+                />
+                <span className={`text-xs text-[#E8C9A0] ${collapsed ? 'md:hidden' : ''}`}>Admin</span>
+                <button onClick={() => setMobileOpen(false)} className="md:hidden ml-auto p-1 text-white/60 hover:text-white" aria-label="Close menu">
+                    <X size={20} />
+                </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5" aria-label="Admin">
+                {NAV.map((g) => (
+                    <div key={g.group}>
+                        <p className={`px-3 mb-1.5 text-xs text-white/40 ${collapsed ? 'md:hidden' : ''}`}>{g.group}</p>
+                        <ul className="space-y-0.5">
+                            {g.items.map((item) => {
+                                const active = isActive(router.pathname, item.href);
+                                return (
+                                    <li key={item.href}>
+                                        <Link
+                                            href={item.href}
+                                            title={collapsed ? item.name : undefined}
+                                            aria-current={active ? 'page' : undefined}
+                                            className={`relative flex items-center gap-3 h-10 rounded-lg text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8C9A0] ${collapsed ? 'md:justify-center px-3 md:px-0' : 'px-3'} ${active ? 'bg-white/10 text-white font-semibold' : 'text-white/65 hover:bg-white/5 hover:text-white'}`}
+                                        >
+                                            {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-[#E8C9A0]" />}
+                                            <item.icon size={18} strokeWidth={active ? 2.4 : 2} className={active ? 'text-[#E8C9A0]' : ''} />
+                                            <span className={collapsed ? 'md:hidden' : ''}>{item.name}</span>
+                                            {item.href === '/admin/notifications' && unreadCount > 0 && (
+                                                <span className={`ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-royal-orange text-white text-[11px] font-bold flex items-center justify-center ${collapsed ? 'md:absolute md:top-0.5 md:right-1 md:ml-0' : ''}`}>{unreadCount}</span>
+                                            )}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                ))}
+            </nav>
+
+            <div className="p-3 border-t border-white/10 space-y-0.5">
+                <a href="/" target="_blank" rel="noreferrer" className={`flex items-center gap-3 h-10 rounded-lg text-sm text-white/65 hover:bg-white/5 hover:text-white ${collapsed ? 'md:justify-center px-3 md:px-0' : 'px-3'}`} title={collapsed ? 'View store' : undefined}>
+                    <ExternalLink size={18} /><span className={collapsed ? 'md:hidden' : ''}>View store</span>
+                </a>
+                <button onClick={handleLogout} className={`w-full flex items-center gap-3 h-10 rounded-lg text-sm text-white/65 hover:bg-red-500/15 hover:text-red-200 ${collapsed ? 'md:justify-center px-3 md:px-0' : 'px-3'}`} title={collapsed ? 'Sign out' : undefined}>
+                    <LogOut size={18} /><span className={collapsed ? 'md:hidden' : ''}>Sign out</span>
+                </button>
+                <button onClick={toggleCollapsed} className={`hidden md:flex w-full items-center gap-3 h-10 rounded-lg text-sm text-white/45 hover:bg-white/5 hover:text-white ${collapsed ? 'justify-center' : 'px-3'}`} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+                    {collapsed ? <PanelLeftOpen size={18} /> : <><PanelLeftClose size={18} /><span>Collapse</span></>}
+                </button>
+            </div>
+        </>
+    );
 
     return (
         <AdminToastProvider>
-        <div className="min-h-screen bg-[#F8F9FA] flex font-sans text-gray-800">
-            {/* Mobile Overlay */}
-            {isMobile && sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-30"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
+            <div className="min-h-screen bg-[#F6F1EB] text-[#2a150c] font-sans">
+                {/* Phone drawer backdrop */}
+                {mobileOpen && <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileOpen(false)} />}
 
-            {/* Sidebar */}
-            <aside
-                className={`fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out bg-white border-r border-gray-100 shadow-xl shadow-gray-200/50 
-                    ${isMobile
-                        ? (sidebarOpen ? 'translate-x-0 w-72' : '-translate-x-full w-72')
-                        : (sidebarOpen ? 'translate-x-0 w-72' : 'translate-x-0 w-20')
-                    }
-                `}
-            >
-                <div className="h-24 flex items-center justify-center border-b border-gray-50/50 mb-2">
-                    <div className={`transition-all duration-300 flex items-center justify-center ${!isMobile && !sidebarOpen ? 'w-12 h-12' : 'w-48'}`}>
-                        {(!isMobile && !sidebarOpen) ? (
-                            <img src="/varaha-assets/logo.png" alt="V" className="h-10 w-10 object-contain" onError={(e) => { e.target.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
-                        ) : (
-                            <img src="/varaha-assets/logo.png" alt="Varaha Jewels" className="h-auto w-full max-w-[160px] object-contain" onError={(e) => { e.target.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
-                        )}
-                    </div>
-                    {/* Close button for mobile */}
-                    {isMobile && (
-                        <button onClick={() => setSidebarOpen(false)} className="absolute right-4 top-8 text-gray-400">
-                            <ChevronRight className="rotate-180" size={24} />
+                <aside className={`fixed inset-y-0 left-0 z-50 w-64 ${sidebarWidth} bg-[#2a150c] flex flex-col transition-[transform,width] duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+                    {sidebar}
+                </aside>
+
+                <div className={`min-h-screen flex flex-col transition-[margin] duration-200 ${collapsed ? 'md:ml-[76px]' : 'md:ml-64'}`}>
+                    <header className="sticky top-0 z-30 h-16 px-4 md:px-8 flex items-center gap-4 bg-[#F6F1EB]/90 backdrop-blur border-b border-[#2a150c]/10">
+                        <button onClick={() => setMobileOpen(true)} className="md:hidden p-2 -ml-2 text-[#2a150c]" aria-label="Open menu">
+                            <Menu size={22} />
                         </button>
-                    )}
-                </div>
+                        <p className="font-royal font-bold text-2xl leading-none truncate">{current?.name || 'Admin'}</p>
 
-                <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
-                    {navItems.map((item) => {
-                        const isActive = router.pathname === item.href;
-                        // On desktop collapsed, hide text. On mobile, always show text (since sidebar is full width when open)
-                        const showText = isMobile || sidebarOpen;
-
-                        return (
-                            <Link key={item.name} href={item.href}>
-                                <div className={`group flex items-center px-4 py-3.5 rounded-xl cursor-pointer transition-all duration-200 ${isActive
-                                    ? 'bg-copper/10 text-copper font-semibold shadow-sm'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                                    }`}>
-                                    <item.icon
-                                        size={22}
-                                        strokeWidth={isActive ? 2.5 : 2}
-                                        className={`transition-colors duration-200 ${isActive ? 'text-copper' : 'group-hover:text-gray-700'}`}
-                                    />
-                                    <span className={`ml-3 whitespace-nowrap transition-all duration-300 ${showText ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 absolute'
-                                        }`}>
-                                        {item.name}
-                                    </span>
-                                    {isActive && showText && (
-                                        <ChevronRight size={16} className="ml-auto text-copper" />
-                                    )}
-                                </div>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                <div className="p-4 mt-auto border-t border-gray-100 bg-white">
-                    <button
-                        onClick={handleLogout}
-                        className={`flex items-center w-full px-4 py-3 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all duration-200 group ${(!isMobile && !sidebarOpen) && 'justify-center'
-                            }`}
-                    >
-                        <LogOut size={22} className="group-hover:translate-x-1 transition-transform" />
-                        <span className={`ml-3 font-medium transition-all duration-300 ${(isMobile || sidebarOpen) ? 'opacity-100' : 'opacity-0 w-0 hidden'
-                            }`}>
-                            Sign Out
-                        </span>
-                    </button>
-
-                    {!isMobile && (
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="mt-4 flex items-center justify-center w-full py-2 text-gray-300 hover:text-gray-500 transition-colors"
-                        >
-                            <div className="w-8 h-1 bg-gray-200 rounded-full"></div>
-                        </button>
-                    )}
-                </div>
-            </aside>
-
-            {/* Main Content Area */}
-            <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 
-                ${isMobile ? 'ml-0' : (sidebarOpen ? 'ml-72' : 'ml-20')}
-            `}>
-                {/* Navbar */}
-                <header className={`sticky top-0 z-20 h-20 px-4 md:px-8 flex items-center justify-between transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-transparent'
-                    }`}>
-
-                    <div className="flex items-center gap-4">
-                        {isMobile && (
-                            <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-gray-600">
-                                <Menu size={24} />
-                            </button>
-                        )}
-                        <div>
-                            {/* Breadcrumb or Page Title can act here */}
-                            <p className="text-sm text-gray-500 font-medium hidden md:block">
-                                {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
-                            </p>
-                            {/* Short Date for Mobile */}
-                            <p className="text-sm text-gray-500 font-medium md:hidden">
-                                {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 md:gap-6">
-                        <div className="relative hidden md:block group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-copper transition-colors" size={18} />
+                        <form onSubmit={onSearch} className="relative ml-auto hidden sm:block" role="search">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2a150c]/40" size={16} />
                             <input
-                                type="text"
-                                placeholder="Quick search..."
-                                className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-copper/20 focus:border-copper transition-all w-64 shadow-sm"
+                                type="search"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Search products"
+                                aria-label="Search products"
+                                className="w-56 lg:w-72 h-10 pl-9 pr-3 rounded-full bg-white border border-[#2a150c]/10 text-sm focus:outline-none focus:border-copper focus:ring-2 focus:ring-copper/20"
                             />
-                        </div>
+                        </form>
 
-                        <div className="relative" ref={notificationRef}>
-                            <button
-                                onClick={() => setShowNotifications(!showNotifications)}
-                                className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <Bell size={22} />
+                        <div className="relative sm:ml-0 ml-auto" ref={notificationRef}>
+                            <button onClick={() => setShowNotifications((s) => !s)} className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#2a150c]/70 hover:bg-white" aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`}>
+                                <Bell size={20} />
                                 {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 rounded-full border border-white text-[10px] flex items-center justify-center text-white font-bold">
-                                        {unreadCount}
-                                    </span>
+                                    <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-royal-orange text-white text-[10px] font-bold flex items-center justify-center">{unreadCount}</span>
                                 )}
                             </button>
-
-                            {/* Dropdown */}
                             {showNotifications && (
-                                <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
-                                    <div className="p-3 border-b border-gray-50 flex justify-between items-center">
-                                        <h3 className="font-semibold text-gray-800">Notifications</h3>
-                                        <button onClick={fetchNotifications} className="text-xs text-copper">Refresh</button>
+                                <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-2xl shadow-xl border border-[#2a150c]/10 overflow-hidden z-50">
+                                    <div className="px-4 py-3 border-b border-[#2a150c]/10 flex justify-between items-center">
+                                        <p className="font-semibold">Notifications</p>
+                                        <button onClick={fetchNotifications} className="text-xs font-semibold text-copper">Refresh</button>
                                     </div>
                                     <div className="max-h-80 overflow-y-auto">
                                         {notifications.length === 0 ? (
-                                            <div className="p-4 text-center text-gray-400 text-sm">No notifications</div>
-                                        ) : (
-                                            notifications.map(n => (
-                                                <div
-                                                    key={n.id}
-                                                    onClick={() => markAsRead(n.id)}
-                                                    className={`p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
-                                                >
-                                                    <p className={`text-sm ${!n.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>{n.message}</p>
-                                                    <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleString()}</p>
-                                                </div>
-                                            ))
-                                        )}
-
+                                            <p className="p-6 text-center text-sm text-[#2a150c]/50">You are all caught up.</p>
+                                        ) : notifications.map((n) => (
+                                            <button key={n.id} onClick={() => markAsRead(n.id)} className={`w-full text-left px-4 py-3 border-b border-[#2a150c]/5 hover:bg-[#F6F1EB] ${!n.is_read ? 'bg-amber-50/60' : ''}`}>
+                                                <p className={`text-sm ${!n.is_read ? 'font-semibold' : 'text-[#2a150c]/70'}`}>{n.message}</p>
+                                                <p className="text-xs text-[#2a150c]/45 mt-1">{new Date(n.created_at).toLocaleString('en-IN')}</p>
+                                            </button>
+                                        ))}
                                     </div>
-                                    <div className="p-2 border-t border-gray-50 bg-gray-50/50 text-center">
-                                        <Link href="/admin/notifications" className="text-xs font-medium text-copper hover:text-heritage block w-full py-1">
-                                            See all notifications
-                                        </Link>
-                                    </div>
+                                    <Link href="/admin/notifications" className="block px-4 py-2.5 text-center text-xs font-semibold text-copper hover:bg-[#F6F1EB]">See all notifications</Link>
                                 </div>
-
                             )}
                         </div>
+                    </header>
 
-                        <div className="flex items-center gap-3 pl-3 md:pl-6 border-l border-gray-200">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-gray-900">Admin</p>
-                                <p className="text-xs text-copper font-medium">Super User</p>
-                            </div>
-                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-md flex items-center justify-center overflow-hidden">
-                                <img src={`https://ui-avatars.com/api/?name=Admin&background=B45309&color=fff`} alt="Admin" />
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Main View */}
-                <main className="flex-1 p-4 md:p-8">
-                    {children}
-                </main>
-            </div >
-        </div >
+                    <main className="flex-1 p-4 md:p-8">{children}</main>
+                </div>
+            </div>
         </AdminToastProvider>
     );
 }

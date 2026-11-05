@@ -1,217 +1,274 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, ArrowRight, ShoppingBag } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { Minus, Plus, ShoppingBag, Check, Truck, Wallet, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import SpotlightSkeleton from '../SpotlightSkeleton';
+import { getApiUrl } from '../../lib/config';
+import { useCart } from '../../context/CartContext';
+import { FREE_DELIVERY_MIN } from '../../lib/deliveryFees';
 
-import { getApiUrl } from '../../lib/config'; // Import config
+// One product, bought right here: gallery + quantity + Add to cart / Buy now.
+// The piece shown = first in-stock spotlight product (admin toggle); the
+// "More picks" row lets shoppers switch to the other spotlight pieces.
+
+const MAX_PICKS = 6;
+const formatINR = (n) => `₹${Math.round(Number(n)).toLocaleString('en-IN')}`;
+const inStock = (p) => p.stock === null || p.stock === undefined || p.stock > 0;
+
+function parseList(v) {
+  if (Array.isArray(v)) return v;
+  try {
+    const x = JSON.parse(v || '[]');
+    return Array.isArray(x) ? x : [];
+  } catch {
+    return [];
+  }
+}
+
+// "Heritage collection", "Silver collection"... ("Artificial" is an internal
+// category name, so fall back to the collection for those)
+function label(p) {
+  const name = p.category && p.category !== 'Artificial' ? p.category : p.collection;
+  return name ? `${name} collection` : '';
+}
+
+function cleanDescription(text) {
+  if (!text) return '';
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/^\s*product\s+description\s*:?\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 export default function ProductSpotlight() {
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true); // Force visible for debugging
-  const ref = useRef(null);
+  const router = useRouter();
+  const { addToCart } = useCart();
+  const [products, setProducts] = useState(null);
+  const [active, setActive] = useState(0);
+  const [photo, setPhoto] = useState(0);
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => {
-      if (ref.current) observer.unobserve(ref.current);
-    };
+    fetch(`${getApiUrl()}/api/products`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        const buyable = data.filter((p) => inStock(p) && p.price);
+        const spot = buyable.filter((p) => p.is_spotlight);
+        const featured = buyable.filter((p) => !p.is_spotlight && (p.tag === 'Featured' || p.tag === 'Bestseller' || p.premium));
+        const rest = buyable.filter((p) => !spot.includes(p) && !featured.includes(p));
+        setProducts([...spot, ...featured, ...rest].slice(0, MAX_PICKS));
+      })
+      .catch(() => setProducts([]));
   }, []);
 
-  useEffect(() => {
-    fetchFeaturedProducts();
-  }, []);
+  const current = products?.[active];
+  const photos = useMemo(
+    () => (current ? [current.image, ...parseList(current.additional_images)].filter(Boolean) : []),
+    [current]
+  );
 
-  const fetchFeaturedProducts = async () => {
-    try {
-      const API_URL = getApiUrl();
-      const response = await fetch(`${API_URL}/api/products`);
-      if (!response.ok) throw new Error('Failed to fetch products');
-      const data = await response.json();
+  if (products === null) return <SpotlightSkeleton />;
+  if (!current) return null;
 
-      // Filter for spotlight products (admin-set via toggle)
-      const spotlight = data.filter(p => p.is_spotlight);
-      // Fallback: if no spotlight set, use featured/bestseller/premium, then first 5
-      if (spotlight.length > 0) {
-        setProducts(spotlight);
-      } else {
-        const featured = data.filter(p => p.tag === 'Featured' || p.tag === 'Bestseller' || p.premium);
-        setProducts(featured.length > 0 ? featured : data.slice(0, 5));
-      }
-    } catch (err) {
-      console.error("Error fetching products:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+  const maxQty = current.stock > 0 ? current.stock : 10;
+  const showMrp = current.mrp && current.mrp > current.price;
+  const offPct = showMrp ? Math.round((1 - current.price / current.mrp) * 100) : 0;
+  const lowStock = current.stock > 0 && current.stock <= 5;
+  const href = `/product/${current.slug || current.id}`;
+  const description = cleanDescription(current.description);
+  const variant = { id: `${current.id}-default`, sku: `${current.id}-default`, price: current.price, name: 'Standard', image: current.image };
+
+  const pick = (i) => {
+    setActive(i);
+    setPhoto(0);
+    setQty(1);
+    setAdded(false);
   };
 
-  // Safe fallback if no products
-  if (isLoading) return <SpotlightSkeleton />;
-  if (error) return <div className="py-24 text-center text-red-500">Error: {error}</div>;
-  if (products.length === 0) {
-    return (
-      <div className="py-24 text-center">
-        <p className="text-heritage/60 mb-4">No products available yet</p>
-        <Link href="/admin/products/new" className="text-copper underline">Add your first product</Link>
-      </div>
-    );
-  }
+  const handleAdd = async () => {
+    await addToCart(current, variant, qty);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2200);
+  };
 
-  const currentProduct = products[currentIndex];
-
-  // Check if products are featured or new arrivals state derived from current set
-  const hasFeaturedProducts = products.some(p => p.tag === 'Featured' || p.tag === 'Bestseller' || p.premium);
+  const handleBuyNow = () => {
+    router.push({
+      pathname: '/checkout',
+      query: {
+        productId: current.id,
+        variantId: variant.id,
+        quantity: qty,
+        amount: current.price * qty,
+        productName: current.name,
+        image: current.image,
+        description: description.substring(0, 100),
+      },
+    });
+  };
 
   return (
-    <section className="py-12 sm:py-16 md:py-24 relative overflow-hidden bg-[#faf9f6]">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
-        <div className="absolute top-10 left-10 w-64 h-64 bg-copper rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-heritage rounded-full blur-[120px]"></div>
-      </div>
-
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-      `}</style>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-
-        {/* Header */}
-        <div
-          ref={ref}
-          className={`text-center mb-8 sm:mb-12 md:mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-        >
-          <span className="text-copper font-medium tracking-[0.2em] uppercase text-sm mb-2 block animate-pulse">
-            {hasFeaturedProducts ? 'Exquisite Collection' : 'Fresh Designs'}
-          </span>
-          <h2 className="font-royal text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-heritage mb-4 sm:mb-6 drop-shadow-sm">
-            {hasFeaturedProducts ? 'Featured Masterpieces' : 'New Arrivals'}
+    <section className="spotlight relative bg-[#2a150c] text-[#FBF3EA] py-16 md:py-24" aria-labelledby="spotlight-title">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="flex items-end justify-between gap-6 mb-8 md:mb-12">
+          <h2 id="spotlight-title" className="font-royal font-semibold text-4xl sm:text-5xl md:text-6xl leading-[1.05]">
+            In the spotlight
           </h2>
+          <Link href="/shop" prefetch={false} className="hidden sm:inline-flex items-center gap-1.5 text-sm text-[#F4E6D8]/75 hover:text-[#FBF3EA] underline underline-offset-[6px] decoration-[#F4E6D8]/30 hover:decoration-[#FBF3EA]">
+            Browse the shop <ArrowUpRight size={15} />
+          </Link>
         </div>
 
-        {/* Main Showcase */}
-        <div className={`relative transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-          <div className="grid lg:grid-cols-12 gap-8 items-center">
-
-            {/* Image Area - Spans 7 cols - WITH FLOATING EFFECT */}
-            <div className="lg:col-span-7 relative group md:animate-float">
-              <div className="aspect-[3/4] sm:aspect-[4/5] md:aspect-[16/10] lg:h-[600px] w-full relative rounded-xl sm:rounded-2xl overflow-hidden shadow-[0_10px_30px_-8px_rgba(183,110,121,0.25)] sm:shadow-[0_20px_50px_-12px_rgba(183,110,121,0.3)] border border-white/20">
-                <Image
-                  src={currentProduct.image}
-                  alt={currentProduct.name}
-                  fill
-                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  onError={(e) => { e.target.src = '/varaha-assets/logo.png'; }}
-                />
-
-                {/* Overlay Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
-
-                {/* Tags on Image */}
-                <div className="absolute top-3 left-3 sm:top-6 sm:left-6 flex gap-1.5 sm:gap-2">
-                  {currentProduct.premium && (
-                    <span className="px-2.5 py-0.5 sm:px-4 sm:py-1 bg-white/90 backdrop-blur-md text-heritage text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-sm shadow-lg">
-                      Premium
-                    </span>
-                  )}
-                  {currentProduct.tag && (
-                    <span className="px-2.5 py-0.5 sm:px-4 sm:py-1 bg-copper/90 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-sm shadow-lg">
-                      {currentProduct.tag}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Content Area - Floating Glass Card - Spans 5 cols */}
-            <div className="lg:col-span-5 lg:-ml-12 relative z-20 mt-4 sm:mt-6 lg:mt-0">
-              <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-5 sm:p-8 md:p-12 rounded-xl sm:rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(183,110,121,0.2)] transition-shadow duration-500">
-                <div className="flex items-center gap-1.5 sm:gap-2 text-copper mb-3 sm:mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} className="sm:w-4 sm:h-4" fill="currentColor" />
-                  ))}
-                  <span className="text-xs text-gray-500 font-medium ml-2 uppercase tracking-wide">(Bestseller)</span>
-                </div>
-
-                <h3 className="font-royal text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-heritage mb-3 sm:mb-4 md:mb-6 leading-[1.1]">
-                  {currentProduct.name}
-                </h3>
-
-                <p className="font-playfair text-sm sm:text-base md:text-lg text-gray-600 mb-4 sm:mb-6 md:mb-8 leading-relaxed line-clamp-2 sm:line-clamp-3">
-                  {currentProduct.description || "Experience the timeless elegance of our handcrafted masterpiece, designed to illuminate your grace."}
-                </p>
-
-                <div className="flex items-baseline gap-2 sm:gap-4 mb-5 sm:mb-8 md:mb-10">
-                  <span className="text-2xl sm:text-3xl md:text-4xl font-light text-copper">
-                    {currentProduct.price ? `₹${currentProduct.price.toLocaleString('en-IN')} ` : 'Price on Request'}
-                  </span>
-                </div>
-
-                <div className="flex flex-row gap-2 sm:gap-4">
-                  <Link
-                    href={`/product/${currentProduct.slug || currentProduct.id}`}
-                    className="flex-1 py-3 sm:py-4 bg-heritage text-white text-center rounded-lg font-medium text-sm sm:text-base hover:bg-copper transition-colors flex items-center justify-center gap-2 group shadow-lg shadow-heritage/20 active:scale-[0.97]"
-                  >
-                    Shop Now
-                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link
-                    href={`/product/${currentProduct.slug || currentProduct.id}`}
-                    className="px-4 sm:px-6 py-3 sm:py-4 border border-heritage/20 text-heritage rounded-lg hover:bg-heritage/5 transition-colors flex items-center justify-center group active:scale-[0.97]"
-                  >
-                    <ShoppingBag size={20} className="group-hover:scale-110 transition-transform" />
-                  </Link>
-                </div>
-
-              </div>
-
-              {/* Thumbnails Navigation */}
-              <div className="mt-4 sm:mt-6 md:mt-8 flex gap-2.5 sm:gap-4 overflow-x-auto pb-3 sm:pb-4 hide-scrollbar scrollbar-hide px-1">
-                {products.map((p, idx) => (
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-14">
+          {/* Gallery */}
+          <div className="lg:col-span-7 flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
+            {photos.length > 1 && (
+              <div className="flex sm:flex-col gap-2.5 sm:w-[76px] flex-shrink-0 overflow-x-auto sm:overflow-visible scrollbar-hide">
+                {photos.slice(0, 5).map((src, i) => (
                   <button
-                    key={p.id}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`flex-shrink-0 w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 relative active:scale-95 ${idx === currentIndex ? 'border-copper scale-110 shadow-lg ring-2 ring-copper/20' : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'}`}
+                    key={src}
+                    onClick={() => setPhoto(i)}
+                    className={`relative w-[64px] h-[80px] sm:w-[76px] sm:h-[95px] flex-shrink-0 rounded-xl overflow-hidden transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8C9A0] ${i === photo ? 'ring-2 ring-[#E8C9A0] opacity-100' : 'opacity-55 hover:opacity-90'}`}
+                    aria-label={`Show photo ${i + 1}`}
+                    aria-pressed={i === photo}
                   >
-                    <Image
-                      src={p.image}
-                      alt={p.name}
-                      fill
-                      className="object-cover"
-                      sizes="80px"
-                      onError={(e) => { e.target.src = '/varaha-assets/logo.png'; }}
-                    />
+                    <Image src={src} alt="" fill sizes="76px" className="object-cover" />
                   </button>
                 ))}
               </div>
-            </div>
+            )}
+            <Link
+              href={href}
+              prefetch={false}
+              className="relative flex-1 aspect-[4/5] rounded-[28px] overflow-hidden bg-[#3a2014]"
+              aria-label={`Open ${current.name}`}
+            >
+              <Image
+                key={photos[photo]}
+                src={photos[photo] || '/varaha-assets/logo.png'}
+                alt={current.name}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover spotlight-photo"
+              />
+              {offPct > 0 && (
+                <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-[#FBF3EA] text-heritage text-xs font-bold">
+                  {offPct}% off
+                </span>
+              )}
+            </Link>
+          </div>
 
+          {/* Buy panel */}
+          <div className="lg:col-span-5 lg:pt-2">
+            <div key={current.id} className="spotlight-in">
+              {label(current) && <p className="text-sm text-[#E8C9A0]">{label(current)}</p>}
+              <h3 className="mt-3 font-royal font-semibold text-3xl md:text-[2.6rem] leading-[1.12]" title={current.name}>
+                <Link href={href} prefetch={false} className="hover:text-[#E8C9A0] transition-colors line-clamp-3">
+                  {current.name}
+                </Link>
+              </h3>
+
+              <div className="mt-6 flex items-baseline flex-wrap gap-x-3 gap-y-1">
+                <span className="font-royal font-semibold text-5xl text-[#E8C9A0] tabular-nums">{formatINR(current.price)}</span>
+                {showMrp && <span className="text-lg text-[#F4E6D8]/45 line-through tabular-nums">{formatINR(current.mrp)}</span>}
+              </div>
+              <p className="mt-1 text-xs text-[#F4E6D8]/55">Inclusive of all taxes</p>
+
+              {lowStock && (
+                <p className="mt-5 inline-flex items-center gap-2 text-sm text-[#FFB27A]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFB27A]" />
+                  Only {current.stock} left
+                </p>
+              )}
+
+              {description && (
+                <p className="mt-5 text-[15px] text-[#F4E6D8]/70 leading-relaxed line-clamp-3 max-w-[60ch]">{description}</p>
+              )}
+
+              {/* Quantity + actions */}
+              <div className="mt-8 flex flex-wrap items-stretch gap-3">
+                <div className="inline-flex items-center rounded-full border border-[#F4E6D8]/25">
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    disabled={qty <= 1}
+                    className="w-11 h-[52px] flex items-center justify-center rounded-l-full disabled:opacity-35 hover:bg-white/10"
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span className="w-8 text-center tabular-nums font-semibold" aria-live="polite">{qty}</span>
+                  <button
+                    onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                    disabled={qty >= maxQty}
+                    className="w-11 h-[52px] flex items-center justify-center rounded-r-full disabled:opacity-35 hover:bg-white/10"
+                    aria-label="Increase quantity"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                <button
+                  onClick={handleAdd}
+                  className="flex-1 min-w-[150px] h-[52px] inline-flex items-center justify-center gap-2 rounded-full border border-[#E8C9A0] text-[#E8C9A0] font-semibold text-sm hover:bg-[#E8C9A0] hover:text-[#2a150c] transition-colors"
+                >
+                  {added ? <><Check size={17} /> Added to cart</> : <><ShoppingBag size={17} /> Add to cart</>}
+                </button>
+                <button
+                  onClick={handleBuyNow}
+                  className="w-full sm:w-auto sm:flex-1 min-w-[150px] h-[52px] rounded-full bg-[#E8C9A0] text-[#2a150c] font-bold text-sm hover:bg-[#FBF3EA] transition-colors"
+                >
+                  Buy now · {formatINR(current.price * qty)}
+                </button>
+              </div>
+
+              <ul className="mt-8 space-y-3 text-sm text-[#F4E6D8]/75">
+                <li className="flex items-center gap-3"><Truck size={17} className="text-[#E8C9A0]" /> Free delivery on orders above {formatINR(FREE_DELIVERY_MIN)}</li>
+                <li className="flex items-center gap-3"><Wallet size={17} className="text-[#E8C9A0]" /> Cash on delivery available</li>
+                <li className="flex items-center gap-3"><ShieldCheck size={17} className="text-[#E8C9A0]" /> Secure online payment</li>
+              </ul>
+            </div>
           </div>
         </div>
+
+        {/* More picks */}
+        {products.length > 1 && (
+          <div className="mt-14 md:mt-16">
+            <p className="font-royal text-2xl mb-4">More picks</p>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 pb-1">
+              {products.map((p, i) => (
+                <button
+                  key={p.id}
+                  onClick={() => pick(i)}
+                  aria-current={i === active}
+                  className={`flex-shrink-0 w-[230px] flex items-center gap-3 p-2.5 pr-4 rounded-2xl text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E8C9A0] ${i === active ? 'bg-white/10 ring-1 ring-[#E8C9A0]/60' : 'bg-white/[0.04] hover:bg-white/[0.08]'}`}
+                >
+                  <span className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-[#3a2014]">
+                    <Image src={p.image || '/varaha-assets/logo.png'} alt="" fill sizes="56px" className="object-cover" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-sm truncate ${i === active ? 'text-[#FBF3EA]' : 'text-[#F4E6D8]/65'}`}>{p.name}</span>
+                    <span className="block text-xs mt-0.5 text-[#E8C9A0]/90 tabular-nums">{formatINR(p.price)}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      <style jsx global>{`
+        .spotlight .spotlight-in { animation: vjSpotIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .spotlight .spotlight-photo { animation: vjSpotFade 0.4s ease-out both; }
+        @keyframes vjSpotIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        @keyframes vjSpotFade { from { opacity: 0.3; } to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) {
+          .spotlight .spotlight-in, .spotlight .spotlight-photo { animation: none; }
+        }
+      `}</style>
     </section>
   );
 }

@@ -57,6 +57,8 @@ export default function CookieConsent() {
     localStorage.setItem('cookieConsentDate', new Date().toISOString());
     setPreferences(prefs);
     setShowBanner(false);
+    // Let other popups (e.g. spin wheel) know the banner is out of the way
+    window.dispatchEvent(new Event('cookie-consent-saved'));
     setShowSettings(false);
     
     // Here you can initialize analytics/marketing scripts based on preferences

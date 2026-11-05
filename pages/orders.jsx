@@ -45,25 +45,25 @@ export default function Orders() {
           }
 
           // UI expects 'product' object for display - let's take the first item
-          const mainProduct = products.length > 0 ? products[0] : { name: 'Unknown Product', quantity: 0, variant: 'N/A' };
+          const mainProduct = products.length > 0 ? products[0] : { productName: 'Unknown Product', quantity: 0, variantName: 'N/A' };
 
           return {
             id: order.order_id || order.id,
             status: order.status.toLowerCase(),
             createdAt: order.created_at,
             amount: order.total_amount,
-            paymentId: order.payment_status === 'Paid' ? 'Paid Online' : 'Pending', // Simplified
+            paymentId: order.payment_method === 'online' ? 'Paid Online' : 'Cash on Delivery',
             customer: {
               name: order.customer_name,
               email: order.email,
               contact: order.phone,
               address: order.address
             },
-            discount: { couponCode: null, discountAmount: 0 }, // Backend doesn't send this explicitly yet
+            discount: { couponCode: null, discountAmount: order.discount_amount || 0 },
             product: {
-              productName: mainProduct.name,
+              productName: mainProduct.productName || mainProduct.name,
               quantity: mainProduct.quantity,
-              variantId: mainProduct.variant || 'Standard'
+              variantId: mainProduct.variantName || mainProduct.variant || 'Standard'
             },
             itemCount: products.length
           };

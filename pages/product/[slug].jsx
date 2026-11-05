@@ -12,6 +12,7 @@ import Footer from '../../components/Footer';
 import ProductDetailSkeleton from '../../components/ProductDetailSkeleton';
 import VarahaMobileProductPage from '../../components/VarahaMobileProductPage';
 import { trackEvent } from '../../lib/metaPixel';
+import ProductDetails from '../../components/ProductDetails';
 
 export default function ProductPage() {
   const router = useRouter();
@@ -139,9 +140,10 @@ export default function ProductPage() {
           mrp: data.mrp,
           images: allImages,
           category: data.category,
-          rating: 4.8,
-          reviewCount: 124,
-          averageRating: 4.8,
+          // Real values only - filled in below from /api/reviews (no made-up ratings)
+          rating: data.average_rating || 0,
+          reviewCount: data.total_reviews || 0,
+          averageRating: data.average_rating || 0,
 
           // Variants
           variants: [
@@ -150,12 +152,13 @@ export default function ProductPage() {
               name: "Standard",
               price: data.price,
               sku: `${data.id}-default`,
-              inStock: data.stock > 0  // Check real stock
+              // stock null/undefined = unlimited stock (was wrongly shown as Sold Out)
+              inStock: data.stock === null || data.stock === undefined || data.stock > 0
             }
           ],
 
           // Stock info
-          stock: data.stock || 0,
+          stock: (data.stock === null || data.stock === undefined) ? undefined : data.stock,
           is_mega_deal: data.is_mega_deal || false,
 
           // Tech specs
@@ -165,23 +168,7 @@ export default function ProductPage() {
           stones: data.stones,
           colour: data.colour,
 
-          // Mock Reviews
-          reviews: [
-            {
-              id: 1,
-              user: "Priya S.",
-              rating: 5,
-              comment: "Absolutely stunning piece! The craftsmanship is unmatched.",
-              date: "2 days ago"
-            },
-            {
-              id: 2,
-              user: "Rahul M.",
-              rating: 5,
-              comment: "Looks even better in person. Packaging was premium too.",
-              date: "1 week ago"
-            }
-          ],
+          reviews: [],
 
           recommendations: []
         };
@@ -321,17 +308,25 @@ export default function ProductPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-warm-sand flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-heritage text-xl mb-4">Product not found.</p>
-          <button
-            onClick={() => router.push('/shop')}
-            className="px-6 py-2 bg-copper text-white rounded-md hover:bg-heritage transition"
-          >
-            Browse Products
-          </button>
+      <>
+        <Head>
+          <title>Product not found | Varaha Jewels™</title>
+          <meta name="robots" content="noindex" />
+        </Head>
+        <Header cartCount={cartCount} />
+        <div className="min-h-[70vh] bg-warm-sand flex items-center justify-center px-6">
+          <div className="text-center max-w-md">
+            <p className="font-royal text-3xl font-bold text-heritage mb-3">This piece isn't available</p>
+            <p className="text-matte-brown mb-8">It may have been removed or the link is incorrect. Explore our other handcrafted designs.</p>
+            <button
+              onClick={() => router.push('/collections')}
+              className="px-8 py-3 bg-copper text-white rounded-full font-semibold hover:bg-heritage transition"
+            >
+              Browse Collections
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -362,11 +357,13 @@ export default function ProductPage() {
                 "availability": product.variants?.[0]?.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
                 "itemCondition": "https://schema.org/NewCondition"
               },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": product.averageRating || "4.8",
-                "reviewCount": product.reviewCount || "12"
-              }
+              ...(product.reviewCount > 0 && {
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": product.averageRating,
+                  "reviewCount": product.reviewCount
+                }
+              })
             })
           }}
         />
@@ -420,8 +417,13 @@ export default function ProductPage() {
               </div>
             </div>
 
+            {/* Specs, care, delivery and more pieces from the same section */}
+            <div ref={suggestionsRef}>
+              <ProductDetails product={product} related={suggestedProducts.filter((p) => p.stock !== 0)} />
+            </div>
+
             {/* Reviews Section */}
-            <div className="mt-12 border-t border-gray-200 pt-8">
+            <div className="mt-12">
               <ReviewsSection
                 reviews={product.reviews}
                 averageRating={product.averageRating}
@@ -429,39 +431,6 @@ export default function ProductPage() {
               />
             </div>
 
-            {/* Suggested For You Section */}
-            {suggestedProducts.length > 0 && (
-              <div ref={suggestionsRef} className="mt-12 border-t border-gray-200 pt-8">
-                <h2 className="text-xl font-bold text-heritage mb-6">Suggested For You</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {suggestedProducts.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => router.push(`/product/${item.slug || item.id}`)}
-                      className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
-                    >
-                      <div className="aspect-square bg-warm-sand overflow-hidden">
-                        <img
-                          src={item.image || '/varaha-assets/og.jpg'}
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/varaha-assets/og.jpg';
-                          }}
-                        />
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-semibold text-sm text-gray-800 line-clamp-2 group-hover:text-heritage transition-colors">
-                          {item.name}
-                        </h3>
-                        <p className="text-heritage font-bold mt-1">₹{item.price?.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </main>
 

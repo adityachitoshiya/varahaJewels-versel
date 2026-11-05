@@ -11,7 +11,13 @@ import TelegramLoginModal from '../components/TelegramLoginModal';
 
 export default function Login() {
     const router = useRouter();
-    const { registered, check_email, redirect } = router.query;
+    const { registered, check_email } = router.query;
+    // Where to go after login: accept ?redirect= or ?next=, but only same-site paths
+    // (a full URL here would let a link send shoppers to another website)
+    const rawRedirect = router.query.redirect || router.query.next;
+    const redirect = typeof rawRedirect === 'string' && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
+        ? rawRedirect
+        : undefined;
     const [formData, setFormData] = useState({
         email: '',
         password: ''

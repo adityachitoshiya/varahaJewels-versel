@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, MapPin, Check, Gift, CreditCard, X, Zap, Minus, Percent, Sparkles } from 'lucide-react';
 import { formatCurrency } from '../lib/productData';
 import WishlistButton from './WishlistButton';
+import { parseSpecs } from '../lib/productSpecs';
 
 import { getApiUrl } from '../lib/config';
 
@@ -10,8 +11,18 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState('');
   const [deliveryInfo, setDeliveryInfo] = useState(null);
-  const [showProductDetails, setShowProductDetails] = useState(false);
   const [showOffers, setShowOffers] = useState(true);
+
+  // Up to 4 key facts from the description (size, material, stones, weight...)
+  const highlights = (() => {
+    const { specs } = parseSpecs(product.description);
+    const want = ['Material', 'Fabric', 'Stones', 'Colour', 'Weight', 'In the box'];
+    const picked = want.map((w) => specs.find((s) => s.label === w)).filter(Boolean);
+    const size = specs.find((s) => s.label.endsWith('size'));
+    const list = [...(size ? [size] : []), ...picked];
+    if (!list.some((s) => s.label === 'Material') && product.metal) list.unshift({ label: 'Material', value: product.metal });
+    return list.slice(0, 4);
+  })();
 
   // Calculate discount percentage
   const originalPrice = product.mrp || selectedVariant.compareAt || selectedVariant.price * 1.15;
@@ -95,7 +106,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
   const sizeOptions = product.variants?.length > 1
     ? product.variants.map(v => ({
       ...v,
-      stockLeft: Math.floor(Math.random() * 10),
+      stockLeft: typeof product.stock === 'number' ? product.stock : 99, // real stock (was random)
       disabled: !v.inStock
     }))
     : null;
@@ -104,21 +115,25 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
     <div className="space-y-4 px-4 lg:px-0 pb-24 lg:pb-0">
       {/* Brand & Title */}
       <div className="border-b border-copper/20 pb-4">
-        <h1 className="text-lg md:text-2xl font-royal font-bold text-heritage tracking-wide">
+        <p className="text-xs uppercase tracking-[0.2em] text-copper font-semibold">
           Varaha Jewels
+        </p>
+        <h1 className="mt-1.5 text-2xl md:text-3xl font-royal font-bold text-heritage leading-snug">
+          {product.title}
         </h1>
-        <p className="text-base text-matte-brown mt-1">{product.title}</p>
 
-        {/* Rating - Hidden on mobile (shown on carousel) */}
-        <div className="hidden lg:flex items-center mt-3 space-x-2">
-          <div className="flex items-center bg-royal-orange text-white px-2 py-0.5 rounded text-sm font-semibold">
-            <span>{product.averageRating || 4.5}</span>
-            <Star size={12} className="ml-1 fill-white text-white" />
+        {/* Rating - only when real reviews exist; hidden on mobile (shown on carousel) */}
+        {product.reviewCount > 0 && (
+          <div className="hidden lg:flex items-center mt-3 space-x-2">
+            <div className="flex items-center bg-royal-orange text-white px-2 py-0.5 rounded text-sm font-semibold">
+              <span>{Number(product.averageRating).toFixed(1)}</span>
+              <Star size={12} className="ml-1 fill-white text-white" />
+            </div>
+            <span className="text-matte-brown text-sm border-b border-copper/40 cursor-pointer hover:text-heritage">
+              {product.reviewCount} {product.reviewCount === 1 ? 'Rating' : 'Ratings'}
+            </span>
           </div>
-          <span className="text-matte-brown text-sm border-b border-copper/40 cursor-pointer hover:text-heritage">
-            {product.reviewCount || 124} Ratings
-          </span>
-        </div>
+        )}
       </div>
 
       {/* Price Section */}
@@ -225,10 +240,17 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
         <button
           onClick={handleAddToCart}
           disabled={product.stock !== undefined && product.stock <= 0}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-copper hover:bg-heritage text-white font-bold text-base rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          className="flex-[3] flex items-center justify-center gap-2 px-5 py-3.5 bg-copper hover:bg-heritage text-white font-semibold text-sm tracking-wider whitespace-nowrap rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed shadow-lg shadow-copper/20"
         >
           <ShoppingBag size={20} />
           {product.stock !== undefined && product.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO BAG'}
+        </button>
+        <button
+          onClick={handleBuyNow}
+          disabled={product.stock !== undefined && product.stock <= 0}
+          className="flex-[3] flex items-center justify-center gap-2 px-5 py-3.5 bg-heritage hover:bg-copper text-white font-semibold text-sm tracking-wider whitespace-nowrap rounded-lg transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
+        >
+          BUY NOW
         </button>
         <WishlistButton
           productId={product.id}
@@ -240,8 +262,8 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
             title: product.title
           }}
           size="lg"
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 border-2 border-copper/50 hover:border-copper text-heritage font-bold text-base rounded-md transition-colors"
-          showText={true}
+          className="flex-none w-[52px] flex items-center justify-center border border-copper/50 hover:border-copper hover:bg-copper/5 text-heritage rounded-lg transition-colors"
+          showText={false}
         />
       </div>
 
@@ -393,58 +415,23 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
         )}
       </div>
 
-      {/* Product Details */}
-      <div className="pb-4">
-        <button
-          onClick={() => setShowProductDetails(!showProductDetails)}
-          className="w-full flex items-center justify-between py-2"
-        >
-          <span className="text-base font-semibold text-heritage">
-            Product Details
-          </span>
-          {showProductDetails ? <ChevronUp size={18} className="text-copper" /> : <ChevronDown size={18} className="text-copper" />}
-        </button>
-
-        {showProductDetails && (
-          <div className="mt-3 space-y-4">
-            <p className="text-sm text-matte-brown leading-relaxed whitespace-pre-line">{product.description}</p>
-
-            {/* Specifications Table */}
-            <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-              {product.metal && (
-                <>
-                  <div className="text-matte-brown">Metal</div>
-                  <div className="text-heritage">{product.metal}</div>
-                </>
-              )}
-              {product.carat && (
-                <>
-                  <div className="text-matte-brown">Purity</div>
-                  <div className="text-heritage">{product.carat}</div>
-                </>
-              )}
-              {product.polish && (
-                <>
-                  <div className="text-matte-brown">Finish</div>
-                  <div className="text-heritage">{product.polish}</div>
-                </>
-              )}
-              {product.category && (
-                <>
-                  <div className="text-matte-brown">Category</div>
-                  <div className="text-heritage">{product.category}</div>
-                </>
-              )}
-              {product.colour && (
-                <>
-                  <div className="text-matte-brown">Colour</div>
-                  <div className="text-heritage">{product.colour}</div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Highlights (full specs are in the "About this piece" section below) */}
+      {highlights.length > 0 && (
+        <div className="pb-4">
+          <h3 className="text-base font-semibold text-heritage mb-3">Highlights</h3>
+          <dl className="grid grid-cols-2 gap-3">
+            {highlights.map((h) => (
+              <div key={h.label} className="rounded-xl bg-warm-sand/50 px-4 py-3">
+                <dt className="text-xs text-matte-brown">{h.label}</dt>
+                <dd className="mt-0.5 text-sm font-medium text-heritage line-clamp-2">{h.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <a href="#details" className="inline-block mt-3 text-sm font-semibold text-copper hover:text-heritage underline underline-offset-4">
+            See full details and care
+          </a>
+        </div>
+      )}
 
       {/* Trust Badges */}
       <div className="grid grid-cols-3 gap-4 py-4 border-t border-copper/20 bg-warm-sand/30 rounded-lg">
@@ -458,7 +445,7 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
         </div>
         <div className="text-center">
           <Truck size={24} className="mx-auto text-copper mb-1" />
-          <p className="text-xs text-heritage">Free Shipping</p>
+          <p className="text-xs text-heritage">Free Delivery ₹499+</p>
         </div>
       </div>
     </div>

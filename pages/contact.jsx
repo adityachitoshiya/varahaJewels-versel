@@ -107,21 +107,8 @@ export default function Contact() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-heritage mb-1">Email</h3>
-                      <a href="mailto:support@varahajewels.com" className="text-heritage/70 hover:text-copper transition-colors">
+                      <a href="mailto:help@varahajewels.in" className="text-heritage/70 hover:text-copper transition-colors">
                         help@varahajewels.in
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div className="flex items-start gap-4">
-                    <div className="bg-gradient-to-r from-heritage to-copper p-3 rounded-lg">
-                      <Phone className="w-6 h-6 text-warm-sand" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-heritage mb-1">Phone</h3>
-                      <a href="tel:+919876543210" className="text-heritage/70 hover:text-copper transition-colors">
-                        +91 98XXX 43210
                       </a>
                     </div>
                   </div>
@@ -300,7 +287,7 @@ export default function Contact() {
               <div className="border-l-4 border-copper pl-4">
                 <h3 className="font-semibold text-heritage mb-2">What are your shipping options?</h3>
                 <p className="text-sm text-heritage/70">
-                  We offer free shipping on all orders. Standard delivery takes 5-7 business days, and express delivery is available within 2-3 days.
+                  Delivery is free on orders of ₹499 and above, and on every order paid online. Cash on Delivery below ₹499 has a ₹99 charge. Standard delivery takes 5-7 business days, and express delivery is available within 2-3 days.
                 </p>
               </div>
 

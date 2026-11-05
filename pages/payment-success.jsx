@@ -43,8 +43,8 @@ export default function PaymentSuccess() {
         ...orderData,
         discount: {
           ...orderData.discount,
-          originalAmount: orderData.amount === 1 ? 2499 : orderData.amount,
-          discountAmount: orderData.amount === 1 ? 2498 : 0
+          originalAmount: orderData.original_amount || orderData.total_amount || orderData.amount,
+          discountAmount: orderData.discount_amount || 0
         }
       };
     }
@@ -66,19 +66,20 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     // Get order details from URL params
-    const { orderId } = router.query;
+    const { orderId, key } = router.query;
 
     if (orderId) {
-      fetchOrder(orderId);
+      fetchOrder(orderId, 1, key);
     }
   }, [router.query]);
 
-  const fetchOrder = async (id, attempt = 1) => {
+  const fetchOrder = async (id, attempt = 1, accessKey = null) => {
     try {
       const API_URL = getApiUrl();
       console.log(`Fetching order: ${id} (Attempt ${attempt})`);
       const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
-      const res = await fetch(`${API_URL}/api/orders/${id}`, {
+      const keyParam = accessKey ? `?key=${encodeURIComponent(accessKey)}` : '';
+      const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(id)}${keyParam}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (res.ok) {
@@ -91,8 +92,8 @@ export default function PaymentSuccess() {
         setFullOrderData(data); // Store raw for invoice
 
         setOrderDetails({
-          orderId: data.id, // Use NUMERIC ID for display
-          displayId: `Order #${data.id}`,
+          orderId: data.order_id, // Same order number as in emails / My Orders
+          displayId: `Order #${data.order_id}`,
           amount: data.total_amount,
           originalAmount: data.original_amount || data.total_amount,
           discountAmount: data.discount_amount || 0,
@@ -166,7 +167,7 @@ export default function PaymentSuccess() {
         // Retry logic for 404 (Order might be creating in background)
         if (res.status === 404 && attempt < 5) {
           console.log(`Order not found yet, retrying in 2s...`);
-          setTimeout(() => fetchOrder(id, attempt + 1), 2000);
+          setTimeout(() => fetchOrder(id, attempt + 1, accessKey), 2000);
         } else if (attempt >= 5) {
           alert("Order processing is taking longer than expected. Please check your email for confirmation.");
           // Fallback to basic display if needed, or let user wait
@@ -484,7 +485,7 @@ export default function PaymentSuccess() {
                 <div>
                   <h3 className="font-semibold text-heritage mb-1">Need Help?</h3>
                   <p className="text-sm text-heritage/70">
-                    Contact our customer support at support@varahajewels.com or call +91-XXXXXXXXXX
+                    Contact our customer support at help@varahajewels.in or call +91-XXXXXXXXXX
                   </p>
                 </div>
               </div>

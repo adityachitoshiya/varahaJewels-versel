@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getApiUrl } from '../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
 import { Users, Activity, Calendar, TrendingUp, MapPin, Globe, Building2, MousePointerClick, MonitorSmartphone, Share2, ShoppingCart } from 'lucide-react';
@@ -34,9 +34,9 @@ export default function Analytics() {
         try {
             const API_URL = getApiUrl();
             const [statsRes, logsRes, geoRes] = await Promise.all([
-                fetch(`${API_URL}/api/analytics`),
-                fetch(`${API_URL}/api/analytics/logs?limit=50`),
-                fetch(`${API_URL}/api/analytics/geo`)
+                fetch(`${API_URL}/api/analytics`, { headers: getAdminHeaders(false) }),
+                fetch(`${API_URL}/api/analytics/logs?limit=50`, { headers: getAdminHeaders(false) }),
+                fetch(`${API_URL}/api/analytics/geo`, { headers: getAdminHeaders(false) })
             ]);
 
             if (statsRes.ok) setStats(await statsRes.json());

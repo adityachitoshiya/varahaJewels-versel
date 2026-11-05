@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getApiUrl } from '../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import { useRouter } from 'next/router';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Bell, Check, Clock, ShoppingBag } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function NotificationsPage() {
     const fetchNotifications = async () => {
         try {
             const API_URL = getApiUrl();
-            const response = await fetch(`${API_URL}/api/notifications?limit=50`);
+            const response = await fetch(`${API_URL}/api/notifications?limit=50`, { headers: getAdminHeaders(false) });
             if (response.ok) {
                 const data = await response.json();
                 setNotifications(data);
@@ -34,7 +34,8 @@ export default function NotificationsPage() {
         try {
             const API_URL = getApiUrl();
             const response = await fetch(`${API_URL}/api/notifications/${id}/read`, {
-                method: 'POST',
+                method: 'PUT', // backend route is PUT
+                headers: getAdminHeaders(false),
             });
             if (response.ok) {
                 // Update local state

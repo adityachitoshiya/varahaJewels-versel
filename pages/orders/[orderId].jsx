@@ -83,7 +83,7 @@ function getStepsFromOrder(order) {
 
 export default function OrderDetails() {
     const router = useRouter();
-    const { orderId } = router.query;
+    const { orderId, key: accessKey } = router.query;
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [trackingHistory, setTrackingHistory] = useState([]);
@@ -117,7 +117,9 @@ export default function OrderDetails() {
         try {
             const API_URL = getApiUrl();
             const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
-            const response = await fetch(`${API_URL}/api/orders/${orderId}`, {
+            // `key` comes from the email link / checkout redirect (guest access)
+            const keyParam = accessKey ? `?key=${encodeURIComponent(accessKey)}` : '';
+            const response = await fetch(`${API_URL}/api/orders/${encodeURIComponent(orderId)}${keyParam}`, {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
             if (response.ok) {
@@ -358,8 +360,12 @@ export default function OrderDetails() {
                         <div className="mt-6 pt-4 border-t border-copper/20 space-y-2">
                             {(() => {
                                 const subtotal = order.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-                                const codCharges = order.payment_method === 'cod' ? 59 : 0;
-                                const discount = subtotal + codCharges - order.total_amount;
+                                // Work the charges out from the stored amounts (the COD fee changed
+                                // over time: ₹59 earlier, ₹99 below ₹499 now), not a fixed number
+                                const discount = Math.max(0, order.discount_amount || 0);
+                                const codCharges = order.payment_method === 'cod'
+                                    ? Math.max(0, Math.round((order.total_amount - (subtotal - discount)) * 100) / 100)
+                                    : 0;
 
                                 return (
                                     <>

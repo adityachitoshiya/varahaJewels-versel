@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getApiUrl } from '../../lib/config';
+import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
 import { Trash2, Plus, Image as ImageIcon, Video, ExternalLink, TrendingUp, DollarSign, Save, Calendar, Clock } from 'lucide-react';
@@ -68,7 +68,7 @@ export default function ContentManagement() {
         try {
             const API_URL = getApiUrl();
             const endpoint = type === 'hero' ? `api/content/hero/${id}` : `api/content/creators/${id}`;
-            const res = await fetch(`${API_URL}/${endpoint}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/${endpoint}`, { method: 'DELETE', headers: getAdminHeaders(false) });
 
             if (res.ok) {
                 fetchContent(); // Refresh
@@ -835,7 +835,7 @@ export default function ContentManagement() {
                                         className="w-full p-2 border rounded-lg"
                                         value={settings.support_email || ''}
                                         onChange={(e) => handleSettingsUpdate({ support_email: e.target.value })}
-                                        placeholder="support@varahajewels.com"
+                                        placeholder="help@varahajewels.in"
                                     />
                                 </div>
                             </div>

@@ -51,14 +51,8 @@ export default function GeoBlocked() {
                         <p className="font-semibold text-heritage">Need assistance?</p>
                         <div className="flex items-center justify-center gap-2">
                             <Mail size={16} className="text-copper" />
-                            <a href="mailto:support@varahajewels.in" className="hover:text-copper transition">
-                                support@varahajewels.in
-                            </a>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                            <Phone size={16} className="text-copper" />
-                            <a href="tel:+919876543210" className="hover:text-copper transition">
-                                +91 98765 43210
+                            <a href="mailto:help@varahajewels.in" className="hover:text-copper transition">
+                                help@varahajewels.in
                             </a>
                         </div>
                     </div>
