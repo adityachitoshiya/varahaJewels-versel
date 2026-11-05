@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { getApiUrl } from '../../lib/config';
+import { FESTIVAL_OFFERS, OFFER_TERMS } from '../../lib/offers';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
 import {
@@ -75,7 +76,7 @@ function CouponRuleBadges({ coupon, block = false }) {
         <>
             {coupon.expires_at && (
                 <span className={`${cls} ${expired ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
-                    {expired ? 'Expired' : 'Expires'} {new Date(coupon.expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                    {expired ? 'Expired' : 'Valid till'} {new Date(coupon.expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                 </span>
             )}
             {notStarted && (
@@ -88,6 +89,9 @@ function CouponRuleBadges({ coupon, block = false }) {
             )}
             {coupon.per_customer_limit && (
                 <span className={`${cls} text-gray-500`}>{coupon.per_customer_limit}× per customer</span>
+            )}
+            {!coupon.expires_at && !coupon.starts_at && (
+                <span className={`${cls} text-gray-400`}>No end date</span>
             )}
         </>
     );
@@ -414,6 +418,30 @@ export default function OffersPage() {
 
                 {/* ======== OFFERS TAB ======== */}
                 {activeTab === 'offers' && (<>
+
+                {/* Festival offers (shown in the homepage hero on these dates) */}
+                <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                    <h2 className="font-semibold text-gray-900">Festival offers</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">{OFFER_TERMS.percent}% off, minimum order ₹{OFFER_TERMS.minOrder}, up to ₹{OFFER_TERMS.maxOff} off. Each one shows on the homepage only on its dates.</p>
+                    <div className="mt-4 grid sm:grid-cols-3 gap-3">
+                        {FESTIVAL_OFFERS.map((o) => {
+                            const t = Date.now();
+                            const live = t >= Date.parse(o.start) && t < Date.parse(o.end);
+                            const ended = t >= Date.parse(o.end);
+                            const fmt = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+                            return (
+                                <div key={o.id} className={`rounded-lg border p-4 ${live ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200'}`}>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="font-medium text-gray-900">{o.title}</p>
+                                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${live ? 'bg-emerald-600 text-white' : ended ? 'bg-gray-200 text-gray-600' : 'bg-amber-100 text-amber-800'}`}>{live ? 'Live now' : ended ? 'Ended' : 'Upcoming'}</span>
+                                    </div>
+                                    <p className="mt-1 font-mono text-sm text-gray-700">{o.code}</p>
+                                    <p className="mt-1 text-sm text-gray-500">{fmt(o.start)} till {fmt(o.end)}, 12:00 AM</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
 
                 {/* Offers Table */}
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
