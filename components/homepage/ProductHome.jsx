@@ -36,7 +36,7 @@ export function CategoryCircles() {
   return (
     <section className="bg-warm-sand pt-8 pb-4 md:pt-12" aria-label="Shop by collection">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ul className="flex gap-4 md:gap-8 overflow-x-auto scrollbar-hide md:justify-center pb-2">
+        <ul className="flex gap-4 md:gap-8 overflow-x-auto scrollbar-hide md:justify-center pt-1.5 pb-2 px-1.5 -mx-1.5">
           {items.map((l) => (
             <li key={l.label} className="flex-shrink-0">
               <Link href={l.href} prefetch={false} className="group flex flex-col items-center gap-2 w-[76px] md:w-[104px] focus-visible:outline-none">
