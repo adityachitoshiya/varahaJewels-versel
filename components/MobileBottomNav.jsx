@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Home, Layers, Heart, User } from 'lucide-react';
+import { Home, Crown, Heart, User } from 'lucide-react';
 
 export default function MobileBottomNav({ wishlistCount = 0 }) {
     const router = useRouter();
@@ -14,7 +14,7 @@ export default function MobileBottomNav({ wishlistCount = 0 }) {
 
     const navItems = [
         { name: 'Home', icon: Home, path: '/' },
-        { name: 'Collections', icon: Layers, path: '/shop' },
+        { name: 'Heritage', icon: Crown, path: '/heritage' },
         { name: 'Wishlist', icon: Heart, path: '/wishlist', count: wishlistCount },
         { name: 'Account', icon: User, path: '/account' }, // Redirects to /login if not auth, handled by page usually
     ];
