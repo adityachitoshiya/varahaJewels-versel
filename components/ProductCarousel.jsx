@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { cld, cldSet } from '../lib/img';
 import { X, ChevronLeft, ChevronRight, ZoomIn, Star, Layers } from 'lucide-react';
 
 export default function ProductCarousel({ images = [], rating = 0, reviewCount = 0, onViewSimilar }) {
@@ -84,10 +85,14 @@ export default function ProductCarousel({ images = [], rating = 0, reviewCount =
                 onClick={() => openLightbox(index)}
               >
                 <img
-                  src={item.url}
+                  src={cld(item.url, 900)}
+                  srcSet={cldSet(item.url, [480, 800, 1200])}
+                  sizes="(max-width: 1024px) 100vw, 60vw"
                   alt={item.alt || `Product image ${index + 1}`}
                   className="w-full h-full object-contain"
-                  loading={index < 2 ? 'eager' : 'lazy'}
+                  loading={index < 1 ? 'eager' : 'lazy'}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
+                  decoding="async"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = '/varaha-assets/og.jpg';
@@ -146,10 +151,14 @@ export default function ProductCarousel({ images = [], rating = 0, reviewCount =
             onClick={() => openLightbox(index)}
           >
             <img
-              src={item.url}
+              src={cld(item.url, 900)}
+              srcSet={cldSet(item.url, [480, 800, 1200])}
+              sizes="(max-width: 1280px) 60vw, 700px"
               alt={item.alt || `Product image ${index + 1}`}
               className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-              loading={index < 4 ? 'eager' : 'lazy'}
+              loading={index < 2 ? 'eager' : 'lazy'}
+              fetchPriority={index === 0 ? 'high' : 'auto'}
+              decoding="async"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = '/varaha-assets/og.jpg';
@@ -202,7 +211,7 @@ export default function ProductCarousel({ images = [], rating = 0, reviewCount =
           {/* Image */}
           <div className="max-w-4xl max-h-[90vh] mx-4" onClick={(e) => e.stopPropagation()}>
             <img
-              src={gridImages[lightboxIndex]?.url}
+              src={cld(gridImages[lightboxIndex]?.url, 1600)}
               alt={gridImages[lightboxIndex]?.alt || 'Product'}
               className="max-w-full max-h-[90vh] object-contain"
             />
@@ -236,9 +245,11 @@ export default function ProductCarousel({ images = [], rating = 0, reviewCount =
                   }`}
               >
                 <img
-                  src={item.url}
+                  src={cld(item.url, 160)}
                   alt={`Thumbnail ${index + 1}`}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               </button>
             ))}

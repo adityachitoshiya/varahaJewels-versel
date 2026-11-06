@@ -8,7 +8,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
 import MarketCard, { CardSkeleton } from '../components/MarketCard';
-import { collapseColours } from '../lib/products';
+import { collapseColours, loadProducts, onProductsUpdate, peekProducts, seedProducts } from '../lib/products';
+import { serverGet } from '../lib/serverData';
 
 // Marketplace: every in-stock piece, filtered by section (chips), who it's for,
 // search and price sort. "All" shows each section as a short shelf.
@@ -31,9 +32,14 @@ const SHELF_SIZE = 4;
 const sectionOf = (p) => p.category || 'Other';
 const labelOf = (s) => SECTION_LABELS[s] || s;
 
-export default function Shop() {
+export default function Shop({ initialProducts = null }) {
   const router = useRouter();
-  const [products, setProducts] = useState(null);
+  // First visit: the list came with the page. Later visits: the last list this browser saw. Never blank.
+  seedProducts(initialProducts);
+  const [products, setProducts] = useState(() => {
+    const first = peekProducts() || initialProducts;
+    return first ? collapseColours(first.filter((p) => p.stock !== 0)) : null;
+  });
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
   const section = typeof router.query.section === 'string' ? router.query.section : 'All';
@@ -41,10 +47,11 @@ export default function Shop() {
   const maxPrice = Number(router.query.max) > 0 ? Number(router.query.max) : null;
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/api/products`, { headers: getAuthHeaders() })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setProducts(collapseColours(data.filter((p) => p.stock !== 0))))
-      .catch(() => setProducts([]));
+    let alive = true;
+    const show = (data) => alive && setProducts(collapseColours(data.filter((p) => p.stock !== 0)));
+    loadProducts().then(show);
+    const off = onProductsUpdate(show);
+    return () => { alive = false; off(); };
   }, []);
 
   // Keep filters in the URL so links like /shop?section=Silver work and Back restores them
@@ -231,4 +238,10 @@ function Chip({ active, onClick, label, count, image }) {
       <span className={`text-xs tabular-nums ${active ? 'text-warm-sand/70' : 'text-heritage/45'}`}>{count}</span>
     </button>
   );
+}
+
+
+export async function getStaticProps() {
+  const list = await serverGet('/api/products');
+  return { props: { initialProducts: Array.isArray(list) ? list : null }, revalidate: 60 };
 }

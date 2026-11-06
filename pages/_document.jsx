@@ -48,7 +48,8 @@ export default function Document() {
         {/* Preconnect for Performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://backend.varahajewels.in" crossOrigin="anonymous" />
         
         {/* Preload Critical Fonts */}
         <link
@@ -59,6 +60,22 @@ export default function Document() {
           crossOrigin="anonymous"
         />
         
+        {/* Fonts: non-blocking. Text shows at once in a fallback font, then swaps (display=swap). */}
+        <link
+          rel="stylesheet"
+          data-font="1"
+          media="print"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "(function(){var l=document.querySelector('link[data-font]');if(!l)return;function on(){l.media='all'}if(l.sheet){on()}else{l.addEventListener('load',on)}})();",
+          }}
+        />
+        <noscript>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" />
+        </noscript>
+
         {/* Preload Hero Image for LCP */}
         <link rel="preload" as="image" href="/varaha-assets/heroimage.avif" type="image/avif" />
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { cld } from '../../lib/img';
 import { ChevronDown, Truck, Wallet, RotateCcw, ShieldCheck, Tag } from 'lucide-react';
 import { activeOffer } from '../../lib/offers';
 import { FREE_DELIVERY_MIN } from '../../lib/deliveryFees';
@@ -35,7 +36,7 @@ export default function OrderSummary({ items = [], subtotal = 0, collapsible = f
             {items.map((item, idx) => (
               <li key={idx} className="flex gap-3 py-3">
                 <span className="relative w-16 h-16 rounded-xl overflow-hidden bg-warm-sand flex-shrink-0">
-                  {item.image && <img src={item.image} alt="" className="w-full h-full object-cover" />}
+                  {item.image && <img src={cld(item.image, 160)} loading="lazy" decoding="async" alt="" className="w-full h-full object-cover" />}
                   <span className="absolute top-0 right-0 min-w-[20px] h-5 px-1 rounded-bl-lg bg-heritage text-white text-[11px] font-bold flex items-center justify-center">{item.quantity}</span>
                 </span>
                 <span className="min-w-0 flex-1">

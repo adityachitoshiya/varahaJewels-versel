@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { cld, cldSet } from '../lib/img';
 import { useRouter } from 'next/router';
 import ColourPicker from './ColourPicker';
 import MarketCard from './MarketCard';
@@ -174,7 +175,8 @@ export default function VarahaMobileProductPage({
     return () => clearTimeout(t);
   }, [toastKey]);
 
-  const discountPercent = Math.round(((product.mrp - (selectedVariant?.price || 0)) / product.mrp) * 100);
+  const hasMrp = Number(product.mrp) > Number(selectedVariant?.price || 0);
+  const discountPercent = hasMrp ? Math.round(((product.mrp - (selectedVariant?.price || 0)) / product.mrp) * 100) : 0;
 
   const stockTone =
     product.stock === 0 ? 'out'
@@ -249,7 +251,7 @@ export default function VarahaMobileProductPage({
             className="flex h-full transition-transform duration-300 ease-out"
             style={{ transform: `translateX(-${activeImage * 100}%)` }}
           >
-            {product.images.map((img) => (
+            {product.images.map((img, i) => (
               <button
                 key={img.id}
                 onClick={() => { if (!touchMoved) setLightboxOpen(true); }}
@@ -257,7 +259,7 @@ export default function VarahaMobileProductPage({
                 className="h-full w-full shrink-0"
                 style={{ minWidth: '100%' }}
               >
-                <img src={img.url || img} alt={img.alt || product?.name || 'Product Image'} className="w-full h-full object-cover" />
+                <img src={cld(img.url || img, 800)} srcSet={cldSet(img.url || img, [480, 750, 1000])} sizes="100vw" alt={img.alt || product?.name || 'Product Image'} className="w-full h-full object-cover" loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : 'auto'} decoding="async" />
               </button>
             ))}
           </div>
@@ -287,9 +289,11 @@ export default function VarahaMobileProductPage({
           </div>
 
           {/* Discount ribbon */}
-          <div className="absolute left-4 top-16 rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold tracking-wide text-amber-300">
-            {discountPercent}% OFF
-          </div>
+          {discountPercent > 0 && (
+            <div className="absolute left-4 top-16 rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold tracking-wide text-amber-300">
+              {discountPercent}% OFF
+            </div>
+          )}
 
           {/* Dots */}
           <div className="absolute inset-x-0 bottom-4 flex justify-center gap-1.5">
@@ -336,8 +340,8 @@ export default function VarahaMobileProductPage({
           <span className="font-serif text-3xl font-semibold text-stone-900">
             ₹{(selectedVariant?.price || 0).toLocaleString('en-IN')}
           </span>
-          <span className="text-sm text-stone-400 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
-          <span className="text-sm font-semibold text-emerald-700">{discountPercent}% off</span>
+          {hasMrp && <span className="text-sm text-stone-400 line-through">₹{Number(product.mrp).toLocaleString('en-IN')}</span>}
+          {hasMrp && discountPercent > 0 && <span className="text-sm font-semibold text-emerald-700">{discountPercent}% off</span>}
         </div>
         <p className="mt-0.5 text-xs text-stone-400">Inclusive of all taxes</p>
 
@@ -636,7 +640,7 @@ export default function VarahaMobileProductPage({
           )}
 
           <div className="h-72 w-72 overflow-hidden rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <img src={product.images[activeImage].url || product.images[activeImage]} alt={product.images[activeImage].alt || product.name} className="w-full h-full object-contain" />
+            <img src={cld(product.images[activeImage].url || product.images[activeImage], 1200)} alt={product.images[activeImage].alt || product.name} className="w-full h-full object-contain" />
           </div>
 
           {product.images.length > 1 && (

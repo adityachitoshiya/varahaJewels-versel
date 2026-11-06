@@ -13,15 +13,91 @@ import ProductDetailSkeleton from '../../components/ProductDetailSkeleton';
 import VarahaMobileProductPage from '../../components/VarahaMobileProductPage';
 import { trackEvent } from '../../lib/metaPixel';
 import ProductDetails from '../../components/ProductDetails';
+import { serverGet } from '../../lib/serverData';
 
-export default function ProductPage() {
+// Turns the API's product into the shape this page uses. Pure, so the server can build it too.
+function adaptProduct(data) {
+  // Parse additional images from JSON string
+  let additionalImages = [];
+  try {
+    additionalImages = data.additional_images ? JSON.parse(data.additional_images) : [];
+  } catch (e) {
+    additionalImages = [];
+  }
+
+  // Build complete images array: main image first, then additional images
+  const allImages = [
+    { id: 1, type: 'image', url: data.image, alt: data.name }
+  ];
+
+  // Add additional images with sequential IDs
+  additionalImages.forEach((imageUrl, index) => {
+    if (imageUrl && imageUrl.trim()) {
+      allImages.push({
+        id: index + 2,
+        type: 'image',
+        url: imageUrl,
+        alt: `${data.name} - Image ${index + 2}`
+      });
+    }
+});
+
+  const adaptedProduct = {
+    id: data.id,
+    title: data.name,
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    mrp: data.mrp,
+    images: allImages,
+    category: data.category,
+    // Real values only - filled in below from /api/reviews (no made-up ratings)
+    rating: data.average_rating || 0,
+    reviewCount: data.total_reviews || 0,
+    averageRating: data.average_rating || 0,
+
+    // Variants
+    variants: [
+      {
+        id: `${data.id}-default`,
+        name: "Standard",
+        price: data.price,
+        sku: `${data.id}-default`,
+        // stock null/undefined = unlimited stock (was wrongly shown as Sold Out)
+        inStock: data.stock === null || data.stock === undefined || data.stock > 0
+      }
+    ],
+
+    // Stock info
+    stock: (data.stock === null || data.stock === undefined) ? undefined : data.stock,
+    is_mega_deal: data.is_mega_deal || false,
+
+    // Tech specs
+    metal: data.metal,
+    carat: data.carat,
+    polish: data.polish,
+    stones: data.stones,
+    colour: data.colour,
+    style: data.style,
+    slug: data.slug,
+
+    reviews: [],
+
+    recommendations: []
+};
+    return adaptedProduct;
+}
+
+
+export default function ProductPage({ initialData = null }) {
   const router = useRouter();
   const { slug } = router.query;
   const suggestionsRef = useRef(null);
 
-  const [product, setProduct] = useState(null);
+  // The server sends the product with the page, so it shows at once (no blank page, no skeleton).
+  const [product, setProduct] = useState(() => (initialData ? adaptProduct(initialData) : null));
   const [settings, setSettings] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [suggestedProducts, setSuggestedProducts] = useState([]);
 
   const { addToCart, updateQuantity, removeFromCart, cartItems } = useCart();
@@ -55,6 +131,10 @@ export default function ProductPage() {
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
     window.dispatchEvent(new Event('wishlistUpdated'));
   };
+
+  useEffect(() => {
+    if (initialData) { setProduct(adaptProduct(initialData)); setIsLoading(false); }
+  }, [initialData]);
 
   useEffect(() => {
     if (slug) {
@@ -105,75 +185,7 @@ export default function ProductPage() {
       if (res.ok) {
         const data = await res.json();
 
-        // Parse additional images from JSON string
-        let additionalImages = [];
-        try {
-          additionalImages = data.additional_images ? JSON.parse(data.additional_images) : [];
-        } catch (e) {
-          console.error("Error parsing additional_images:", e);
-          additionalImages = [];
-        }
-
-        // Build complete images array: main image first, then additional images
-        const allImages = [
-          { id: 1, type: 'image', url: data.image, alt: data.name }
-        ];
-
-        // Add additional images with sequential IDs
-        additionalImages.forEach((imageUrl, index) => {
-          if (imageUrl && imageUrl.trim()) {
-            allImages.push({
-              id: index + 2,
-              type: 'image',
-              url: imageUrl,
-              alt: `${data.name} - Image ${index + 2}`
-            });
-          }
-        });
-
-        const adaptedProduct = {
-          id: data.id,
-          title: data.name,
-          name: data.name,
-          description: data.description,
-          price: data.price,
-          mrp: data.mrp,
-          images: allImages,
-          category: data.category,
-          // Real values only - filled in below from /api/reviews (no made-up ratings)
-          rating: data.average_rating || 0,
-          reviewCount: data.total_reviews || 0,
-          averageRating: data.average_rating || 0,
-
-          // Variants
-          variants: [
-            {
-              id: `${data.id}-default`,
-              name: "Standard",
-              price: data.price,
-              sku: `${data.id}-default`,
-              // stock null/undefined = unlimited stock (was wrongly shown as Sold Out)
-              inStock: data.stock === null || data.stock === undefined || data.stock > 0
-            }
-          ],
-
-          // Stock info
-          stock: (data.stock === null || data.stock === undefined) ? undefined : data.stock,
-          is_mega_deal: data.is_mega_deal || false,
-
-          // Tech specs
-          metal: data.metal,
-          carat: data.carat,
-          polish: data.polish,
-          stones: data.stones,
-          colour: data.colour,
-          style: data.style,
-          slug: data.slug,
-
-          reviews: [],
-
-          recommendations: []
-        };
+        const adaptedProduct = adaptProduct(data);
 
         setProduct(adaptedProduct);
 
@@ -457,4 +469,23 @@ export default function ProductPage() {
       </div>
     </>
   );
+}
+
+
+// Product pages are built on the server and kept fresh every minute (ISR), so opening one is instant.
+export async function getStaticPaths() {
+  const list = await serverGet('/api/products', 10000);
+  const paths = (Array.isArray(list) ? list : [])
+    .filter((p) => p.slug)
+    .slice(0, 200)
+    .map((p) => ({ params: { slug: p.slug } }));
+  return { paths, fallback: 'blocking' };
+}
+
+export async function getStaticProps({ params }) {
+  const data = await serverGet(`/api/products/${encodeURIComponent(params.slug)}`);
+  if (data && data.__notFound) return { notFound: true, revalidate: 30 };
+  // Backend asleep or slow: still send the page, it loads the product in the browser (old behaviour)
+  if (!data) return { props: { initialData: null }, revalidate: 5 };
+  return { props: { initialData: data }, revalidate: 60 };
 }

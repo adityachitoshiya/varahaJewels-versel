@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { cld } from '../lib/img';
 import Link from 'next/link';
 import { loadProducts, colourSiblings } from '../lib/products';
 
@@ -37,7 +38,7 @@ export default function ColourPicker({ product, compact = false }) {
                 className={`group block w-[68px] focus-visible:outline-none ${active ? 'pointer-events-none' : ''}`}
               >
                 <span className={`relative block w-[68px] h-[68px] rounded-xl overflow-hidden bg-warm-sand border-2 transition-colors ${active ? 'border-heritage' : 'border-transparent group-hover:border-copper group-focus-visible:border-copper'}`}>
-                  {p.image && <img src={p.image} alt="" className={`w-full h-full object-cover ${soldOut ? 'opacity-40' : ''}`} />}
+                  {p.image && <img src={cld(p.image, 120)} loading="lazy" decoding="async" alt="" className={`w-full h-full object-cover ${soldOut ? 'opacity-40' : ''}`} />}
                   {soldOut && <span className="absolute inset-x-0 bottom-0 bg-white/85 text-[10px] font-semibold text-heritage text-center py-0.5">Sold out</span>}
                 </span>
                 <span className={`mt-1 block text-[11px] leading-tight text-center ${active ? 'font-semibold text-heritage' : 'text-heritage/60'}`}>{p.colour}</span>

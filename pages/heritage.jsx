@@ -5,19 +5,22 @@ import Image from 'next/image';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getApiUrl } from '../lib/config';
+import { loadProducts, onProductsUpdate, peekProducts, seedProducts } from '../lib/products';
+import { serverGet } from '../lib/serverData';
 import { Search, SlidersHorizontal, Grid, List, Heart, ChevronDown, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import HeritageWaiting from '../components/HeritageWaiting';
 import SectionGrid from '../components/SectionGrid';
 
-export default function Heritage() {
-  // Initialize products empty
-  const [products, setProducts] = useState([]);
+export default function Heritage({ initialProducts = null }) {
+  // First visit: list came with the page. Later: last list this browser saw. Never blank.
+  seedProducts(initialProducts);
+  const [products, setProducts] = useState(() => peekProducts() || initialProducts || []);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !(peekProducts() || initialProducts));
 
   // Filter states - Initialize Heritage category as selected
   const [selectedCategories, setSelectedCategories] = useState(['Heritage']);
@@ -34,29 +37,17 @@ export default function Heritage() {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    fetchProducts();
+    const off = fetchProducts();
     const savedWishlist = localStorage.getItem('wishlist');
     if (savedWishlist) {
       setWishlist(JSON.parse(savedWishlist));
     }
+    return () => off();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const API_URL = getApiUrl();
-      const res = await fetch(`${API_URL}/api/products`);
-      if (res.ok) {
-        const data = await res.json();
-        setProducts(data);
-        // Filter initally happens in useEffect
-      } else {
-        console.error("Failed to fetch products");
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const fetchProducts = () => {
+    loadProducts().then((data) => { setProducts(data); setIsLoading(false); });
+    return onProductsUpdate((data) => setProducts(data)); // fresh prices / stock a moment later
   };
 
   const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
@@ -323,4 +314,10 @@ export default function Heritage() {
       </div>
     </>
   );
+}
+
+
+export async function getStaticProps() {
+  const list = await serverGet('/api/products');
+  return { props: { initialProducts: Array.isArray(list) ? list : null }, revalidate: 60 };
 }

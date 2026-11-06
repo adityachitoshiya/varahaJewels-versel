@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cld } from '../lib/img';
 import { Star, CheckCircle } from 'lucide-react';
 
 export default function ReviewsSection({ reviews = [], averageRating = 0, reviewCount = 0 }) {
@@ -71,7 +72,7 @@ export default function ReviewsSection({ reviews = [], averageRating = 0, review
               <div className="flex gap-2 mt-3 flex-wrap">
                 {review.media_urls.map((url, idx) => (
                   <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
-                    <img src={url} alt={`Review photo ${idx + 1}`} className="w-16 h-16 object-cover rounded-lg border hover:opacity-80 transition" />
+                    <img src={cld(url, 200)} loading="lazy" decoding="async" alt={`Review photo ${idx + 1}`} className="w-16 h-16 object-cover rounded-lg border hover:opacity-80 transition" />
                   </a>
                 ))}
               </div>

@@ -3,6 +3,8 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { getApiUrl, getAuthHeaders } from '../lib/config';
+import { seedProducts } from '../lib/products';
+import { serverGet } from '../lib/serverData';
 import { organizationLd } from '../lib/brand';
 import dynamic from 'next/dynamic';
 import HeroSection from '../components/homepage/HeroSection';
@@ -25,7 +27,8 @@ const CreatorShowcase = dynamic(() => import('../components/homepage/CreatorShow
 const LaunchCountdown = dynamic(() => import('../components/LaunchCountdown'), { ssr: false });
 const SpinWheelPopup = dynamic(() => import('../components/SpinWheelPopup'), { ssr: false });
 
-export default function Home({ heroSlides, initialSettings }) {
+export default function Home({ heroSlides, initialSettings, initialProducts }) {
+  seedProducts(initialProducts); // homepage sections show products at once, even on a first visit
   // Check if user has already skipped countdown (persistent)
   // Check if user has already skipped countdown (persistent)
   // Default to false (fail-safe) in case settings fail to load
@@ -309,6 +312,7 @@ export async function getStaticProps() {
   const API_URL = getApiUrl();
   let heroSlides = null;
   let initialSettings = null;
+  let initialProducts = null;
 
   try {
     const controller = new AbortController();
@@ -328,6 +332,9 @@ export async function getStaticProps() {
     if (settingsRes.status === 'fulfilled' && settingsRes.value.ok) {
       initialSettings = await settingsRes.value.json();
     }
+
+    const list = await serverGet('/api/products');
+    if (Array.isArray(list)) initialProducts = list;
   } catch (error) {
     console.error('SSG Fetch Error:', error);
   }
@@ -338,7 +345,8 @@ export async function getStaticProps() {
   return {
     props: {
       heroSlides: heroSlides || null,
-      initialSettings: initialSettings || null
+      initialSettings: initialSettings || null,
+      initialProducts: initialProducts || null
     },
     // Revalidate every 60 seconds
     revalidate: 60,

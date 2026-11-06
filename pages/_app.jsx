@@ -17,6 +17,7 @@ import { CartProvider } from '../context/CartContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationPopup from '../components/NotificationPopup';
 import MobileBottomNav from '../components/MobileBottomNav';
+import RouteProgress from '../components/RouteProgress';
 import { WishlistProvider } from '../context/WishlistContext';
 import { PIXEL_ID, getUserData } from '../lib/metaPixel';
 
@@ -175,6 +176,7 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <ErrorBoundary>
+    <RouteProgress />
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       {/* ── Meta Pixel Script (loads after page is interactive) ── */}
       <Script
