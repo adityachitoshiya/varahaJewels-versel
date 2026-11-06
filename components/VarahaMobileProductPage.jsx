@@ -566,7 +566,7 @@ export default function VarahaMobileProductPage({
         {/* Similar products */}
         <div>
           <p className="mb-3 text-sm font-medium text-stone-900">You may also love</p>
-          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scroll-pl-1 snap-x">
             {collapseColours(similarProducts.filter((p) => p.stock !== 0)).slice(0, 10).map((p) => (
               <div key={p.id} className="w-[46%] shrink-0 flex">
                 <MarketCard product={p} />

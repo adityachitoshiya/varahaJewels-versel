@@ -86,7 +86,7 @@ export function ProductRail({ title, note, href, pick, limit = 12, tone = 'sand'
             </button>
           </div>
         </div>
-        <div ref={rail} className="flex gap-3 md:gap-5 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0 pb-2">
+        <div ref={rail} className="flex gap-3 md:gap-5 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-pl-4 sm:scroll-pl-0 -mx-4 px-4 sm:mx-0 sm:px-0 pb-2">
           {(items || Array.from({ length: 4 })).map((p, i) => (
             <div key={p?.id || i} className="snap-start flex-shrink-0 w-[46%] sm:w-[31%] lg:w-[calc(25%-15px)] flex">
               {p ? <MarketCard product={p} /> : <div className="w-full"><CardSkeleton /></div>}
