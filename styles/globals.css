@@ -830,3 +830,77 @@ body[data-countdown-active="true"] button.fixed.bottom-8.right-8.z-50 {
   visibility: hidden !important;
   opacity: 0 !important;
 }
+/* ───────────────────────────────────────────────────────────────
+   Heritage products: royal dark product page.
+   Everything inside <main class="heritage-royal"> is re-coloured here, so the
+   same product components work in both themes.
+   ─────────────────────────────────────────────────────────────── */
+.heritage-royal {
+  --royal-bg: #0f0806;
+  --royal-card: #1a100b;
+  --royal-card-2: #231610;
+  --royal-line: rgba(217, 178, 111, 0.28);
+  --royal-gold: #e2bd7c;
+  --royal-gold-deep: #b88a3e;
+  --royal-text: #f4e7d3;
+  --royal-soft: #d6bf9f;
+  --royal-dim: #a98f6e;
+  background: radial-gradient(1200px 600px at 50% -10%, #2a170f 0%, var(--royal-bg) 60%);
+  color: var(--royal-text);
+}
+/* surfaces */
+.heritage-royal .bg-white, .heritage-royal .bg-stone-50, .heritage-royal .bg-stone-100, .heritage-royal .bg-ivory-smoke,
+.heritage-royal .bg-warm-sand, .heritage-royal .bg-warm-sand\/50, .heritage-royal .bg-warm-sand\/40, .heritage-royal .bg-warm-sand\/30,
+.heritage-royal .bg-amber-50, .heritage-royal .bg-amber-50\/60, .heritage-royal .bg-orange-50, .heritage-royal .bg-yellow-50, .heritage-royal .bg-green-50, .heritage-royal .bg-red-50, .heritage-royal .bg-rose-50 {
+  background-color: var(--royal-card) !important;
+}
+.heritage-royal .bg-white\/95, .heritage-royal .bg-white\/90 { background-color: rgba(15, 8, 6, 0.94) !important; }
+.heritage-royal .bg-heritage\/10, .heritage-royal .bg-copper\/10, .heritage-royal .bg-amber-100, .heritage-royal .bg-emerald-100 {
+  background-color: rgba(217, 178, 111, 0.14) !important;
+}
+/* text */
+.heritage-royal .text-heritage, .heritage-royal .text-stone-900, .heritage-royal .text-stone-800, .heritage-royal .text-gray-900, .heritage-royal .text-gray-800 { color: var(--royal-text) !important; }
+.heritage-royal .text-stone-700, .heritage-royal .text-stone-600, .heritage-royal .text-gray-700, .heritage-royal .text-gray-600,
+.heritage-royal .text-matte-brown, .heritage-royal .text-heritage\/70, .heritage-royal .text-matte-brown\/60 { color: var(--royal-soft) !important; }
+.heritage-royal .text-stone-500, .heritage-royal .text-stone-400, .heritage-royal .text-stone-300, .heritage-royal .text-gray-500, .heritage-royal .text-gray-400 { color: var(--royal-dim) !important; }
+.heritage-royal .text-copper, .heritage-royal .text-orange-600, .heritage-royal .text-orange-500, .heritage-royal .text-amber-600, .heritage-royal .text-amber-700, .heritage-royal .text-royal-orange { color: var(--royal-gold) !important; }
+.heritage-royal .text-green-600, .heritage-royal .text-green-700, .heritage-royal .text-emerald-600, .heritage-royal .text-emerald-700 { color: #7fd8a4 !important; }
+.heritage-royal .text-red-500, .heritage-royal .text-red-600 { color: #ff9a8f !important; }
+/* lines */
+.heritage-royal .border-copper\/20, .heritage-royal .border-copper\/30, .heritage-royal .border-heritage\/25, .heritage-royal .border-heritage\/20,
+.heritage-royal .border-stone-200, .heritage-royal .border-stone-100, .heritage-royal .border-gray-200, .heritage-royal .border-gray-100,
+.heritage-royal .border-amber-200, .heritage-royal .border-orange-200, .heritage-royal .border-orange-300, .heritage-royal .border-green-200, .heritage-royal .border-red-200 {
+  border-color: var(--royal-line) !important;
+}
+.heritage-royal .divide-y > :not([hidden]) ~ :not([hidden]) { border-color: var(--royal-line) !important; }
+/* primary buttons and filled chips become gold */
+.heritage-royal .bg-heritage, .heritage-royal .bg-stone-900, .heritage-royal .bg-copper, .heritage-royal .bg-amber-500 {
+  background: linear-gradient(135deg, #f0d396 0%, var(--royal-gold) 45%, var(--royal-gold-deep) 100%) !important;
+  color: #1a0f0a !important;
+}
+.heritage-royal .bg-heritage *, .heritage-royal .bg-stone-900 *, .heritage-royal .bg-copper * { color: inherit; }
+.heritage-royal .hover\:bg-copper:hover, .heritage-royal .hover\:bg-heritage:hover { filter: brightness(1.08); }
+.heritage-royal .border-heritage, .heritage-royal .border-copper { border-color: var(--royal-gold) !important; }
+/* fields */
+.heritage-royal input, .heritage-royal select, .heritage-royal textarea {
+  background-color: var(--royal-card-2) !important; color: var(--royal-text) !important; border-color: var(--royal-line) !important;
+}
+.heritage-royal input::placeholder { color: var(--royal-dim) !important; }
+.heritage-royal .accent-copper { accent-color: var(--royal-gold); }
+/* light gradients (offer strips, banners) -> dark */
+.heritage-royal .bg-gradient-to-r, .heritage-royal .bg-gradient-to-b, .heritage-royal .bg-gradient-to-br {
+  background-image: linear-gradient(90deg, #2a170f, #1a100b) !important;
+}
+.heritage-royal .bg-gradient-to-r *, .heritage-royal .bg-gradient-to-b * { text-shadow: none; }
+/* gold hairline + eyebrow used at the top of the page */
+.royal-eyebrow {
+  display: flex; align-items: center; justify-content: center; gap: 14px; padding: 10px 16px;
+  font-family: 'Cormorant Garamond', serif; letter-spacing: .32em; text-transform: uppercase; font-size: 12px; font-weight: 600;
+  color: #e2bd7c; border-bottom: 1px solid rgba(217, 178, 111, 0.28); background: #0b0504;
+}
+.royal-eyebrow::before, .royal-eyebrow::after { content: ''; height: 1px; width: 56px; background: linear-gradient(90deg, transparent, #e2bd7c); }
+.royal-eyebrow::after { transform: scaleX(-1); }
+@media (max-width: 480px) {
+  .royal-eyebrow { letter-spacing: .18em; font-size: 11px; gap: 8px; white-space: nowrap; }
+  .royal-eyebrow::before, .royal-eyebrow::after { width: 22px; }
+}

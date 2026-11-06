@@ -304,6 +304,8 @@ export default function ProductPage() {
     router.push('/checkout?fromCart=true');
   };
 
+  const isHeritage = /heritage/i.test(`${product?.category || ''} ${product?.tag || ''}`);
+
   if (isLoading) {
     return <ProductDetailSkeleton />;
   }
@@ -376,7 +378,8 @@ export default function ProductPage() {
         <Header cartCount={cartCount} onCartClick={() => setIsCartModalOpen(true)} />
 
         {/* Main Content - Myntra Style Layout */}
-        <main className="flex-1">
+        <main className={`flex-1 ${isHeritage ? 'heritage-royal' : ''}`}>
+          {isHeritage && <div className="royal-eyebrow">The Heritage Collection</div>}
           {/* Mobile Layout */}
           <div className="lg:hidden">
             <VarahaMobileProductPage
