@@ -3,8 +3,7 @@ import { useRouter } from 'next/router';
 import {
     LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Package, Menu, X, Search, Bell,
     Activity, Image as ImageIcon, Sparkles, RotateCcw, FolderTree, FileBarChart, ExternalLink,
-    PanelLeftClose, PanelLeftOpen, FileSpreadsheet,
-} from 'lucide-react';
+    PanelLeftClose, PanelLeftOpen, FileSpreadsheet, ShoppingCart } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import { AdminToastProvider } from './AdminToast';
@@ -20,6 +19,7 @@ const NAV = [
             { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
             { name: 'Returns', href: '/admin/returns', icon: RotateCcw },
             { name: 'Customers', href: '/admin/customers', icon: Users },
+            { name: 'Abandoned carts', href: '/admin/abandoned', icon: ShoppingCart },
         ],
     },
     {
