@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getApiUrl, getAdminHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import OtpToggle from '../../../components/admin/OtpToggle';
+import MagicToggle from '../../../components/admin/MagicToggle';
 import VideoUpload from '../../../components/admin/VideoUpload';
 import MediaUpload from '../../../components/admin/MediaUpload';
 import Head from 'next/head';
@@ -252,6 +253,7 @@ export default function Settings() {
             </div>
 
             <OtpToggle />
+            <MagicToggle />
 
             {/* Tabs */}
             <div className="flex gap-1 md:gap-4 mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hide -mx-4 md:mx-0 px-4 md:px-0">
