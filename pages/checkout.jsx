@@ -11,6 +11,7 @@ import Footer from '../components/Footer';
 import PaymentLayout from '../components/checkout/PaymentLayout';
 import OrderSummary from '../components/checkout/OrderSummary';
 import PhoneOtpModal from '../components/checkout/PhoneOtpModal';
+import MagicCheckoutPanel from '../components/checkout/MagicCheckoutPanel';
 import { trackEvent, storeUserData } from '../lib/metaPixel';
 
 import { ShoppingBag, ArrowLeft, Lock, CreditCard, Truck, Check, Tag, Phone, CheckCircle, User, MapPin, Home, Briefcase, ChevronDown } from 'lucide-react';
@@ -72,6 +73,24 @@ export default function Checkout() {
   // const [isPhoneVerified, setIsPhoneVerified] = useState(true); // Removed - No Guest Checkout
   // const [isOtpLoading, setIsOtpLoading] = useState(false); // Removed
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Razorpay Magic Checkout (admin switch). When on, Razorpay's window takes the address and payment.
+  const [magicOn, setMagicOn] = useState(false);
+  useEffect(() => {
+    fetch(`${getApiUrl()}/api/magic/config`).then((r) => (r.ok ? r.json() : null))
+      .then((d) => setMagicOn(!!d?.enabled)).catch(() => {});
+  }, []);
+  const handleMagicSuccess = async (data) => {
+    if (cartItems.length > 0) {
+      localStorage.removeItem('cart');
+      try { await clearCart(); } catch (e) { /* ignore */ }
+    }
+    setIsSuccess(true);
+    router.push({
+      pathname: '/payment-success',
+      query: { orderId: data.orderId, key: data.accessKey, amount: data.amount, ...(data.cod ? { codMode: 'true' } : {}) },
+    });
+  };
 
   // Cash on Delivery needs a verified mobile number (the server says if it is switched on)
   const [codOtpRequired, setCodOtpRequired] = useState(false);
@@ -902,7 +921,17 @@ export default function Checkout() {
             <p role="alert" className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</p>
           )}
 
-          {currentStep === 1 && (
+          {magicOn && (
+            <MagicCheckoutPanel
+              cartItems={cartItems}
+              orderDetails={orderDetails}
+              summaryItems={summaryItems}
+              totalAmount={totalAmount}
+              onSuccess={handleMagicSuccess}
+            />
+          )}
+
+          {!magicOn && currentStep === 1 && (
             <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
               {/* Phone: summary folds into a bar above the form */}
               <div className="lg:hidden mb-4">
@@ -1049,7 +1078,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {currentStep === 2 && (
+          {!magicOn && currentStep === 2 && (
             <PaymentLayout
               cartItems={cartItems}
               orderDetails={orderDetails}

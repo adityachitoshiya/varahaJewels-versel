@@ -34,7 +34,7 @@ export default function MagicToggle() {
             <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-gray-900">Razorpay Magic Checkout</h2>
                 <p className="text-sm text-gray-500 mt-0.5">One-tap checkout with saved addresses and coupons shown inside the payment window. When off, the normal checkout is used.</p>
-                <p className="mt-2 text-sm text-amber-700">Heads up: the Magic Checkout screen is not connected to the store yet, so this switch does not change the checkout until that work is done.</p>
+                <p className="mt-2 text-sm text-amber-700">Switches the live checkout for every shopper. Place one test order yourself right after turning it on.</p>
                 {error && <p role="alert" className="mt-2 text-sm text-red-600">{error}</p>}
             </div>
             <button
