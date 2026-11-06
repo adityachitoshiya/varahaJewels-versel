@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { ShoppingBag, ArrowLeft, Plus, Minus, Trash2, Heart, Tag, ArrowRight, X } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Plus, Minus, Trash2, Heart, Tag, ArrowRight, X, ShieldCheck, RotateCcw, Truck, BadgeCheck, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { FREE_DELIVERY_MIN, COD_CHARGE } from '../lib/deliveryFees';
 
@@ -15,6 +15,7 @@ export default function Cart() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [showCoupon, setShowCoupon] = useState(false);
 
   const handleUpdateQuantity = (item, newQuantity) => {
     updateQuantity(item.variant?.sku, newQuantity, item.id);
@@ -106,6 +107,11 @@ export default function Cart() {
 
   const total = subtotal - discountAmount;
 
+  const inr = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+  const itemCount = cartItems.reduce((n, i) => n + i.quantity, 0);
+  const toFree = Math.max(0, FREE_DELIVERY_MIN - total);
+  const hasSoldOut = cartItems.some((i) => i.stock !== undefined && i.stock <= 0);
+
   return (
     <>
       <Head>
@@ -116,294 +122,195 @@ export default function Cart() {
 
       <Header cartCount={cartCount} />
 
-      <main className="min-h-screen bg-warm-sand py-8 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-8 sm:mb-12">
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 text-heritage hover:text-copper transition-colors mb-4 sm:mb-6"
-            >
-              <ArrowLeft size={20} />
-              Continue Shopping
-            </Link>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-royal font-bold text-heritage mb-4">Shopping Cart</h1>
-            <div className="w-20 h-px bg-copper"></div>
+      <main className="min-h-screen bg-warm-sand/40 pt-6 pb-44 lg:pb-16 lg:pt-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <Link href="/shop" className="inline-flex items-center gap-2 text-sm font-semibold text-heritage hover:text-copper">
+            <ArrowLeft size={16} /> Continue shopping
+          </Link>
+          <div className="mt-3 flex items-end justify-between gap-4">
+            <h1 className="font-royal font-bold text-4xl sm:text-5xl text-heritage leading-none">Your cart</h1>
+            {cartItems.length > 0 && (
+              <button onClick={handleClearCart} className="text-sm font-medium text-heritage/55 hover:text-red-600 underline underline-offset-4">Clear cart</button>
+            )}
           </div>
+          {cartItems.length > 0 && (
+            <p className="mt-2 text-heritage/60">{itemCount} {itemCount === 1 ? 'piece' : 'pieces'} waiting for you</p>
+          )}
 
           {!cartItems || cartItems.length === 0 ? (
-            /* Empty Cart State */
-            <div className="bg-white border border-copper/30 rounded-sm p-8 sm:p-12 text-center">
-              <ShoppingBag className="mx-auto mb-6 text-heritage/30" size={64} />
-              <h2 className="text-2xl sm:text-3xl font-royal font-bold text-heritage mb-4">Your cart is empty</h2>
-              <p className="text-heritage/70 mb-8 max-w-md mx-auto">
-                Looks like you haven't added any items to your cart yet. Explore our exquisite collections!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-copper text-warm-sand font-semibold rounded-sm hover:bg-heritage transition-all duration-300"
-                >
-                  <ShoppingBag size={20} />
-                  Browse Collections
-                </Link>
-                <Link
-                  href="/wishlist"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-copper text-copper font-semibold rounded-sm hover:bg-copper hover:text-warm-sand transition-all duration-300"
-                >
-                  <Heart size={20} />
-                  View Wishlist
-                </Link>
+            <div className="mt-8 rounded-3xl bg-white border border-heritage/10 px-6 py-14 sm:py-20 text-center">
+              <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-warm-sand text-copper"><ShoppingBag size={34} /></span>
+              <h2 className="mt-6 font-royal font-bold text-3xl text-heritage">Your cart is empty</h2>
+              <p className="mt-2 text-heritage/65 max-w-md mx-auto">Pieces you add will wait here. Start with our Heritage sets, made for weddings and festivals.</p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/heritage" className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full bg-heritage text-white font-semibold hover:bg-copper transition-colors">See Heritage</Link>
+                <Link href="/shop" className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-full border border-heritage/25 text-heritage font-semibold hover:bg-heritage hover:text-white transition-colors">Browse everything</Link>
               </div>
+              <Link href="/wishlist" className="mt-6 inline-flex items-center gap-2 text-sm text-copper font-semibold"><Heart size={16} /> View your wishlist</Link>
             </div>
           ) : (
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Cart Items */}
-              <div className="lg:col-span-2 space-y-4">
-                {/* Clear Cart Button */}
-                <div className="flex justify-between items-center mb-4">
-                  <p className="text-heritage/70 text-sm">
-                    {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in cart
-                  </p>
-                  <button
-                    onClick={handleClearCart}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
-                  >
-                    Clear Cart
-                  </button>
+            <div className="mt-6 grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+              {/* Items */}
+              <div className="lg:col-span-7 space-y-4">
+                {/* Delivery nudge */}
+                <div className="rounded-2xl bg-white border border-heritage/10 px-4 py-3.5">
+                  <div className="flex items-center gap-3 text-sm text-heritage">
+                    <Truck size={18} className="text-copper flex-shrink-0" />
+                    {toFree > 0
+                      ? <p>Add <b>{inr(toFree)}</b> more to skip the {inr(COD_CHARGE)} Cash on Delivery fee. Delivery is free on every order.</p>
+                      : <p><b>Free delivery</b> and no Cash on Delivery fee on this order.</p>}
+                  </div>
+                  <div className="mt-2.5 h-1.5 rounded-full bg-heritage/10 overflow-hidden" aria-hidden="true">
+                    <div className="h-full rounded-full bg-copper transition-all duration-500" style={{ width: `${Math.min(100, (total / FREE_DELIVERY_MIN) * 100)}%` }} />
+                  </div>
                 </div>
 
                 {cartItems.map((item) => {
                   const isOutOfStock = item.stock !== undefined && item.stock <= 0;
-
+                  const unit = item.variant?.price || 0;
                   return (
-                    <div
+                    <article
                       key={item.variant?.sku || item.id}
-                      className={`bg-white border rounded-sm p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 ${isOutOfStock ? 'border-red-300 bg-red-50/30' : 'border-copper/30'}`}
+                      className={`rounded-2xl bg-white border p-3.5 sm:p-5 ${isOutOfStock ? 'border-red-200' : 'border-heritage/10'}`}
                     >
-                      <div className="flex gap-4 sm:gap-6">
-                        {/* Product Image */}
-                        <div className="flex-shrink-0 relative">
+                      <div className="flex gap-3.5 sm:gap-5">
+                        <div className="relative flex-shrink-0">
                           <Image
                             src={item.variant?.image || item.image || '/varaha-assets/dp1.avif'}
                             alt={item.productName || item.name}
-                            width={120}
-                            height={120}
-                            className={`w-20 h-20 sm:w-32 sm:h-32 object-cover rounded-sm ${isOutOfStock ? 'opacity-50' : ''}`}
+                            width={140}
+                            height={140}
+                            className={`h-24 w-24 sm:h-32 sm:w-32 object-cover rounded-xl bg-warm-sand ${isOutOfStock ? 'opacity-50' : ''}`}
                           />
                           {isOutOfStock && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
-                                SOLD OUT
-                              </span>
-                            </div>
+                            <span className="absolute inset-x-1 bottom-1 rounded-md bg-red-600 py-0.5 text-center text-[10px] font-bold uppercase tracking-wide text-white">Sold out</span>
                           )}
                         </div>
 
-                        {/* Product Details */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="text-base sm:text-lg font-royal font-bold text-heritage mb-1">
-                                {item.productName || item.name}
-                              </h3>
-                              <p className="text-sm text-heritage/60">{item.variant?.name}</p>
-                              {isOutOfStock && (
-                                <p className="text-sm text-red-600 font-semibold mt-1">
-                                  ⚠️ This item is no longer available
-                                </p>
-                              )}
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <h3 className="font-royal font-bold text-lg sm:text-xl leading-snug text-heritage line-clamp-2">{item.productName || item.name}</h3>
+                              {item.variant?.name && <p className="mt-0.5 text-sm text-heritage/55">{item.variant.name}</p>}
+                              {isOutOfStock && <p className="mt-1 text-sm font-semibold text-red-600">No longer available</p>}
                             </div>
-                            <button
-                              onClick={() => handleRemoveItem(item)}
-                              className="text-heritage/40 hover:text-red-600 transition-colors p-2"
-                              aria-label="Remove item"
-                            >
-                              <X size={20} />
-                            </button>
+                            <button onClick={() => handleRemoveItem(item)} className="-m-1 p-2 text-heritage/40 hover:text-red-600" aria-label="Remove item"><X size={18} /></button>
                           </div>
 
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4">
-                            {/* Quantity Controls */}
-                            <div className="flex items-center gap-4">
-                              <span className="hidden sm:inline text-sm text-heritage/70">Quantity:</span>
-                              <div className={`flex items-center border-2 rounded-sm overflow-hidden ${isOutOfStock ? 'border-gray-300 bg-gray-100' : 'border-copper/30'}`}>
-                                <button
-                                  onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
-                                  disabled={isOutOfStock}
-                                  className={`p-2 transition-colors ${isOutOfStock ? 'cursor-not-allowed opacity-50' : 'hover:bg-copper/10'}`}
-                                  aria-label="Decrease quantity"
-                                >
-                                  <Minus size={16} className={isOutOfStock ? 'text-gray-400' : 'text-copper'} />
-                                </button>
-                                <span className={`px-4 sm:px-6 py-2 font-semibold min-w-[50px] sm:min-w-[60px] text-center text-sm sm:text-base bg-white ${isOutOfStock ? 'text-gray-400' : 'text-heritage'}`}>
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
-                                  disabled={isOutOfStock}
-                                  className={`p-2 transition-colors ${isOutOfStock ? 'cursor-not-allowed opacity-50' : 'hover:bg-copper/10'}`}
-                                  aria-label="Increase quantity"
-                                >
-                                  <Plus size={16} className={isOutOfStock ? 'text-gray-400' : 'text-copper'} />
-                                </button>
-                              </div>
+                          <div className="mt-auto pt-3 flex flex-wrap items-end justify-between gap-3">
+                            <div className={`inline-flex items-center rounded-full border ${isOutOfStock ? 'border-gray-200 bg-gray-50' : 'border-heritage/20'}`}>
+                              <button onClick={() => handleUpdateQuantity(item, item.quantity - 1)} disabled={isOutOfStock} className="h-9 w-9 flex items-center justify-center text-copper disabled:opacity-40" aria-label="Decrease quantity"><Minus size={15} /></button>
+                              <span className="min-w-[28px] text-center text-sm font-semibold tabular-nums text-heritage" aria-live="polite">{item.quantity}</span>
+                              <button onClick={() => handleUpdateQuantity(item, item.quantity + 1)} disabled={isOutOfStock} className="h-9 w-9 flex items-center justify-center text-copper disabled:opacity-40" aria-label="Increase quantity"><Plus size={15} /></button>
                             </div>
-
-                            {/* Price */}
-                            <div className="text-left sm:text-right">
-                              <p className={`text-lg sm:text-2xl font-bold ${isOutOfStock ? 'text-gray-400 line-through' : 'text-heritage'}`}>
-                                ₹{((item.variant?.price || 0) * item.quantity).toLocaleString('en-IN')}
-                              </p>
-                              <p className="text-xs text-heritage/60">
-                                ₹{(item.variant?.price || 0).toLocaleString('en-IN')} each
-                              </p>
+                            <div className="text-right">
+                              <p className={`font-royal font-bold text-2xl tabular-nums leading-none ${isOutOfStock ? 'text-gray-400 line-through' : 'text-heritage'}`}>{inr(unit * item.quantity)}</p>
+                              {item.quantity > 1 && <p className="mt-1 text-xs text-heritage/50">{inr(unit)} each</p>}
                             </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex gap-4 mt-4 pt-4 border-t border-copper/20">
-                            <button
-                              onClick={() => handleMoveToWishlist(item)}
-                              className="text-sm text-copper hover:text-heritage font-medium flex items-center gap-2 transition-colors"
-                            >
-                              <Heart size={16} />
-                              Move to Wishlist
-                            </button>
-                            {isOutOfStock && (
-                              <button
-                                onClick={() => handleRemoveItem(item)}
-                                className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-2 transition-colors"
-                              >
-                                <Trash2 size={16} />
-                                Remove
-                              </button>
-                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
+                      <div className="mt-3.5 pt-3 border-t border-heritage/10 flex items-center gap-5 text-sm">
+                        <button onClick={() => handleMoveToWishlist(item)} className="inline-flex items-center gap-1.5 font-medium text-copper hover:text-heritage"><Heart size={15} /> Save for later</button>
+                        {isOutOfStock && (
+                          <button onClick={() => handleRemoveItem(item)} className="inline-flex items-center gap-1.5 font-medium text-red-600"><Trash2 size={15} /> Remove</button>
+                        )}
+                      </div>
+                    </article>
                   );
                 })}
               </div>
 
-              {/* Order Summary */}
-              <div className="lg:col-span-1">
-                <div className="bg-white border border-copper/30 rounded-sm p-6 sticky top-24">
-                  <h2 className="text-2xl font-royal font-bold text-heritage mb-6">Order Summary</h2>
+              {/* Summary */}
+              <aside className="lg:col-span-5 lg:sticky lg:top-24">
+                <div className="rounded-2xl bg-white border border-heritage/10 p-5 sm:p-6">
+                  <h2 className="font-royal font-bold text-2xl text-heritage">Order summary</h2>
 
-                  {/* Coupon Section */}
-                  <div className="mb-6 pb-6 border-b border-copper/30">
-                    {!appliedCoupon ? (
-                      <div>
-                        <label className="block text-sm font-medium text-heritage mb-2 flex items-center gap-2">
-                          <Tag size={16} className="text-copper" />
-                          Have a Coupon Code?
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                            placeholder="Enter code"
-                            className="flex-1 w-full px-4 py-2 border border-copper/30 rounded-sm focus:outline-none focus:ring-2 focus:ring-copper focus:border-copper transition-all text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleApplyCoupon}
-                            className="px-4 py-2 bg-copper text-warm-sand font-medium rounded-sm hover:bg-heritage transition-all duration-300 text-sm whitespace-nowrap"
-                          >
-                            Apply
-                          </button>
-                        </div>
-                        {couponError && (
-                          <p className="text-red-600 text-xs mt-2">{couponError}</p>
-                        )}
+                  {/* Coupon */}
+                  <div className="mt-4 rounded-xl border border-heritage/12 bg-warm-sand/40">
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between gap-3 px-4 py-3">
+                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700"><BadgeCheck size={18} /> {appliedCoupon} applied</span>
+                        <button onClick={handleRemoveCoupon} className="text-sm text-heritage/60 underline underline-offset-4" aria-label="Remove coupon">Remove</button>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-sm">
-                        <div className="flex items-center gap-2">
-                          <Tag size={16} className="text-green-600" />
-                          <span className="text-sm font-semibold text-green-700">{appliedCoupon}</span>
-                        </div>
-                        <button
-                          onClick={handleRemoveCoupon}
-                          className="text-green-600 hover:text-green-800 transition-colors"
-                          aria-label="Remove coupon"
-                        >
-                          <X size={18} />
+                      <>
+                        <button type="button" onClick={() => setShowCoupon((v) => !v)} className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-heritage" aria-expanded={showCoupon}>
+                          <span className="inline-flex items-center gap-2"><Tag size={16} className="text-copper" /> Have a coupon?</span>
+                          <ChevronDown size={16} className={`transition-transform ${showCoupon ? 'rotate-180' : ''}`} />
                         </button>
-                      </div>
+                        {showCoupon && (
+                          <div className="px-4 pb-4">
+                            <div className="flex gap-2">
+                              <input
+                                type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleApplyCoupon(); }}
+                                placeholder="Enter code" autoCapitalize="characters"
+                                className="flex-1 min-w-0 h-11 px-4 rounded-full bg-white border border-heritage/20 text-sm focus:outline-none focus:border-copper focus:ring-2 focus:ring-copper/20"
+                              />
+                              <button type="button" onClick={handleApplyCoupon} className="h-11 px-5 rounded-full bg-heritage text-white text-sm font-semibold hover:bg-copper transition-colors">Apply</button>
+                            </div>
+                            {couponError && <p role="alert" className="mt-2 text-xs text-red-600">{couponError}</p>}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
-                  {/* Price Breakdown */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between text-heritage/70">
-                      <span>Subtotal</span>
-                      <span className="font-semibold">₹{subtotal.toLocaleString('en-IN')}</span>
-                    </div>
-
-                    {appliedCoupon && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Discount ({appliedCoupon})</span>
-                        <span className="font-semibold">-₹{discountAmount.toLocaleString('en-IN')}</span>
-                      </div>
+                  <dl className="mt-5 space-y-3 text-[15px]">
+                    <div className="flex justify-between"><dt className="text-heritage/65">Subtotal</dt><dd className="font-semibold tabular-nums text-heritage">{inr(subtotal)}</dd></div>
+                    {appliedCoupon && discountAmount > 0 && (
+                      <div className="flex justify-between text-emerald-700"><dt>Coupon ({appliedCoupon})</dt><dd className="font-semibold tabular-nums">-{inr(discountAmount)}</dd></div>
                     )}
+                    <div className="flex justify-between"><dt className="text-heritage/65">Delivery</dt><dd className="font-semibold text-emerald-700">Free</dd></div>
+                  </dl>
 
-                    <div className="flex justify-between text-heritage/70">
-                      <span>Delivery</span>
-                      <span className="font-semibold text-green-600">FREE</span>
+                  <div className="mt-5 pt-5 border-t border-heritage/10 flex items-end justify-between">
+                    <div>
+                      <p className="text-sm text-heritage/60">Total</p>
+                      <p className="text-xs text-heritage/45">Inclusive of all taxes</p>
                     </div>
-
-                    {total < FREE_DELIVERY_MIN && (
-                      <p className="text-xs text-heritage/70 bg-copper/10 p-2 rounded-sm">
-                        Free delivery with online payment. Cash on Delivery has a ₹{COD_CHARGE} charge on orders below ₹{FREE_DELIVERY_MIN} — add ₹{Math.ceil(FREE_DELIVERY_MIN - total).toLocaleString('en-IN')} more to avoid it.
-                      </p>
-                    )}
+                    <p className="font-royal font-bold text-4xl tabular-nums leading-none text-heritage">{inr(total)}</p>
                   </div>
 
-                  {/* Total */}
-                  <div className="pt-4 border-t-2 border-copper/30 mb-6">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-heritage">Total</span>
-                      <span className="text-3xl font-bold text-heritage">
-                        ₹{Math.round(total).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                    <p className="text-xs text-heritage/60 mt-1">Inclusive of all taxes</p>
-                  </div>
-
-                  {/* Checkout Button */}
                   <Link
                     href="/checkout?fromCart=true"
-                    className="w-full px-8 py-4 bg-copper text-warm-sand font-bold rounded-sm hover:bg-heritage transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+                    aria-disabled={hasSoldOut}
+                    className={`mt-6 hidden lg:flex h-14 items-center justify-center gap-2 rounded-full bg-heritage text-white text-lg font-bold shadow-lg hover:bg-copper transition-colors ${hasSoldOut ? 'pointer-events-none opacity-50' : ''}`}
                   >
-                    Proceed to Checkout
-                    <ArrowRight size={20} />
+                    Proceed to checkout <ArrowRight size={20} />
                   </Link>
+                  {hasSoldOut && <p className="mt-2 text-xs text-red-600">Remove the sold out item to continue.</p>}
 
-                  {/* Trust Badges */}
-                  <div className="mt-6 pt-6 border-t border-copper/20 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-heritage/70">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Secure Checkout</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-heritage/70">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>7-Day Easy Returns</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-heritage/70">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>100% Authentic Products</span>
-                    </div>
-                  </div>
+                  <ul className="mt-6 grid gap-2.5 text-sm text-heritage/75">
+                    <li className="flex items-center gap-2.5"><ShieldCheck size={17} className="text-copper" /> Secure payment by UPI, card or net banking</li>
+                    <li className="flex items-center gap-2.5"><RotateCcw size={17} className="text-copper" /> 7-day easy returns and exchange</li>
+                    <li className="flex items-center gap-2.5"><BadgeCheck size={17} className="text-copper" /> 100% authentic, quality checked</li>
+                  </ul>
                 </div>
-              </div>
+              </aside>
             </div>
           )}
         </div>
       </main>
+
+      {/* Phone: checkout bar above the bottom tabs */}
+      {cartItems.length > 0 && (
+        <div className="lg:hidden fixed inset-x-0 z-40 bg-white border-t border-heritage/10 px-4 py-3 shadow-[0_-8px_24px_-12px_rgba(42,21,12,0.25)] bottom-[calc(3.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(4rem+env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-4">
+            <div className="min-w-0">
+              <p className="text-xs text-heritage/55">{itemCount} {itemCount === 1 ? 'piece' : 'pieces'}</p>
+              <p className="font-royal font-bold text-2xl leading-none tabular-nums text-heritage">{inr(total)}</p>
+            </div>
+            <Link
+              href="/checkout?fromCart=true" aria-disabled={hasSoldOut}
+              className={`flex-1 h-12 inline-flex items-center justify-center gap-2 rounded-full bg-heritage text-white font-bold ${hasSoldOut ? 'pointer-events-none opacity-50' : ''}`}
+            >
+              Checkout <ArrowRight size={18} />
+            </Link>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
