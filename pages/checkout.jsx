@@ -75,10 +75,22 @@ export default function Checkout() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Razorpay Magic Checkout (admin switch). When on, Razorpay's window takes the address and payment.
+  // magicReady stays false until we know which checkout to show, so the other one never flashes.
   const [magicOn, setMagicOn] = useState(false);
+  const [magicReady, setMagicReady] = useState(false);
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem('vj_magic_checkout'); // last answer: shows the right layout at once
+      if (cached !== null) { setMagicOn(cached === '1'); setMagicReady(true); }
+    } catch (e) { /* storage blocked */ }
     fetch(`${getApiUrl()}/api/magic/config`).then((r) => (r.ok ? r.json() : null))
-      .then((d) => setMagicOn(!!d?.enabled)).catch(() => {});
+      .then((d) => {
+        const on = !!d?.enabled;
+        setMagicOn(on);
+        try { localStorage.setItem('vj_magic_checkout', on ? '1' : '0'); } catch (e) { /* ignore */ }
+      })
+      .catch(() => {})
+      .finally(() => setMagicReady(true));
   }, []);
   const handleMagicSuccess = async (data) => {
     if (cartItems.length > 0) {
@@ -891,6 +903,7 @@ export default function Checkout() {
           <Link href="/" className="mx-auto sm:mx-0 flex-shrink-0" aria-label="Varaha Jewels home">
             <Image src="/varaha-assets/logo.png" alt="Varaha Jewels" width={110} height={32} className="h-7 w-auto" onError={(e) => { e.currentTarget.src = 'https://res.cloudinary.com/dd5zrsmok/image/upload/v1766342264/logo_hvef6t.png'; }} />
           </Link>
+          {magicReady && !magicOn ? (
           <ol className="hidden sm:flex items-center gap-2 ml-auto text-sm font-medium" aria-label="Checkout steps">
             {['Shipping', 'Payment'].map((labelText, i) => {
               const n = i + 1;
@@ -907,12 +920,13 @@ export default function Checkout() {
               );
             })}
           </ol>
+          ) : <span className="ml-auto" />}
           <span className="hidden md:flex items-center gap-1.5 text-xs text-heritage/55 ml-4 whitespace-nowrap">
             <Lock size={13} className="text-emerald-600" /> Secure checkout
           </span>
         </div>
         {/* Phone step bar */}
-        <div className="sm:hidden h-1 bg-heritage/10"><div className={`h-full bg-copper transition-all ${currentStep === 1 ? 'w-1/2' : 'w-full'}`} /></div>
+        {magicReady && !magicOn && <div className="sm:hidden h-1 bg-heritage/10"><div className={`h-full bg-copper transition-all ${currentStep === 1 ? 'w-1/2' : 'w-full'}`} /></div>}
       </header>
 
       <main className="min-h-screen bg-warm-sand/40 pt-5 lg:pt-8 pb-28 lg:pb-16">
@@ -921,7 +935,14 @@ export default function Checkout() {
             <p role="alert" className="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</p>
           )}
 
-          {magicOn && (
+          {!magicReady && (
+            <div className="max-w-3xl mx-auto py-16 text-center text-heritage/60" role="status" aria-live="polite">
+              <div className="mx-auto mb-4 h-8 w-8 rounded-full border-2 border-heritage/20 border-t-copper animate-spin" />
+              Loading checkout…
+            </div>
+          )}
+
+          {magicReady && magicOn && (
             <MagicCheckoutPanel
               cartItems={cartItems}
               orderDetails={orderDetails}
@@ -931,7 +952,7 @@ export default function Checkout() {
             />
           )}
 
-          {!magicOn && currentStep === 1 && (
+          {magicReady && !magicOn && currentStep === 1 && (
             <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
               {/* Phone: summary folds into a bar above the form */}
               <div className="lg:hidden mb-4">
@@ -1078,7 +1099,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {!magicOn && currentStep === 2 && (
+          {magicReady && !magicOn && currentStep === 2 && (
             <PaymentLayout
               cartItems={cartItems}
               orderDetails={orderDetails}
