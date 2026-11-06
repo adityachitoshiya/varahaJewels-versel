@@ -23,6 +23,7 @@ import ColourPicker from './ColourPicker';
 import MarketCard from './MarketCard';
 import { collapseColours } from '../lib/products';
 import { parseSpecs } from '../lib/productSpecs';
+import { COD_CHARGE, FREE_DELIVERY_MIN, codChargeFor } from '../lib/deliveryFees';
 import {
   ChevronLeft, ChevronRight, Share2, Heart, Star, Truck, RotateCcw, ShieldCheck,
   ChevronDown, ChevronUp, MapPin, Check, Percent, Sparkles,
@@ -427,10 +428,14 @@ export default function VarahaMobileProductPage({
                 </div>
               )}
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
-                  <Check size={16} className="text-emerald-600" />
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full ${deliveryInfo.cod === false ? 'bg-red-100' : 'bg-emerald-100'}`}>
+                  {deliveryInfo.cod === false ? <X size={16} className="text-red-500" /> : <Check size={16} className="text-emerald-600" />}
                 </div>
-                <p className="text-sm text-stone-800">Pay on delivery available</p>
+                <p className="text-sm text-stone-800">
+                  {deliveryInfo.cod === false
+                    ? 'Pay on delivery is not available for this pincode. You can pay online.'
+                    : `Pay on delivery available${codChargeFor(selectedVariant?.price || product?.price || 0) > 0 ? ` (₹${COD_CHARGE} fee on orders under ₹${FREE_DELIVERY_MIN})` : ''}`}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">

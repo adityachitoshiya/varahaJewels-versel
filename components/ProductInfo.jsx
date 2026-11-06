@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { COD_CHARGE, FREE_DELIVERY_MIN, codChargeFor } from '../lib/deliveryFees';
 import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, MapPin, Check, Gift, CreditCard, X, Zap, Minus, Percent, Sparkles } from 'lucide-react';
 import { formatCurrency } from '../lib/productData';
 import WishlistButton from './WishlistButton';
@@ -329,10 +330,14 @@ export default function ProductInfo({ product, onAddToCart, onBuyNow, settings }
               </div>
             )}
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
-                <Check size={16} className="text-green-600" />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${deliveryInfo.cod === false ? 'bg-red-50' : 'bg-green-50'}`}>
+                {deliveryInfo.cod === false ? <X size={16} className="text-red-500" /> : <Check size={16} className="text-green-600" />}
               </div>
-              <p className="text-sm text-heritage">Pay on Delivery available</p>
+              <p className="text-sm text-heritage">
+                {deliveryInfo.cod === false
+                  ? 'Pay on Delivery is not available for this pincode. You can pay online.'
+                  : `Pay on Delivery available${codChargeFor(selectedVariant.price || 0) > 0 ? ` (₹${COD_CHARGE} fee on orders under ₹${FREE_DELIVERY_MIN})` : ''}`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-copper/10 rounded-full flex items-center justify-center">
