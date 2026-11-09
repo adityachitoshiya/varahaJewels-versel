@@ -33,6 +33,12 @@ function MyApp({ Component, pageProps }) {
 
   const [faviconUrl, setFaviconUrl] = useState('/favicon-circle.png');
 
+  // The visit has landed: later visits to Home skip the preloader (see pages/index.jsx)
+  useEffect(() => {
+    window.__vjLanded = true;
+    try { sessionStorage.setItem('preloaderShown', 'true'); } catch (e) { /* private mode */ }
+  }, []);
+
   // Fetch favicon from store settings once
   useEffect(() => {
     const API_URL = getApiUrl();

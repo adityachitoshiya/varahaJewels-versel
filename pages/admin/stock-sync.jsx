@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { Upload, FileSpreadsheet, ArrowRight, CheckCircle2, AlertTriangle } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getApiUrl, getAdminHeaders } from '../../lib/config';
+import { istDateTime } from '../../lib/istDate';
 
 // Daily stock update: upload the supplier's Excel (SKU + Quantity), check what
 // would change, then apply. Nothing is written until "Apply" is pressed.
 
 const inr = (n) => (n == null ? '-' : `₹${Math.round(n).toLocaleString('en-IN')}`);
-const when = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '');
+const when = (iso) => istDateTime(iso, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 export default function StockSync() {
     const fileRef = useRef(null);

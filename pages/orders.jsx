@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Package, CheckCircle, Clock, XCircle, Search } from 'lucide-react';
+import { utcDate } from '../lib/istDate';
 
 export default function Orders() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function Orders() {
         });
 
         // Sort by date desc
-        adaptedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        adaptedOrders.sort((a, b) => utcDate(b.createdAt) - utcDate(a.createdAt));
 
         setOrders(adaptedOrders);
         setFilteredOrders(adaptedOrders);
@@ -226,7 +227,8 @@ export default function Orders() {
                         </span>
                       </div>
                       <p className="text-sm text-heritage/60">
-                        Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                        Placed on {utcDate(order.createdAt).toLocaleDateString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric',

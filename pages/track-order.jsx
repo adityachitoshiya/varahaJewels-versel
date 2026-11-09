@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import { getApiUrl } from '../lib/config';
 import OrderStepper from '../components/OrderStepper';
 import { Package, Search, ChevronRight, ArrowRight, MapPin, Truck, CheckCircle, Clock, Mail, Phone, ExternalLink } from 'lucide-react';
+import { istDate } from '../lib/istDate';
 
 export default function TrackOrder() {
     const [searchType, setSearchType] = useState('email'); // 'email' or 'phone'
@@ -243,7 +244,7 @@ export default function TrackOrder() {
                                                         {order.item_count > 2 && ` +${order.item_count - 2} more`}
                                                     </p>
                                                     <p className="text-xs text-heritage/40 mt-1">
-                                                        {new Date(order.created_at).toLocaleDateString('en-IN', {
+                                                        {istDate(order.created_at, {
                                                             day: 'numeric', month: 'long', year: 'numeric'
                                                         })}
                                                     </p>

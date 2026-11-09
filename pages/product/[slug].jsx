@@ -14,6 +14,7 @@ import VarahaMobileProductPage from '../../components/VarahaMobileProductPage';
 import { trackEvent } from '../../lib/metaPixel';
 import ProductDetails from '../../components/ProductDetails';
 import { serverGet } from '../../lib/serverData';
+import { istDate } from '../../lib/istDate';
 
 // Turns the API's product into the shape this page uses. Pure, so the server can build it too.
 function adaptProduct(data) {
@@ -216,7 +217,7 @@ export default function ProductPage({ initialData = null }) {
                 title: r.verified_purchase ? 'Verified Purchase' : '',
                 text: r.comment || '',
                 media_urls: r.media_urls || [],
-                date: new Date(r.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                date: istDate(r.created_at, { year: 'numeric', month: 'short', day: 'numeric' })
               }));
 
               setProduct(prev => ({

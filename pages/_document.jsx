@@ -76,6 +76,14 @@ export default function Document() {
           <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" />
         </noscript>
 
+        {/* Preloader once per visit: on a reload or a later page, hide it before the first paint */}
+        <style dangerouslySetInnerHTML={{ __html: "html[data-vj-seen] .vj-preloader{display:none!important}" }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(sessionStorage.getItem('preloaderShown'))document.documentElement.setAttribute('data-vj-seen','1')}catch(e){}",
+          }}
+        />
+
         {/* Preload Hero Image for LCP */}
         <link rel="preload" as="image" href="/varaha-assets/heroimage.avif" type="image/avif" />
 

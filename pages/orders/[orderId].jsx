@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import OrderStepper from '../../components/OrderStepper';
+import { istDateTime } from '../../lib/istDate';
 import {
     Package, Truck, CheckCircle, Clock, MapPin,
     ChevronLeft, Star, Upload, Video, Image as ImageIcon, RefreshCw, RotateCcw
@@ -36,7 +37,7 @@ function getStepsFromOrder(order) {
             description: "Order confirmed",
             completed: currentStep >= 1,
             active: currentStep === 1,
-            date: order.created_at ? new Date(order.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null
+            date: order.created_at ? istDateTime(order.created_at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null
         },
         {
             step: 2,
@@ -159,7 +160,8 @@ export default function OrderDetails() {
         try {
             const API_URL = getApiUrl();
             const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
-            const res = await fetch(`${API_URL}/api/orders/${orderId}/refresh-tracking`, {
+            const keyParam = accessKey ? `?key=${encodeURIComponent(accessKey)}` : '';
+            const res = await fetch(`${API_URL}/api/orders/${orderId}/refresh-tracking${keyParam}`, {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
             if (res.ok) {
@@ -179,17 +181,20 @@ export default function OrderDetails() {
 
         setSubmittingReview(true);
         try {
-            const productId = order.items[0]?.id || 'unknown';
+            const productId = order.items[0]?.productId || order.items[0]?.id || 'unknown';
 
+            const token = typeof window !== 'undefined' ? localStorage.getItem('customer_token') : null;
             const response = await fetch(`${getApiUrl()}/api/reviews`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: JSON.stringify({
                     product_id: productId,
                     customer_name: order.customer_name,
                     rating: rating,
                     comment: comment,
-                    media_urls: mediaUrl ? [mediaUrl] : []
+                    media_urls: mediaUrl ? [mediaUrl] : [],
+                    order_id: orderId,
+                    key: accessKey || undefined
                 })
             });
 

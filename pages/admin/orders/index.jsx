@@ -4,6 +4,7 @@ import AdminLayout from '../../../components/admin/AdminLayout';
 import Head from 'next/head';
 import { Search, Eye, Filter, Truck, Mail, Check, X, Download } from 'lucide-react';
 import { useAdminToast } from '../../../components/admin/AdminToast';
+import { utcDate, istDate, istDateTime } from '../../../lib/istDate';
 
 export default function Orders() {
     const toast = useAdminToast();
@@ -61,7 +62,7 @@ export default function Orders() {
                     items: order.items_json ? JSON.parse(order.items_json) : []
                 }));
                 // Sort by date desc
-                processedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                processedData.sort((a, b) => utcDate(b.created_at) - utcDate(a.created_at));
                 setOrders(processedData);
             }
         } catch (error) {
@@ -200,7 +201,7 @@ export default function Orders() {
                                 <div className="flex items-start justify-between mb-2">
                                     <div>
                                         <p className="font-mono text-sm font-semibold text-copper">{order.order_id}</p>
-                                        <p className="text-xs text-gray-400 mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
+                                        <p className="text-xs text-gray-400 mt-0.5">{istDate(order.created_at)}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
@@ -255,7 +256,7 @@ export default function Orders() {
                                 filteredOrders.map((order) => (
                                     <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 font-mono text-sm text-copper font-medium">{order.order_id}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500">{istDate(order.created_at)}</td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900">{order.customer_name}</div>
                                             <div className="text-xs text-gray-500">{order.email}</div>
@@ -289,7 +290,7 @@ export default function Orders() {
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-800">Order #{selectedOrder.order_id}</h2>
-                                <p className="text-sm text-gray-500">Placed on {new Date(selectedOrder.created_at).toLocaleString()}</p>
+                                <p className="text-sm text-gray-500">Placed on {istDateTime(selectedOrder.created_at)}</p>
                             </div>
                             <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-gray-600">
                                 <span className="text-2xl">&times;</span>

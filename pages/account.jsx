@@ -7,6 +7,7 @@ import { getApiUrl } from '../lib/config';
 import { supabase } from '../lib/supabaseClient';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { istDate } from '../lib/istDate';
 
 const EMPTY_ADDR = {
     label: 'Home',
@@ -71,7 +72,7 @@ export default function Account() {
                 // Backend: id, created_at, status, total_amount, items_json
                 const formattedOrders = data.map(order => ({
                     id: order.order_id || `ORD-${order.id}`,
-                    date: new Date(order.created_at).toLocaleDateString(),
+                    date: istDate(order.created_at),
                     status: order.status,
                     total: `₹${order.total_amount}`,
                     items: JSON.parse(order.items_json).length

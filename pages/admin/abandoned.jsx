@@ -3,10 +3,11 @@ import Head from 'next/head';
 import { Phone, MessageCircle, Check, ShoppingBag } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getApiUrl, getAdminHeaders } from '../../lib/config';
+import { istDateTime } from '../../lib/istDate';
 
 // Carts that Razorpay Magic Checkout reported as left before paying.
 const inr = (n) => (n == null ? '-' : `₹${Math.round(n).toLocaleString('en-IN')}`);
-const when = (iso) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const when = (iso) => istDateTime(iso, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 const digits = (p) => (p || '').replace(/\D/g, '').slice(-10);
 
 export default function Abandoned() {

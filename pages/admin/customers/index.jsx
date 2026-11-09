@@ -3,6 +3,7 @@ import { getApiUrl, getAdminHeaders } from '../../../lib/config';
 import AdminLayout from '../../../components/admin/AdminLayout';
 import Head from 'next/head';
 import { Search, Mail, Phone, MapPin } from 'lucide-react';
+import { utcDate } from '../../../lib/istDate';
 
 export default function Customers() {
     const [customers, setCustomers] = useState([]);
@@ -38,7 +39,7 @@ export default function Customers() {
 
                     uniqueCustomers[order.email].totalOrders += 1;
                     uniqueCustomers[order.email].totalSpent += order.total_amount;
-                    if (new Date(order.created_at) > new Date(uniqueCustomers[order.email].lastOrder)) {
+                    if (utcDate(order.created_at) > utcDate(uniqueCustomers[order.email].lastOrder)) {
                         uniqueCustomers[order.email].lastOrder = order.created_at;
                     }
                 });

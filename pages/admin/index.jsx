@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Package, Upload, Image as ImageIcon, Sparkles, ArrowRight } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getApiUrl, getAdminHeaders } from '../../lib/config';
+import { utcDate, istDate, isTodayIST } from '../../lib/istDate';
 
 // Admin overview: only figures computed from real orders and products.
 
@@ -18,7 +19,7 @@ const STATUS_STYLE = {
     cancelled: 'bg-gray-200 text-gray-600',
 };
 const inr = (n) => `₹${Math.round(n || 0).toLocaleString('en-IN')}`;
-const isToday = (d) => new Date(d).toDateString() === new Date().toDateString();
+const isToday = isTodayIST;
 const LOW = 2;
 
 export default function AdminDashboard() {
@@ -60,7 +61,7 @@ export default function AdminDashboard() {
             outOfStock: products.length - inStock.length,
             low: products.filter((p) => p.stock > 0 && p.stock <= LOW).sort((a, b) => a.stock - b.stock),
             sections: Object.entries(bySection).sort((a, b) => b[1].total - a[1].total),
-            recent: [...orders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6),
+            recent: [...orders].sort((a, b) => utcDate(b.created_at) - utcDate(a.created_at)).slice(0, 6),
             orderCount: live.length,
         };
     }, [orders, products]);
@@ -86,7 +87,7 @@ export default function AdminDashboard() {
             <div className="max-w-7xl">
                 <h1 className="sr-only">Overview</h1>
                 <p className="text-[#2a150c]/60">
-                    {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
                 </p>
                 {error && <p className="mt-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</p>}
 
@@ -122,7 +123,7 @@ export default function AdminDashboard() {
                                     <li key={o.id} className="px-5 md:px-6 py-3.5 flex items-center gap-4">
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm font-semibold truncate">{o.customer_name || 'Customer'}</p>
-                                            <p className="text-xs text-[#2a150c]/50 font-mono truncate">{o.order_id || `#${o.id}`} · {new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
+                                            <p className="text-xs text-[#2a150c]/50 font-mono truncate">{o.order_id || `#${o.id}`} · {istDate(o.created_at, { day: 'numeric', month: 'short' })}</p>
                                         </div>
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_STYLE[o.status] || 'bg-gray-100 text-gray-700'}`}>{o.status}</span>
                                         <span className="w-24 text-right text-sm font-semibold tabular-nums">{inr(o.total_amount)}</span>

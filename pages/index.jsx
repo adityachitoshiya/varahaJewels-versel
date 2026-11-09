@@ -45,7 +45,8 @@ export default function Home({ heroSlides, initialSettings, initialProducts }) {
   }, []);
 
   const [userSkipped, setUserSkipped] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Preloader only on the first page load of a visit (not when coming back to Home)
+  const [isLoading, setIsLoading] = useState(() => !(typeof window !== 'undefined' && window.__vjLanded));
   const router = useRouter();
 
 
@@ -81,9 +82,9 @@ export default function Home({ heroSlides, initialSettings, initialProducts }) {
       return;
     }
 
-    // Check if preloader has already been shown in this session
-    // Check if preloader has already been shown in this session
-    const hasSeenPreloader = sessionStorage.getItem('preloaderShown');
+    // Preloader shows once per visit: skip it if this tab has already loaded any page
+    let hasSeenPreloader = false;
+    try { hasSeenPreloader = !!sessionStorage.getItem('preloaderShown'); } catch (e) { /* private mode */ }
 
     // If already seen, skip loading immediately
     if (hasSeenPreloader) {
@@ -97,7 +98,7 @@ export default function Home({ heroSlides, initialSettings, initialProducts }) {
 
       const timer = setTimeout(() => {
         setIsLoading(false);
-        sessionStorage.setItem('preloaderShown', 'true');
+        try { sessionStorage.setItem('preloaderShown', 'true'); } catch (e) { /* private mode */ }
       }, remainingTime);
 
       // Cleanup

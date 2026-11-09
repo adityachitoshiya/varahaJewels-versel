@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 export default function PremiumLoader() {
   return (
-    <div className="fixed inset-0 z-[9999] bg-heritage flex items-center justify-center">
+    <div className="vj-preloader fixed inset-0 z-[9999] bg-heritage flex items-center justify-center">
       <div className="relative">
         {/* Rotating Orange Ring */}
         <div className="w-32 h-32 relative">

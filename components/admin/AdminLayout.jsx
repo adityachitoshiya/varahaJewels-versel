@@ -7,6 +7,7 @@ import {
 import { useEffect, useState, useRef } from 'react';
 import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import { AdminToastProvider } from './AdminToast';
+import { istDateTime } from '../../lib/istDate';
 
 // Shared admin frame: grouped sidebar, page title bar, product search and
 // notifications. Every /admin page renders inside this.
@@ -254,7 +255,7 @@ export default function AdminLayout({ children }) {
                                         ) : notifications.map((n) => (
                                             <button key={n.id} onClick={() => markAsRead(n.id)} className={`w-full text-left px-4 py-3 border-b border-[#2a150c]/5 hover:bg-[#F6F1EB] ${!n.is_read ? 'bg-amber-50/60' : ''}`}>
                                                 <p className={`text-sm ${!n.is_read ? 'font-semibold' : 'text-[#2a150c]/70'}`}>{n.message}</p>
-                                                <p className="text-xs text-[#2a150c]/45 mt-1">{new Date(n.created_at).toLocaleString('en-IN')}</p>
+                                                <p className="text-xs text-[#2a150c]/45 mt-1">{istDateTime(n.created_at)}</p>
                                             </button>
                                         ))}
                                     </div>

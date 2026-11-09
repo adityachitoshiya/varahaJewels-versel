@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { CheckCircle, Package, Mail, Phone, Home, Download } from 'lucide-react';
+import { CheckCircle, Package, Mail, Home, Download } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { trackPixelEvent, sendCapiEvent, generateEventId, getUserData } from '../lib/metaPixel';
 
@@ -275,6 +275,9 @@ export default function PaymentSuccess() {
     );
   }
 
+  // Magic Checkout orders often come without an email (Razorpay sends void@razorpay.com)
+  const hasEmail = !!orderDetails.email && /@/.test(orderDetails.email) && !/void@razorpay\.com$/i.test(orderDetails.email);
+
   return (
     <>
       <Head>
@@ -308,7 +311,9 @@ export default function PaymentSuccess() {
               Thank you for your purchase, {orderDetails.name}
             </p>
             <p className="text-sm text-heritage/60">
-              Order confirmation has been sent to your email
+              {hasEmail
+                ? <>Order confirmation has been sent to {orderDetails.email}</>
+                : <>Keep your order ID handy. You can follow your order on the Track Order page.</>}
             </p>
             {orderDetails.isCod && (
               <p className="text-md text-copper font-medium mt-4 bg-copper/10 inline-block px-4 py-2 rounded-full">
@@ -454,7 +459,7 @@ export default function PaymentSuccess() {
             </div>
 
             {/* Contact Info */}
-            {orderDetails.email && (
+            {hasEmail && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-heritage mb-4">Contact Information</h3>
                 <div className="flex items-center gap-2 text-heritage/70">
@@ -491,9 +496,11 @@ export default function PaymentSuccess() {
                   <Mail className="text-copper" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-heritage mb-1">Order Confirmation Email</h3>
+                  <h3 className="font-semibold text-heritage mb-1">{hasEmail ? 'Order Confirmation Email' : 'Your Order Details'}</h3>
                   <p className="text-sm text-heritage/70">
-                    We've sent a confirmation email with your order details and tracking information.
+                    {hasEmail
+                      ? "We've sent a confirmation email with your order details and tracking information."
+                      : 'Your order details are on this page. Note your order ID to track it later.'}
                   </p>
                 </div>
               </div>
@@ -517,19 +524,19 @@ export default function PaymentSuccess() {
                 <div>
                   <h3 className="font-semibold text-heritage mb-1">Delivery</h3>
                   <p className="text-sm text-heritage/70">
-                    Expect delivery within 5-7 business days. Track your order using the tracking link in your email.
+                    Expect delivery within 5-7 business days. Track your order any time on the Track Order page{hasEmail ? ' or from the link in your email' : ''}.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-copper/10 rounded-full flex items-center justify-center">
-                  <Phone className="text-copper" size={24} />
+                  <Mail className="text-copper" size={24} />
                 </div>
                 <div>
                   <h3 className="font-semibold text-heritage mb-1">Need Help?</h3>
                   <p className="text-sm text-heritage/70">
-                    Contact our customer support at help@varahajewels.in or call +91-XXXXXXXXXX
+                    Write to us at <a href="mailto:help@varahajewels.in" className="text-copper underline">help@varahajewels.in</a> and we will help you.
                   </p>
                 </div>
               </div>

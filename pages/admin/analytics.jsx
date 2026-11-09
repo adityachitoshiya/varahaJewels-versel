@@ -3,6 +3,7 @@ import { getApiUrl, getAdminHeaders } from '../../lib/config';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Head from 'next/head';
 import { Users, Activity, Calendar, TrendingUp, MapPin, Globe, Building2, MousePointerClick, MonitorSmartphone, Share2, ShoppingCart } from 'lucide-react';
+import { utcDate } from '../../lib/istDate';
 
 export default function Analytics() {
     const [stats, setStats] = useState({
@@ -345,7 +346,7 @@ export default function Analytics() {
                                     logs.map((log) => (
                                         <tr key={log.id} className="hover:bg-gray-50">
                                             <td className="px-4 py-2 text-xs text-gray-500 whitespace-nowrap">
-                                                {new Date(log.timestamp).toLocaleString('en-IN', {
+                                                {utcDate(log.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata',
                                                     day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                                                 })}
                                             </td>

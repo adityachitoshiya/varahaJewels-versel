@@ -464,7 +464,7 @@ export default function Login() {
 
                             <div className="flex items-center justify-end">
                                 <div className="text-sm">
-                                    <a href="#" className="font-medium text-copper hover:text-heritage transition-colors">
+                                    <a href="/forgot-password" className="font-medium text-copper hover:text-heritage transition-colors">
                                         Forgot password?
                                     </a>
                                 </div>
