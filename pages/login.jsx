@@ -8,6 +8,7 @@ import { Mail, Lock, AlertCircle, ArrowRight, Loader2, Facebook, CheckCircle } f
 import { useSafeGoogleLogin } from '../lib/googleAuth';
 import { authenticateWithGoogleBackend, authenticateWithBackend } from '../lib/authUtils';
 import TelegramLoginModal from '../components/TelegramLoginModal';
+import WhatsAppLogin from '../components/WhatsAppLogin';
 
 export default function Login() {
     const router = useRouter();
@@ -27,6 +28,8 @@ export default function Login() {
     const [successMsg, setSuccessMsg] = useState('');
     const [showFacebookModal, setShowFacebookModal] = useState(false);
     const [showTelegramModal, setShowTelegramModal] = useState(false);
+    // 'phone' = mobile number + WhatsApp OTP (default), 'email' = email + password / admin
+    const [mode, setMode] = useState('phone');
 
     // Google OAuth sign-in via Google Identity Services
     const googleLogin = useSafeGoogleLogin({
@@ -365,7 +368,24 @@ export default function Login() {
             <div className="mt-2 sm:mx-auto sm:w-full sm:max-w-md px-4">
                 <div className="bg-white py-8 sm:px-10 sm:shadow-xl sm:shadow-gray-200/50 sm:rounded-2xl sm:border border-gray-100">
 
-                    {showOtp ? (
+                    {!showOtp && mode === 'phone' ? (
+                        <div className="space-y-5">
+                            {successMsg && (
+                                <div className="bg-green-50 border border-green-100 text-green-600 px-4 py-3 rounded-xl text-sm flex items-center gap-3">
+                                    <CheckCircle size={18} className="flex-shrink-0" />
+                                    <span>{successMsg}</span>
+                                </div>
+                            )}
+                            <WhatsAppLogin onDone={(u, isNew) => {
+                                setSuccessMsg(isNew ? 'Welcome to Varaha Jewels! Your account is ready.' : 'Signed in!');
+                                setTimeout(() => router.push(redirect || '/'), 400);
+                            }} />
+                            <button type="button" onClick={() => { setMode('email'); setError(null); }}
+                                className="w-full text-sm font-medium text-gray-500 hover:text-heritage transition-colors">
+                                Sign in with email and password instead
+                            </button>
+                        </div>
+                    ) : showOtp ? (
                         <form className="space-y-6" onSubmit={handleVerifyOtp}>
                             {/* ... Rest of OTP Form ... */}
                             <div className="text-center mb-6">
@@ -485,6 +505,10 @@ export default function Login() {
                                         Sign In <ArrowRight className="ml-2" size={20} />
                                     </>
                                 )}
+                            </button>
+                            <button type="button" onClick={() => { setMode('phone'); setError(null); }}
+                                className="w-full text-sm font-medium text-gray-500 hover:text-heritage transition-colors">
+                                Use mobile number (WhatsApp OTP) instead
                             </button>
                         </form>
                     )}

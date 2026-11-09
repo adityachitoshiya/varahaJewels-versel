@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { User, Mail, Lock, AlertCircle, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import WhatsAppLogin from '../components/WhatsAppLogin';
 
 export default function Signup() {
     const router = useRouter();
@@ -18,6 +19,9 @@ export default function Signup() {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    // 'phone' = name + mobile + WhatsApp OTP (default), 'email' = email + password
+    const [mode, setMode] = useState('phone');
+    const [waDone, setWaDone] = useState(false);
 
     // Google OAuth sign-in via Google Identity Services
     const googleLogin = useSafeGoogleLogin({
@@ -186,6 +190,20 @@ export default function Signup() {
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 rounded-2xl sm:px-10 border border-gray-100">
+                    {mode === 'phone' ? (
+                    <div className="space-y-5">
+                        {waDone && (
+                            <div className="bg-green-50 border border-green-100 text-green-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                                <CheckCircle size={16} /> Welcome to Varaha Jewels! Your account is ready.
+                            </div>
+                        )}
+                        <WhatsAppLogin askName onDone={() => { setWaDone(true); setTimeout(() => router.push('/'), 900); }} />
+                        <button type="button" onClick={() => setMode('email')}
+                            className="w-full text-sm font-medium text-gray-500 hover:text-heritage transition-colors">
+                            Sign up with email and password instead
+                        </button>
+                    </div>
+                    ) : (
                     <form className="space-y-6" onSubmit={handleSignup}>
                         {success && (
                             <div className="bg-green-50 border border-green-100 text-green-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
@@ -318,7 +336,12 @@ export default function Signup() {
                                 )}
                             </button>
                         </div>
+                        <button type="button" onClick={() => setMode('phone')}
+                            className="w-full text-sm font-medium text-gray-500 hover:text-heritage transition-colors">
+                            Use mobile number (WhatsApp OTP) instead
+                        </button>
                     </form>
+                    )}
 
                     {/* Divider */}
                     <div className="my-6 relative">
