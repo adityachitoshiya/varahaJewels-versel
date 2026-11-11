@@ -410,9 +410,9 @@ export default function Login() {
                                 id="otp"
                                 name="otp"
                                 type="text"
-                                label="Enter 6-digit OTP"
+                                label="Enter 4-digit OTP"
                                 value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
                                 icon={Lock}
                                 required
                             />
