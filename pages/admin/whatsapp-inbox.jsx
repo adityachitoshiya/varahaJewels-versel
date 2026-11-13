@@ -18,9 +18,13 @@ export default function WhatsAppInbox() {
     const [text, setText] = useState('');
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
+    const [status, setStatus] = useState(null);
     const bottom = useRef(null);
 
-    const loadChats = () => api('/api/admin/wa/chats').then(setChats).catch((e) => setError(e.message));
+    const loadChats = () => {
+        api('/api/admin/wa/status').then(setStatus).catch(() => {});
+        return api('/api/admin/wa/chats').then(setChats).catch((e) => setError(e.message));
+    };
     const loadThread = (phone) => api(`/api/admin/wa/chats/${phone}`).then((d) => { setThread(d); setError(''); }).catch((e) => setError(e.message));
 
     useEffect(() => { loadChats(); const id = setInterval(loadChats, 20000); return () => clearInterval(id); }, []);
@@ -56,6 +60,16 @@ export default function WhatsAppInbox() {
                 <p className="text-[#2a150c]/70 max-w-2xl text-sm">Customer chats on WhatsApp. The bot replies by itself; chats marked <b>Team</b> are waiting for you. You can reply up to 24 hours after the customer's last message.</p>
                 <button onClick={loadChats} className="inline-flex items-center gap-2 rounded-xl border border-[#2a150c]/15 bg-white px-3 py-2 text-sm hover:bg-[#F6F1EB]"><RefreshCw size={16} /> Refresh</button>
             </div>
+            {status && (
+                <p className="mb-3 text-xs text-[#2a150c]/60">
+                    <span className="font-medium text-[#2a150c]/80">Webhook status: </span>
+                    {!status.configured ? 'not set up on the server (META_APP_SECRET / META_WA_VERIFY_TOKEN missing). ' : ''}
+                    last message from Meta: {status.last_call_at ? istDateTime(status.last_call_at) : 'none yet'}
+                    {' · '}last customer message: {status.last_message_at ? istDateTime(status.last_message_at) : 'none yet'}
+                    {status.last_bad_sig_at && <span className="text-red-600">{' · '}rejected a call at {istDateTime(status.last_bad_sig_at)} (app secret on Render does not match Meta)</span>}
+                    {status.last_error && <span className="text-red-600">{' · '}last error ({istDateTime(status.last_error_at)}): {status.last_error}</span>}
+                </p>
+            )}
             {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
 
             <div className="grid md:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
